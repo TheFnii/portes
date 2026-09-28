@@ -25,6 +25,7 @@ export const EULER_WS_URL = 'wss://ws.eulerstream.com';
 // Clés du stockage local (navigateur de la tablette).
 export const STORAGE = {
   ticker: 'portes.ticker',
+  messages: 'portes.messages',
   sound: 'portes.sound',
   tiktokUser: 'portes.tiktok.user',
   tiktokKey: 'portes.tiktok.key',

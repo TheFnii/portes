@@ -1,5 +1,5 @@
 import { APP_SUBTITLE, APP_TAGLINE, STORAGE } from './config.js';
-import { load, save, loadFlag, saveFlag } from './prefs.js';
+import { load, loadFlag, saveFlag } from './prefs.js';
 import { randomInt } from './random.js';
 import { flowerDefs } from './doors-art.js';
 import { buildBackdrop, LAYOUT } from './scene.js';
@@ -113,7 +113,7 @@ function goGame(mode) {
   state.screen = 'game';
   state.phase = 'idle';
   round.reset();
-  body.classList.remove('at-home', 'vitrine');
+  body.classList.remove('at-home');
   body.classList.toggle('mode-live', mode === 'live');
   dice.setActive(true);
   fx.setAmbient(18);
@@ -122,7 +122,11 @@ function goGame(mode) {
   fit();
   if (mode === 'live') {
     if (hasCreds()) ensureLive();
-    else setTimeout(() => openSettings('Pour jouer avec le chat, renseignez votre pseudo TikTok et votre clé API Euler Stream.'), 700);
+    else {
+      setTimeout(() => {
+        if (!simulating && state.mode === 'live' && state.screen === 'game' && state.phase === 'idle') needCreds();
+      }, 700);
+    }
   }
 }
 
@@ -168,7 +172,7 @@ diceHit.addEventListener('click', () => {
 
 function startCollecting({ force = false } = {}) {
   if (!force && !hasCreds()) {
-    openSettings('Pour jouer avec le chat, renseignez votre pseudo TikTok et votre clé API Euler Stream.');
+    needCreds();
     return;
   }
   if (!force) ensureLive();
@@ -377,9 +381,6 @@ function renderStatus() {
 live.addEventListener('status', (e) => {
   const { state: st, message } = e.detail;
   renderStatus();
-  const fs = $('tt-status');
-  fs.dataset.state = st;
-  fs.textContent = message;
   if (state.mode === 'live' && state.screen === 'game' && (st === 'error' || st === 'waiting')) toast(message, 5000);
 });
 
@@ -395,7 +396,7 @@ function ensureLive() {
 
 // Simulation : de faux spectateurs écrivent dans le chat (pour répéter sans être en live).
 async function simulate() {
-  closeSettings();
+  closeNotice();
   if (state.screen !== 'game' || state.mode !== 'live') goGame('live');
   if (state.phase === 'result') await closeResult();
   if (state.phase !== 'collecting') startCollecting({ force: true });
@@ -464,74 +465,124 @@ document.addEventListener('pointerdown', (e) => {
   if (!$('drawer').hidden && !e.target.closest('#drawer, #btn-game-menu')) closeDrawer();
 });
 
-function openSettings(message) {
+// ---------- Petite fenêtre d'information ----------
+
+function notice(title, html, actions = []) {
   closeDrawer();
-  $('tt-user').value = load(STORAGE.tiktokUser, '') ? `@${load(STORAGE.tiktokUser)}` : '';
-  $('tt-key').value = load(STORAGE.tiktokKey, '');
-  $('tt-key').type = 'password';
-  const fs = $('tt-status');
-  if (message) {
-    fs.dataset.state = 'waiting';
-    fs.textContent = message;
-  } else {
-    fs.dataset.state = live.state;
-    fs.textContent = live.message || '';
-  }
-  $('settings').hidden = false;
+  $('notice-title').textContent = title;
+  $('notice-body').innerHTML = html;
+  const box = $('notice-actions');
+  box.textContent = '';
+  actions.forEach(({ label, href, primary, onClick }) => {
+    const el = document.createElement(href ? 'a' : 'button');
+    el.className = `btn${primary ? ' btn-primary' : ''}`;
+    el.textContent = label;
+    if (href) el.href = href;
+    else {
+      el.type = 'button';
+      el.addEventListener('click', () => { closeNotice(); if (onClick) onClick(); });
+    }
+    box.appendChild(el);
+  });
+  $('notice').hidden = false;
 }
-function closeSettings() {
-  $('settings').hidden = true;
+function closeNotice() {
+  $('notice').hidden = true;
 }
-$('settings').addEventListener('click', (e) => {
-  if (e.target === $('settings') || e.target.closest('[data-close]')) closeSettings();
+$('notice').addEventListener('click', (e) => {
+  if (e.target === $('notice') || e.target.closest('[data-close]')) closeNotice();
 });
 
-$('tiktok-form').addEventListener('submit', (e) => {
+function needCreds() {
+  notice('Connexion TikTok',
+    '<p class="hint">Pour jouer avec le chat, renseignez d’abord votre pseudo TikTok et votre clé API Euler Stream dans les réglages.</p>',
+    [
+      { label: 'Ouvrir les réglages', href: 'admin.html#tiktok', primary: true },
+      { label: 'Simuler des participants', onClick: simulate },
+    ]);
+}
+
+// ---------- Écran de veille ----------
+
+const saver = new Ticker($('screensaver'), $('ss-track'), { speedFactor: 2.4 });
+saver.setEnabled(true);
+
+function openScreensaver() {
+  closeDrawer();
+  if (!ticker.messages.length) {
+    toast('Aucun message à afficher : ajoutez-en dans les réglages.');
+    return;
+  }
+  saver.setData(ticker.messages, ticker.speed);
+  $('screensaver').hidden = false;
+  body.classList.add('saver');
+  enterFullscreen(false);
+}
+function closeScreensaver() {
+  $('screensaver').hidden = true;
+  body.classList.remove('saver');
+}
+$('screensaver').addEventListener('pointerdown', (e) => {
   e.preventDefault();
-  const user = $('tt-user').value.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/i, '').replace(/\/.*$/, '');
-  const key = $('tt-key').value.trim();
-  save(STORAGE.tiktokUser, user);
-  save(STORAGE.tiktokKey, key);
-  $('tt-user').value = user ? `@${user}` : '';
-  live.connect(user, key);
+  closeScreensaver();
 });
-$('tt-disconnect').addEventListener('click', () => live.disconnect());
-$('tt-forget').addEventListener('click', () => {
-  save(STORAGE.tiktokKey, null);
-  $('tt-key').value = '';
-  live.disconnect();
-  $('tt-status').textContent = 'Clé effacée de cette tablette.';
-});
-$('tt-key-show').addEventListener('click', () => {
-  const k = $('tt-key');
-  k.type = k.type === 'password' ? 'text' : 'password';
-});
-$('tt-simulate').addEventListener('click', simulate);
 
-// Plein écran
-const fsEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-if (!fsEnabled) $$('.fullscreen-only').forEach((el) => { el.hidden = true; });
-function toggleFullscreen() {
+// ---------- Plein écran ----------
+// iPad : Safari ne permet pas toujours le plein écran d'une page. La solution fiable est
+// d'ajouter l'appli à l'écran d'accueil : elle s'ouvre alors sans aucune barre.
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+if (standalone) $$('.fullscreen-btn').forEach((el) => { el.hidden = true; });
+
+const isFullscreen = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+
+function fullscreenHelp() {
+  notice('Plein écran sur iPad',
+    `<p class="hint">Safari ne permet pas de masquer ses barres depuis une page web. Installez l’appli sur l’écran d’accueil : elle s’ouvrira en plein écran, sans aucune barre.</p>
+     <ol class="steps">
+       <li>Dans Safari, touchez le bouton <strong>Partager</strong> <span aria-hidden="true">(carré avec une flèche ↑)</span>.</li>
+       <li>Choisissez <strong>Sur l’écran d’accueil</strong>, puis <strong>Ajouter</strong>.</li>
+       <li>Fermez Safari et ouvrez <strong>Portes</strong> depuis sa nouvelle icône.</li>
+     </ol>`,
+    [{ label: 'Compris', primary: true }]);
+}
+
+// helpIfFails : afficher l'aide si le plein écran n'est pas possible (bouton « Plein écran »).
+function enterFullscreen(helpIfFails = true) {
+  if (standalone || isFullscreen()) return;
   const el = document.documentElement;
-  if (document.fullscreenElement || document.webkitFullscreenElement) {
-    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-  } else {
-    const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (req) Promise.resolve(req.call(el)).catch(() => {});
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) {
+    if (helpIfFails) fullscreenHelp();
+    return;
   }
+  try {
+    const p = req.call(el);
+    if (p && p.catch) p.catch(() => { if (helpIfFails) fullscreenHelp(); });
+  } catch (e) {
+    if (helpIfFails) fullscreenHelp();
+    return;
+  }
+  if (helpIfFails && isIOS) setTimeout(() => { if (!isFullscreen()) fullscreenHelp(); }, 800);
+}
+
+function toggleFullscreen() {
+  if (isFullscreen()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else enterFullscreen(true);
 }
 
 // Délégation des clics de menu
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-go], [data-toggle], [data-open], [data-action]');
+  const t = e.target.closest('[data-go], [data-toggle], [data-action]');
   if (!t) return;
   sound.tink();
   if (t.dataset.go) goGame(t.dataset.go);
   else if (t.dataset.toggle === 'ticker') setTicker(!ticker.enabled);
   else if (t.dataset.toggle === 'sound') setSound(!sound.enabled);
-  else if (t.dataset.open === 'settings') openSettings();
   else if (t.dataset.action === 'home') goHome();
   else if (t.dataset.action === 'fullscreen') toggleFullscreen();
+  else if (t.dataset.action === 'screensaver') openScreensaver();
   else if (t.dataset.action === 'reset') {
     closeDrawer();
     if (state.phase === 'result') closeResult();
@@ -545,27 +596,16 @@ document.addEventListener('click', (e) => {
   }
 });
 
-$('live-status').addEventListener('click', () => openSettings());
-
-// Écran d'attente (menu masqué)
-$('btn-vitrine').addEventListener('click', (e) => {
-  e.stopPropagation();
-  body.classList.add('vitrine');
-});
-$('home').addEventListener('pointerdown', (e) => {
-  if (body.classList.contains('vitrine')) {
-    e.preventDefault();
-    body.classList.remove('vitrine');
-  }
-});
+$('live-status').addEventListener('click', () => { location.href = 'admin.html#tiktok'; });
 
 // Clavier (pratique sur ordinateur)
 document.addEventListener('keydown', (e) => {
   if (e.target.closest('input')) return;
   if (e.key === 'Escape') {
-    if (!$('settings').hidden) closeSettings();
-    else closeDrawer();
-  } else if ((e.key === ' ' || e.key === 'Enter') && state.screen === 'game' && $('settings').hidden) {
+    closeNotice();
+    closeScreensaver();
+    closeDrawer();
+  } else if ((e.key === ' ' || e.key === 'Enter') && state.screen === 'game' && $('notice').hidden && $('screensaver').hidden) {
     e.preventDefault();
     if (state.phase === 'result') $('btn-again').click();
     else mainAction();
@@ -575,9 +615,22 @@ document.addEventListener('keydown', (e) => {
 // ---------- Démarrage ----------
 
 ticker.setEnabled(loadFlag(STORAGE.ticker, true));
-ticker.load().then(() => {
-  fit();
-  if (ticker.error) toast('Le fichier messages.json contient une erreur : le bandeau est masqué.', 6000);
+function loadTicker() {
+  return ticker.load().then(() => {
+    fit();
+    if (ticker.error) toast('Le fichier messages.json contient une erreur : le bandeau est masqué.', 6000);
+  });
+}
+loadTicker();
+// Retour depuis la page des réglages : relire les messages et la connexion.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) {
+    loadTicker();
+    ticker.setEnabled(loadFlag(STORAGE.ticker, true));
+    sound.setEnabled(loadFlag(STORAGE.sound, true));
+    syncToggles();
+    if (state.mode === 'live' && state.screen === 'game') ensureLive();
+  }
 });
 syncToggles();
 renderFeeds();
@@ -585,6 +638,12 @@ updateUI();
 fit();
 fx.setAmbient(26);
 dice.setActive(false);
+
+// Lien depuis les réglages : ouvrir directement une simulation.
+if (new URLSearchParams(location.search).has('simulation')) {
+  history.replaceState(null, '', location.pathname);
+  setTimeout(simulate, 400);
+}
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});

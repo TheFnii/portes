@@ -1,32 +1,29 @@
 // Bandeau des messages défilants, lus dans messages.json (modifiable sur GitHub).
 
-import { MESSAGES_FILE, DEFAULT_SPEED } from './config.js';
+import { DEFAULT_SPEED } from './config.js';
+import { loadMessages } from './messages.js';
 
 export class Ticker {
-  constructor(el, track) {
+  constructor(el, track, { speedFactor = 1 } = {}) {
     this.el = el;
     this.track = track;
     this.messages = [];
     this.speed = DEFAULT_SPEED;
+    this.speedFactor = speedFactor;
     this.enabled = false;
     window.addEventListener('resize', () => this.layout());
   }
 
   async load() {
-    this.error = false;
-    try {
-      const res = await fetch(MESSAGES_FILE, { cache: 'no-cache' });
-      if (!res.ok) throw new Error(res.status);
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : data.messages;
-      this.messages = (list || []).map((m) => String(m).trim()).filter(Boolean);
-      const v = Number(data.vitesse);
-      if (v > 5 && v < 1000) this.speed = v;
-    } catch (e) {
-      console.warn('messages.json illisible :', e);
-      this.error = true;
-      this.messages = [];
-    }
+    const data = await loadMessages();
+    this.error = data.error;
+    this.source = data.source;
+    this.setData(data.messages, data.speed);
+  }
+
+  setData(messages, speed) {
+    this.messages = messages;
+    this.speed = speed;
     this.render();
   }
 
@@ -61,7 +58,7 @@ export class Ticker {
     if (!group) return;
     const w = group.getBoundingClientRect().width;
     if (!w) return;
-    this.track.style.setProperty('--ticker-dur', `${(w / this.speed).toFixed(1)}s`);
+    this.track.style.setProperty('--ticker-dur', `${(w / (this.speed * this.speedFactor)).toFixed(1)}s`);
   }
 
   setEnabled(on) {

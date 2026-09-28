@@ -531,14 +531,16 @@ function medallion(d, id) {
   const num = String(d.n);
   const fs = num.length > 1 ? 27 : 33;
   const text = (fill, stroke) =>
-    `<text x="${x}" y="${y}" dy=".36em" text-anchor="middle" font-family="'Cinzel', serif" font-weight="700" font-size="${fs}" fill="${fill}" stroke="${stroke}" stroke-width=".7" paint-order="stroke">${num}</text>`;
+    `<text x="${x}" y="${y}" dy=".36em" text-anchor="middle" font-family="'Cinzel', serif" font-weight="700" font-size="${fs}" fill="${fill}" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke">${num}</text>`;
   const goldDefs = `
     <linearGradient id="${id}-mg" x1="0" y1="0" x2=".3" y2="1">
       <stop offset="0" stop-color="#fff4c4"/><stop offset=".45" stop-color="#e6b85a"/><stop offset="1" stop-color="#9a6618"/>
     </linearGradient>
-    <radialGradient id="${id}-en" cx="40%" cy="35%" r="70%">
-      <stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="${d.enamel}"/><stop offset="1" stop-color="#000" stop-opacity=".6"/>
+    <radialGradient id="${id}-glow">
+      <stop offset=".55" stop-color="#ffe7a0" stop-opacity=".85"/><stop offset="1" stop-color="#ffc860" stop-opacity="0"/>
     </radialGradient>`;
+  // Halo lumineux derrière le médaillon, pour que le chiffre ressorte de loin.
+  const halo = `<circle cx="${x}" cy="${y}" r="46" fill="url(#${id}-glow)"/>`;
   switch (d.medal) {
     case 'porcelain': {
       let dots = '';
@@ -547,16 +549,16 @@ function medallion(d, id) {
         dots += `<circle cx="${r2(x + Math.cos(a) * 23)}" cy="${r2(y + Math.sin(a) * 27)}" r="${i % 2 ? 1.2 : 1.7}" fill="${i % 2 ? '#6aa06a' : '#e98aa2'}"/>`;
       }
       return `<defs>${goldDefs}</defs>
-        <ellipse cx="${x}" cy="${y}" rx="28" ry="32" fill="url(#${id}-mg)" stroke="#6e4a12" stroke-width=".8"/>
+        ${halo}<ellipse cx="${x}" cy="${y}" rx="28" ry="32" fill="url(#${id}-mg)" stroke="#6e4a12" stroke-width=".8"/>
         <ellipse cx="${x}" cy="${y}" rx="25.5" ry="29.5" fill="#fbf6ee"/>${dots}
-        ${text(d.enamel, '#fff')}`;
+        ${text(d.enamel, '#fffdf6')}`;
     }
     case 'tile':
       return `<defs>${goldDefs}</defs>
-        <rect x="${x - 27}" y="${y - 27}" width="54" height="54" rx="3" fill="#fbf7ee" stroke="${d.trim}" stroke-width="3"/>
+        ${halo}<rect x="${x - 27}" y="${y - 27}" width="54" height="54" rx="3" fill="#fbf7ee" stroke="${d.trim}" stroke-width="3"/>
         <rect x="${x - 22}" y="${y - 22}" width="44" height="44" fill="none" stroke="${d.trim}" stroke-width=".8" stroke-dasharray="2 1.5"/>
         ${[[-27, -27], [27, -27], [-27, 27], [27, 27]].map(([a, b]) => `<circle cx="${x + a}" cy="${y + b}" r="3" fill="#f3d27a" stroke="${d.trim}" stroke-width=".8"/>`).join('')}
-        ${text(d.enamel, '#fff')}`;
+        ${text(d.enamel, '#fffdf6')}`;
     case 'sun': {
       let rays = '';
       for (let i = 0; i < 16; i++) {
@@ -567,17 +569,17 @@ function medallion(d, id) {
         rays += `<path d="M${r2(x + Math.cos(c) * 24)},${r2(y + Math.sin(c) * 24)}L${r2(x + Math.cos(a) * R)},${r2(y + Math.sin(a) * R)}L${r2(x + Math.cos(b) * 24)},${r2(y + Math.sin(b) * 24)}Z"/>`;
       }
       return `<defs>${goldDefs}</defs>
-        <g fill="url(#${id}-mg)" stroke="#8a5a12" stroke-width=".5">${rays}</g>
+        ${halo}<g fill="url(#${id}-mg)" stroke="#8a5a12" stroke-width=".5">${rays}</g>
         <circle cx="${x}" cy="${y}" r="25" fill="url(#${id}-mg)" stroke="#8a5a12" stroke-width="1"/>
-        <circle cx="${x}" cy="${y}" r="21.5" fill="url(#${id}-en)"/>
-        ${text(`url(#${id}-mg)`, '#2a1606')}`;
+        <circle cx="${x}" cy="${y}" r="21.5" fill="${d.enamel}"/>
+        ${text('#ffeaa6', '#1c0e02')}`;
     }
     default:
       return `<defs>${goldDefs}</defs>
-        <circle cx="${x}" cy="${y}" r="31" fill="url(#${id}-mg)" stroke="#6e4a12" stroke-width=".9"/>
+        ${halo}<circle cx="${x}" cy="${y}" r="31" fill="url(#${id}-mg)" stroke="#6e4a12" stroke-width=".9"/>
         <circle cx="${x}" cy="${y}" r="28.4" fill="none" stroke="#fff6d0" stroke-width="1.8" stroke-dasharray="0.1 3.6" stroke-linecap="round"/>
-        <circle cx="${x}" cy="${y}" r="25" fill="url(#${id}-en)" stroke="#5a3a0c" stroke-width=".8"/>
-        ${text(`url(#${id}-mg)`, '#1c1206')}`;
+        <circle cx="${x}" cy="${y}" r="25" fill="${d.enamel}" stroke="#5a3a0c" stroke-width=".8"/>
+        ${text('#ffeaa6', '#120a02')}`;
   }
 }
 

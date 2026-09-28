@@ -1,0 +1,102 @@
+/* ---------- Page des réglages ---------- */
+
+html:has(body.admin),
+body.admin {
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+}
+
+body.admin {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(90, 40, 130, .45), transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(40, 80, 50, .35), transparent 55%),
+    #0b0612;
+  background-attachment: fixed;
+  user-select: auto;
+  -webkit-user-select: auto;
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+}
+
+.admin-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: max(14px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left));
+  background: rgba(11, 6, 18, .92);
+  border-bottom: 1px solid rgba(232, 199, 122, .3);
+}
+.admin-head h1 {
+  margin: 0;
+  font: 700 32px/1.1 'Cinzel', serif;
+  color: var(--gold-light);
+}
+
+.admin-main {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+
+.admin-note { margin: 0; font-size: 20px; color: rgba(243, 233, 210, .8); }
+.admin-note strong { color: var(--gold-light); }
+
+.card {
+  padding: 24px 26px 28px;
+  border-radius: 26px;
+  background: linear-gradient(165deg, rgba(44, 20, 66, .9), rgba(16, 9, 26, .92));
+  border: 1px solid rgba(232, 199, 122, .45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+  scroll-margin-top: 90px;
+  min-width: 0;
+}
+.card h2 {
+  margin: 0 0 8px;
+  font: 700 26px/1.2 'Cinzel', serif;
+  color: var(--gold-light);
+}
+.card h3 {
+  margin: 22px 0 6px;
+  font: 600 20px/1.2 'Cinzel', serif;
+  color: var(--gold);
+}
+.card > .btn { margin-top: 6px; }
+
+textarea {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(232, 199, 122, .45);
+  background: rgba(0, 0, 0, .35);
+  color: var(--ink);
+  font: 500 22px/1.45 'Cormorant Garamond', Georgia, serif;
+  resize: vertical;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+textarea:focus { border-color: var(--gold-light); box-shadow: 0 0 0 3px rgba(232, 199, 122, .25); }
+
+input[type='range'] { width: 100%; accent-color: #e2b451; min-height: 36px; }
+output { color: var(--gold-light); font-weight: 600; }
+
+.preview-label {
+  margin: 12px 0 6px;
+  font: 600 16px/1 'Cinzel', serif;
+  letter-spacing: .1em;
+  color: rgba(246, 227, 168, .7);
+}
+.ticker.admin-preview {
+  position: relative;
+  top: auto;
+  z-index: auto;
+  width: 100%;
+  border-radius: 12px;
+  --ticker-h: 60px;
+}

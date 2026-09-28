@@ -128,7 +128,8 @@ export class Dice {
   }
 
   resize(stageScale) {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const touch = navigator.maxTouchPoints > 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, touch ? 1.5 : 2);
     const k = stageScale * dpr;
     this.k = k;
     this.canvas.width = Math.round(this.region.w * k);
@@ -238,6 +239,12 @@ export class Dice {
   }
 
   loop(now) {
+    // Au repos, 30 images/s suffisent (économise la batterie et le processeur).
+    if (!this.anim && this.active && now - (this.lastIdle || 0) < 30) {
+      requestAnimationFrame(this.loop);
+      return;
+    }
+    if (!this.anim) this.lastIdle = now;
     if (this.anim) {
       this.anim(now);
     } else if (this.active) {

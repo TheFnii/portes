@@ -2,6 +2,8 @@
 // (Adapté du grimoire.)
 
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Tablettes (iPad, Android) : moins de particules et une résolution de canvas réduite.
+export const TOUCH = navigator.maxTouchPoints > 1 || /iPad|Android/.test(navigator.userAgent);
 
 function makeGlowSprite(size, inner, outer) {
   const c = document.createElement('canvas');
@@ -66,7 +68,7 @@ export class FX {
   }
 
   resize() {
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.dpr = TOUCH ? 1 : Math.min(window.devicePixelRatio || 1, 2);
     this.w = window.innerWidth;
     this.h = window.innerHeight;
     this.canvas.width = Math.round(this.w * this.dpr);
@@ -77,7 +79,7 @@ export class FX {
   }
 
   get scale() {
-    return reduceMotion ? 0.3 : this.w < 700 ? 0.6 : 1;
+    return reduceMotion ? 0.3 : TOUCH ? 0.55 : this.w < 700 ? 0.6 : 1;
   }
 
   setAmbient(n) {

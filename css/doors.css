@@ -25,20 +25,25 @@
 
 .door-leaf {
   transform-origin: left center;
-  transition: transform 1.9s cubic-bezier(.35, .05, .15, 1), filter 1.9s ease;
+  transition: transform 1.9s cubic-bezier(.35, .05, .15, 1);
 }
 .door-leaf.right { transform-origin: right center; }
 .door-leaf svg { display: block; width: 100%; height: 100%; }
 
-.door.open .door-leaf.left { transform: perspective(calc(var(--w) * 2.2)) rotateY(76deg); filter: brightness(.42); }
-.door.open .door-leaf.right { transform: perspective(calc(var(--w) * 2.2)) rotateY(-76deg); filter: brightness(.42); }
+.door.open .door-leaf.left { transform: perspective(calc(var(--w) * 2.2)) rotateY(76deg); }
+.door.open .door-leaf.right { transform: perspective(calc(var(--w) * 2.2)) rotateY(-76deg); }
+/* Le battant s'assombrit en s'ouvrant (fondu d'un calque noir, sans filtre) */
+.door-leaf::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  transition: opacity 1.9s ease;
+}
+.door.open .door-leaf::after { opacity: .58; }
 .door.leaves-1.open .door-leaf.left { transform: perspective(calc(var(--w) * 2.6)) rotateY(78deg); }
 
-.door.open .portal-rays { animation: portal-spin 22s linear infinite; }
-.door.open .portal-stars circle { animation: twinkle 2.6s ease-in-out infinite; }
-
-@keyframes portal-spin { to { transform: rotate(360deg); } }
-@keyframes twinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 
 /* Halo lumineux derrière la porte */
 .door-halo {
@@ -59,12 +64,6 @@
   50% { transform: scale(1.06); opacity: 1; }
 }
 
-.lantern-glow { animation: lantern 3.2s ease-in-out infinite; }
-@keyframes lantern {
-  0%, 100% { opacity: .8; }
-  45% { opacity: 1; }
-  60% { opacity: .65; }
-}
 
 /* Participants (mode TikTok) : un petit personnage par personne, devant la porte */
 .door-crowd {
@@ -90,7 +89,9 @@
   width: 100%;
   height: 100%;
   fill: hsl(calc(38 + var(--h) * .06) 85% calc(66% + var(--h) * .03%));
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .8)) drop-shadow(0 0 4px rgba(255, 200, 110, .8));
+  stroke: rgba(40, 20, 0, .85);
+  stroke-width: 1.2px;
+  paint-order: stroke;
 }
 .door-crowd .more {
   align-self: center;

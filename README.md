@@ -20,7 +20,9 @@ Tout fonctionne dans le navigateur, sans serveur. Les sons sont synthétisés en
 
 ### 2. L’installer sur la tablette
 - **Android (Chrome)** : ouvrez le lien → menu **⋮** → **Ajouter à l’écran d’accueil**. L’application s’ouvre ensuite en plein écran.
-- **iPad (Safari)** : ouvrez le lien → bouton **Partager** → **Sur l’écran d’accueil**.
+- **iPad (Safari)** : ouvrez le lien → bouton **Partager** → **Sur l’écran d’accueil** → **Ajouter**.
+
+**Sur iPad, c’est la seule façon d’avoir un vrai plein écran** : Safari ne permet pas à une page de masquer ses barres. Ouvrez toujours l’appli depuis son icône, elle s’affiche alors sans aucune barre.
 
 L’application demande à la tablette de garder l’écran allumé, si le navigateur le permet. Pensez tout de même à brancher la tablette pendant le live.
 
@@ -32,13 +34,15 @@ L’application demande à la tablette de garder l’écran allumé, si le navig
 - **Jeu des Portes** : la version simple, sans connexion TikTok.
 - **Jeu des Portes · TikTok** : le chat participe et les gagnants s’affichent.
 - **Messages défilants** : active ou coupe le bandeau de messages.
-- **Réglages** : connexion TikTok, son, plein écran.
+- **Écran de veille** : seulement les messages, en très grand, sur fond sombre, sans rien d’autre. À laisser pendant le live entre deux jeux. Touchez l’écran pour revenir.
+- En haut à droite : **⛶** plein écran et **⚙** réglages.
 
-Le bouton **◐**, en bas à droite, masque le menu : il ne reste que le titre, le jardin et les messages qui défilent. C’est l’écran d’attente, à laisser pendant le live entre deux jeux. Touchez l’écran pour faire revenir le menu.
+### La page Réglages
+Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙) : connexion TikTok, modification des messages, son, aide au plein écran et simulation. Ces réglages restent enregistrés sur l’appareil utilisé.
 
 ### Le jeu
 - Touchez **Lancer le dé**, ou directement le dé.
-- Le bouton **☰**, en haut à gauche, ouvre le menu du jeu : retour à l’accueil, messages défilants, son, nouvelle partie, connexion TikTok et plein écran.
+- Le bouton **☰**, en haut à gauche, ouvre le menu du jeu : retour à l’accueil, messages défilants, son, nouvelle partie, écran de veille, plein écran et réglages.
 - Sur ordinateur, la barre **Espace** fait la même chose que le grand bouton doré.
 
 Le tirage est vraiment aléatoire : il utilise le générateur cryptographique du navigateur, et chaque face a exactement une chance sur 12.
@@ -47,7 +51,11 @@ Le tirage est vraiment aléatoire : il utilise le générateur cryptographique d
 
 ## Modifier les messages défilants
 
-Les messages sont dans le fichier **`messages.json`**, à la racine du dépôt. Vous seul pouvez le modifier, puisque vous seul avez accès au dépôt : les spectateurs voient les messages mais ne peuvent pas les changer.
+Deux possibilités :
+
+**1. Depuis les réglages (le plus simple)** : ⚙ → **Messages défilants**, un message par ligne, réglez la vitesse, vérifiez l’aperçu puis **Enregistrer les messages**. Ils s’affichent aussitôt, mais seulement sur cet appareil. **Revenir aux messages du fichier** rétablit ceux de GitHub.
+
+**2. Depuis GitHub (pour tous les appareils)** : les messages par défaut sont dans le fichier **`messages.json`**, à la racine du dépôt. Vous seul pouvez le modifier, puisque vous seul avez accès au dépôt : les spectateurs voient les messages mais ne peuvent pas les changer.
 
 1. Sur GitHub, ouvrez le dépôt **portes**, puis cliquez sur **`messages.json`**.
 2. Cliquez sur le crayon ✏️ (**Edit this file**).
@@ -88,9 +96,9 @@ TikTok ne propose pas d’accès officiel au chat des lives. L’application pas
 2. Dans votre tableau de bord, créez une **clé API** et copiez-la. Vérifiez sur leur site les limites et le prix de la formule choisie.
 
 ### La saisir dans l’application
-1. Accueil → **Réglages**. Le bouton ⚙ du menu du jeu mène au même endroit.
+1. Accueil → **⚙ Réglages** (ou ☰ → Réglages dans le jeu).
 2. Renseignez votre **@pseudo TikTok** et collez la **clé API**.
-3. Touchez **Enregistrer et se connecter**.
+3. Touchez **Enregistrer**, puis **Tester la connexion** si vous êtes en live.
 
 Le pseudo et la clé restent uniquement dans le navigateur de la tablette ; ils ne sont jamais envoyés sur GitHub. Si vous changez d’appareil, il faudra les saisir à nouveau.
 
@@ -113,7 +121,7 @@ L’indicateur en haut à droite du jeu montre l’état de la connexion : vert 
 - Vos propres messages sont ignorés : vous pouvez écrire « tapez un chiffre entre 1 et 12 » sans être éliminé.
 
 ### Répéter sans être en live
-**Réglages → Simuler des participants** : de faux spectateurs remplissent les portes, et certains changent d’avis et sont éliminés. C’est l’idéal pour s’entraîner ou vérifier l’affichage avant le live.
+**⚙ Réglages → Lancer une simulation** : de faux spectateurs remplissent les portes, et certains changent d’avis et sont éliminés. C’est l’idéal pour s’entraîner ou vérifier l’affichage avant le live.
 
 ---
 
@@ -136,12 +144,15 @@ Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez l
 
 ```
 index.html            la page unique
-messages.json         les messages défilants (à modifier sur GitHub)
+admin.html            la page des réglages
+messages.json         les messages défilants par défaut (modifiables sur GitHub)
 manifest.webmanifest  installation sur la tablette
 sw.js                 fonctionnement hors ligne
 css/                  styles (base, scène, portes, interface)
 js/
   main.js             enchaînement des écrans et du jeu
+  admin.js            page des réglages
+  messages.js         lecture des messages (réglages ou messages.json)
   config.js           titres, noms des fichiers de sons, réglages
   doors-data.js       les 12 portes : forme, couleurs, fleurs
   doors-art.js        dessin des portes en SVG

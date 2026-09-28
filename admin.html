@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Réglages · Les Portes du Destin</title>
+  <meta name="theme-color" content="#120a1e">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+  <header class="admin-head">
+    <a class="btn" href="index.html">← Retour au jeu</a>
+    <h1>Réglages</h1>
+  </header>
+
+  <main class="admin-main">
+    <p class="admin-note">Tout ce qui est réglé ici reste enregistré <strong>sur cet appareil uniquement</strong> (tablette ou ordinateur). Rien n’est envoyé sur GitHub.</p>
+
+    <!-- Connexion TikTok -->
+    <section class="card" id="tiktok">
+      <h2>Connexion TikTok LIVE</h2>
+      <p class="hint">Le chat est lu grâce à <strong>Euler Stream</strong>. Ne montrez jamais cette page pendant le live : la clé est un mot de passe.</p>
+      <form id="tiktok-form" autocomplete="off">
+        <label class="field">
+          <span>Votre pseudo TikTok</span>
+          <input id="tt-user" type="text" placeholder="@votre_pseudo" autocapitalize="off" autocorrect="off" spellcheck="false">
+        </label>
+        <label class="field">
+          <span>Clé API Euler Stream</span>
+          <span class="field-row">
+            <input id="tt-key" type="password" placeholder="Collez votre clé ici" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <button class="icon-btn small" id="tt-key-show" type="button" aria-label="Afficher la clé">👁</button>
+          </span>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+          <button class="btn" id="tt-test" type="button">Tester la connexion</button>
+          <button class="btn btn-ghost" id="tt-forget" type="button">Oublier la clé</button>
+        </div>
+        <p class="form-status" id="tt-status" role="status"></p>
+      </form>
+    </section>
+
+    <!-- Messages défilants -->
+    <section class="card" id="messages">
+      <h2>Messages défilants</h2>
+      <p class="hint">Un message par ligne. Les emojis sont les bienvenus ✨🔮🌙</p>
+      <textarea id="msg-text" rows="8" spellcheck="true" placeholder="Bienvenue dans mon live ✨"></textarea>
+      <label class="field">
+        <span>Vitesse de défilement : <output id="msg-speed-out">80</output></span>
+        <input id="msg-speed" type="range" min="40" max="180" step="5" value="80">
+      </label>
+      <div class="preview-label">Aperçu</div>
+      <div class="ticker admin-preview" id="preview">
+        <div class="ticker-track" id="preview-track"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="msg-save" type="button">Enregistrer les messages</button>
+        <button class="btn btn-ghost" id="msg-reset" type="button">Revenir aux messages du fichier</button>
+      </div>
+      <p class="form-status" id="msg-status" role="status"></p>
+    </section>
+
+    <!-- Affichage et son -->
+    <section class="card">
+      <h2>Affichage et son</h2>
+      <div class="settings-toggles">
+        <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
+          <span><strong>Bandeau des messages</strong><small class="state"></small></span><span class="switch" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-menu btn-toggle" data-toggle="sound" type="button" aria-pressed="true">
+          <span><strong>Son</strong><small class="state"></small></span><span class="switch" aria-hidden="true"></span>
+        </button>
+      </div>
+      <h3>Plein écran sur iPad</h3>
+      <ol class="steps">
+        <li>Dans Safari, touchez <strong>Partager</strong> (carré avec une flèche ↑).</li>
+        <li>Choisissez <strong>Sur l’écran d’accueil</strong>, puis <strong>Ajouter</strong>.</li>
+        <li>Ouvrez <strong>Portes</strong> depuis sa nouvelle icône : l’appli s’affiche sans aucune barre.</li>
+      </ol>
+      <p class="hint">Sur Android (Chrome) : menu ⋮ → <strong>Ajouter à l’écran d’accueil</strong>.</p>
+    </section>
+
+    <!-- Répétition -->
+    <section class="card">
+      <h2>Répéter sans être en live</h2>
+      <p class="hint">De faux spectateurs remplissent les portes, certains changent d’avis et sont éliminés.</p>
+      <a class="btn" href="index.html?simulation">Lancer une simulation</a>
+    </section>
+  </main>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
