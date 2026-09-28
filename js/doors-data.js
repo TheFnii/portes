@@ -31,8 +31,12 @@ export const DOORS = [
     shape: 'round', frame: 'stone', panel: 'planks', leaves: 1, medal: 'gold',
     color: '#7b4a24', dark: '#4a2a12', light: '#a06a3a', trim: '#2b2622', enamel: '#3a2412',
     stone: ['#a39883', '#756b5b'],
-    garland: { kinds: [{ sym: 'sunflower', colors: ['#f5b81c'] }], leaves: ['#3f6a26', '#557f2d', '#2f5220'], density: 0.9 },
-    base: { sym: 'sunflower', colors: ['#f5b81c'], count: 4 },
+    garland: {
+      style: 'vine', from: 0.04, to: 0.62, stem: '#3d5f24',
+      kinds: [{ sym: 'sunflower', colors: ['#f5b81c'] }], leaves: ['#3f6a26', '#557f2d', '#2f5220'],
+      clusters: [{ t: 0.1, size: 26 }, { t: 0.42, size: 30 }, { t: 0.62, size: 20 }],
+    },
+    base: { sym: 'sunflower', colors: ['#f5b81c'], count: 2 },
   },
   {
     n: 4,
@@ -68,8 +72,12 @@ export const DOORS = [
     n: 8,
     shape: 'round', frame: 'celestial', panel: 'stars', leaves: 1, medal: 'gold',
     color: '#452671', dark: '#220f3f', light: '#6a44a0', trim: '#e9d08a', enamel: '#2a1450',
-    garland: { kinds: [{ sym: 'rose', colors: ['#c9b3f0', '#a98ae0'] }], leaves: ['#3b5f35', '#4d7440'], density: 0.45, wisteria: ['#b49ae8', '#9a7ddc', '#cbb8f4'] },
-    base: { sym: 'lavender', colors: ['#9b7fd8', '#b59bea'], count: 6 },
+    garland: {
+      style: 'vine', from: 0.22, to: 0.78, stem: '#3b5a33',
+      kinds: [{ sym: 'rose', colors: ['#cbb6f2', '#b39be6'] }], leaves: ['#3b5f35', '#4d7440'],
+      hang: { count: 7, from: 0.24, to: 0.76, colors: ['#b49ae8', '#9a7ddc', '#cbb8f4'] },
+    },
+    base: { sym: 'lavender', colors: ['#9b7fd8', '#b59bea'], count: 3 },
   },
   {
     n: 9,

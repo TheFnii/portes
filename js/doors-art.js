@@ -196,9 +196,73 @@ function pick(rnd, arr) {
   return arr[Math.floor(rnd() * arr.length) % arr.length];
 }
 
+// Guirlande composée : une tige régulière le long de l'arche, des feuilles alternées
+// et quelques bouquets placés précisément (au lieu de fleurs semées au hasard).
+function vine(d, rnd) {
+  const g = d.garland;
+  const pts = garlandPoints(d);
+  const L = pts.length - 1;
+  const at = (t) => pts[Math.max(0, Math.min(L, Math.round(t * L)))];
+  const from = g.from ?? 0;
+  const to = g.to ?? 1;
+  const leafColor = (i) => g.leaves[i % g.leaves.length];
+  let stem = '';
+  let leaves = '';
+  let front = '';
+
+  // Tige : légère ondulation autour du cadre
+  const seg = pts.slice(Math.round(from * L), Math.round(to * L) + 1).filter((_, i) => i % 3 === 0);
+  seg.forEach((p, i) => {
+    const o = 1.5 + Math.sin(i * 0.9) * 2.2;
+    stem += `${i ? 'L' : 'M'}${r2(p.x + p.nx * o)},${r2(p.y + p.ny * o)}`;
+  });
+  // Feuilles alternées, espacées régulièrement
+  seg.forEach((p, i) => {
+    if (i % 2) return;
+    const side = (i / 2) % 2 ? 1 : -1;
+    const tang = Math.atan2(p.nx, -p.ny) * 180 / Math.PI;
+    const o = 1.5 + Math.sin(i * 0.9) * 2.2 + side * 3.2;
+    leaves += use('leaf', p.x + p.nx * o, p.y + p.ny * o, 8 + (i % 3), leafColor(i), tang + side * 55);
+  });
+
+  // Bouquets : une grande fleur, deux plus petites, des feuilles derrière
+  (g.clusters || []).forEach((c, ci) => {
+    const p = at(c.t);
+    const tx = -p.ny;
+    const ty = p.nx;
+    const size = c.size || 14;
+    const kind = g.kinds[0];
+    const ang = Math.atan2(p.ny, p.nx) * 180 / Math.PI;
+    [-50, 0, 50].forEach((da, k) => {
+      leaves += use('leaf', p.x + p.nx * 5, p.y + p.ny * 5, size * 0.95, leafColor(ci + k), ang + da);
+    });
+    [-1, 1].forEach((s, k) => {
+      const q = { x: p.x + tx * s * size * 0.62 + p.nx * 1.5, y: p.y + ty * s * size * 0.62 + p.ny * 1.5 };
+      front += use(kind.sym, q.x, q.y, size * 0.62, kind.colors[(ci + k + 1) % kind.colors.length], rnd() * 360);
+    });
+    front += use(kind.sym, p.x + p.nx * 2, p.y + p.ny * 2, size, kind.colors[ci % kind.colors.length], rnd() * 360);
+  });
+
+  // Grappes suspendues (glycine), symétriques, plus longues vers les côtés
+  if (g.hang) {
+    const { count, colors, from: hf, to: ht } = g.hang;
+    for (let i = 0; i < count; i++) {
+      const u = count === 1 ? 0.5 : i / (count - 1);
+      const p = at(hf + (ht - hf) * u);
+      const len = 26 + Math.abs(u - 0.5) * 2 * 16;
+      front += use('leaf', p.x - 4, p.y, 10, leafColor(i), 160);
+      front += use('leaf', p.x + 4, p.y, 10, leafColor(i + 1), 20);
+      front += `<use href="#fl-wisteria" x="${r2(p.x - len * 0.25)}" y="${r2(p.y + 1)}" width="${r2(len * 0.5)}" height="${r2(len)}" color="${colors[i % colors.length]}"/>`;
+    }
+  }
+
+  return `<path d="${stem}" fill="none" stroke="${g.stem || '#3a5a26'}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>${leaves}${front}`;
+}
+
 function garland(d, rnd) {
   const g = d.garland;
   if (!g) return '';
+  if (g.style === 'vine') return vine(d, rnd);
   const pts = garlandPoints(d);
   let back = '';
   let front = '';
