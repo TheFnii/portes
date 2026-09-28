@@ -249,11 +249,11 @@ function showResult(n) {
   const d = doors.data(n);
   let html = `<p class="result-kicker">Le dé a parlé</p><div class="result-number">${n}</div>`;
   if (state.mode === 'simple') {
-    html += `<p class="result-title">Le chiffre ${n} a été choisi</p><p class="result-name">${esc(d.name)}</p>`;
+    html += `<p class="result-title">Le chiffre ${n} a été choisi</p>`;
     $('btn-again').textContent = 'Relancer le dé';
   } else {
     const winners = round.winners(n);
-    html += `<p class="result-title">La porte ${n} s’ouvre</p><p class="result-name">${esc(d.name)}</p>`;
+    html += `<p class="result-title">La porte ${n} s’ouvre</p>`;
     if (winners.length) {
       html += `<p class="result-text">${winners.length === 1 ? 'Une personne avait choisi cette porte :' : `${winners.length} personnes avaient choisi cette porte :`}</p><ul class="winners">`;
       winners.forEach((w, i) => {
@@ -353,7 +353,7 @@ function onChat(msg) {
   if (state.mode !== 'live' || state.phase !== 'collecting') return;
   const r = round.handle(msg);
   if (r.type === 'join') {
-    doors.setCounts(round.counts(), r.player.choice);
+    doors.setCounts(round.counts());
     sound.join();
   } else if (r.type === 'out') {
     doors.setCounts(round.counts());

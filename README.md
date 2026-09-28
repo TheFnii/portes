@@ -101,7 +101,7 @@ L’indicateur en haut à droite du jeu montre l’état de la connexion : vert 
 ### Déroulement d’une partie
 1. **Lancer le jeu** : les participations s’ouvrent.
 2. Les spectateurs écrivent un chiffre de 1 à 12 dans le chat, seul (« 7 ») ou dans une phrase (« je prends la 7 ✨ »). Les chiffres en emoji comme 7️⃣ ou 🔟 comptent aussi.
-3. Chaque porte affiche en direct le nombre de personnes qui l’ont choisie. Le panneau **Participants** montre les derniers inscrits.
+3. Devant chaque porte, un petit personnage apparaît pour chaque personne qui l’a choisie (au-delà de 12, un « +N » s’affiche). Le panneau **Participants** montre les derniers inscrits.
 4. **Lancer le dé** ferme les participations et lance le dé.
 5. La porte s’ouvre et affiche la liste des gagnants, avec leur photo de profil quand TikTok la fournit.
 6. **Nouvelle partie** efface les participants et rouvre aussitôt les participations.
@@ -159,7 +159,7 @@ sounds/               sons personnalisés (facultatif)
 tests/                tests des règles du jeu
 ```
 
-Pour changer l’apparence d’une porte (couleur, fleurs, forme de l’arche), modifiez sa fiche dans `js/doors-data.js`. Les options possibles sont listées en haut du fichier.
+Pour changer l’apparence d’une porte (couleur, fleurs, forme de l’arche, médaillon), modifiez sa fiche dans `js/doors-data.js`. Les options possibles sont listées en haut du fichier.
 
 ### Tests
 Les règles du jeu sont couvertes par des tests automatiques (Node.js 20 ou plus) :

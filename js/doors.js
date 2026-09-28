@@ -6,6 +6,9 @@ import { doorSlots, buildPlaza } from './scene.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const MAX_FIGURES = 12;
+const PERSON = '<svg viewBox="0 0 12 18" aria-hidden="true"><circle cx="6" cy="3.6" r="3.2"/><path d="M0.6,18 C0.6,10 11.4,10 11.4,18Z"/></svg>';
+
 export class DoorStage {
   constructor({ doorsEl, plaza, focusEl, focusDoorEl }) {
     this.focusEl = focusEl;
@@ -21,6 +24,15 @@ export class DoorStage {
       el.style.setProperty('--i', i);
       el.style.zIndex = Math.round(s.y);
       doorsEl.appendChild(el);
+      // Les personnages sont sur un calque au-dessus des portes, pour ne jamais être cachés.
+      const crowd = document.createElement('div');
+      crowd.className = 'door-crowd';
+      crowd.hidden = true;
+      crowd.style.left = `${s.x}px`;
+      crowd.style.top = `${s.y}px`;
+      crowd.style.setProperty('--s', s.scale.toFixed(3));
+      doorsEl.appendChild(crowd);
+      el.crowd = crowd;
       return el;
     });
   }
@@ -33,17 +45,36 @@ export class DoorStage {
     return DOORS[n - 1];
   }
 
-  setCounts(counts, bumped = 0) {
+  // Un petit personnage par participant, devant la porte choisie.
+  setCounts(counts) {
     this.els.forEach((el, i) => {
-      const badge = el.querySelector('.door-badge');
+      const { crowd } = el;
       const c = counts ? counts[i + 1] : 0;
-      badge.hidden = !counts;
-      badge.textContent = c;
-      badge.classList.toggle('empty', !c);
-      if (bumped === i + 1) {
-        badge.classList.remove('bump');
-        void badge.offsetWidth;
-        badge.classList.add('bump');
+      crowd.hidden = !counts;
+      if (!counts) {
+        crowd.textContent = '';
+        return;
+      }
+      const shown = Math.min(c, MAX_FIGURES);
+      const figs = crowd.querySelectorAll('.person');
+      for (let k = figs.length; k < shown; k++) {
+        const p = document.createElement('span');
+        p.className = 'person';
+        p.style.setProperty('--h', `${(k * 47) % 360}`);
+        p.innerHTML = PERSON;
+        crowd.insertBefore(p, crowd.querySelector('.more'));
+      }
+      for (let k = figs.length - 1; k >= shown; k--) figs[k].remove();
+      let more = crowd.querySelector('.more');
+      if (c > MAX_FIGURES) {
+        if (!more) {
+          more = document.createElement('span');
+          more.className = 'more';
+          crowd.appendChild(more);
+        }
+        more.textContent = `+${c - MAX_FIGURES}`;
+      } else if (more) {
+        more.remove();
       }
     });
   }
