@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Les Portes du Destin</title>
+  <meta name="description" content="Le jeu des 12 portes, pour animer les lives de voyance.">
+  <meta name="theme-color" content="#07100b">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preload" href="fonts/cinzel-0.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/scene.css">
+  <link rel="stylesheet" href="css/doors.css">
+  <link rel="stylesheet" href="css/ui.css">
+</head>
+<body class="at-home">
+  <svg class="defs" aria-hidden="true" width="0" height="0"><defs id="flower-defs"></defs></svg>
+
+  <!-- Décor du jardin (plein écran) -->
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- Scène du jeu : 1500 × 1000 unités, mise à l'échelle de l'écran -->
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <svg class="plaza" id="plaza" viewBox="0 0 1500 1000"></svg>
+      <div class="doors" id="doors"></div>
+      <div class="stage-title" id="stage-title">
+        <h2 id="stage-heading">Choisissez un chiffre de 1 à 12</h2>
+        <div class="flourish" aria-hidden="true"></div>
+        <p id="stage-tagline">Si le dé ouvre votre porte, on répond à votre question</p>
+      </div>
+      <canvas class="dice-canvas" id="dice"></canvas>
+      <div class="dice-number" id="dice-number" aria-live="polite"></div>
+      <div class="stage-actions">
+        <button class="btn btn-primary btn-roll" id="btn-main" type="button">Lancer le dé</button>
+      </div>
+
+      <!-- Panneaux du mode TikTok -->
+      <section class="live-panel live-players" id="panel-players" hidden>
+        <h3>Participants <span class="count" id="players-count">0</span></h3>
+        <ul class="feed" id="players-feed"></ul>
+      </section>
+      <section class="live-panel live-out" id="panel-out" hidden>
+        <h3>Éliminés <span class="count" id="out-count">0</span></h3>
+        <ul class="feed out" id="out-list"></ul>
+      </section>
+    </div>
+  </div>
+
+  <!-- Porte agrandie + résultat -->
+  <div class="focus" id="focus" hidden>
+    <div class="focus-veil"></div>
+    <div class="focus-door" id="focus-door"></div>
+    <section class="result" id="result" hidden>
+      <div class="result-inner" id="result-inner"></div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-again" type="button">Nouvelle partie</button>
+        <button class="btn" id="btn-back" type="button">Retour aux portes</button>
+      </div>
+    </section>
+  </div>
+
+  <canvas class="fx" id="fx" aria-hidden="true"></canvas>
+
+  <!-- Accueil -->
+  <section class="home" id="home">
+    <div class="home-veil"></div>
+    <div class="home-content">
+      <p class="home-kicker">✦ Jeu de voyance ✦</p>
+      <h1 class="home-title">Les Portes<br><span>du Destin</span></h1>
+      <div class="flourish" aria-hidden="true"></div>
+      <nav class="home-menu" id="home-menu">
+        <button class="btn btn-menu" data-go="simple" type="button">
+          <span class="btn-icon" aria-hidden="true">🚪</span>
+          <span><strong>Jeu des Portes</strong><small>Le dé choisit une porte</small></span>
+        </button>
+        <button class="btn btn-menu" data-go="live" type="button">
+          <span class="btn-icon" aria-hidden="true">✨</span>
+          <span><strong>Jeu des Portes · TikTok</strong><small>Le chat participe, les gagnants s’affichent</small></span>
+        </button>
+        <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
+          <span class="btn-icon" aria-hidden="true">📜</span>
+          <span><strong>Messages défilants</strong><small class="state"></small></span>
+          <span class="switch" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-menu" data-open="settings" type="button">
+          <span class="btn-icon" aria-hidden="true">⚙</span>
+          <span><strong>Réglages</strong><small>Connexion TikTok, son, plein écran</small></span>
+        </button>
+      </nav>
+    </div>
+    <button class="icon-btn home-hide" id="btn-vitrine" type="button" title="Masquer le menu (écran d’attente)" aria-label="Masquer le menu">◐</button>
+    <p class="vitrine-hint">Touchez l’écran pour revenir au menu</p>
+  </section>
+
+  <!-- Menu du jeu -->
+  <button class="icon-btn game-menu-btn" id="btn-game-menu" type="button" aria-label="Menu du jeu" aria-expanded="false">☰</button>
+  <button class="live-status" id="live-status" type="button" hidden>
+    <span class="dot"></span><span class="label">Non connecté</span>
+  </button>
+  <aside class="drawer" id="drawer" hidden>
+    <h2>Menu du jeu</h2>
+    <button class="btn btn-menu" data-action="home" type="button">
+      <span class="btn-icon" aria-hidden="true">⌂</span><span><strong>Accueil</strong></span>
+    </button>
+    <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
+      <span class="btn-icon" aria-hidden="true">📜</span>
+      <span><strong>Messages défilants</strong><small class="state"></small></span>
+      <span class="switch" aria-hidden="true"></span>
+    </button>
+    <button class="btn btn-menu btn-toggle" data-toggle="sound" type="button" aria-pressed="true">
+      <span class="btn-icon" aria-hidden="true">♪</span>
+      <span><strong>Son</strong><small class="state"></small></span>
+      <span class="switch" aria-hidden="true"></span>
+    </button>
+    <button class="btn btn-menu live-only" data-action="reset" type="button">
+      <span class="btn-icon" aria-hidden="true">↺</span>
+      <span><strong>Nouvelle partie</strong><small>Efface les participants</small></span>
+    </button>
+    <button class="btn btn-menu live-only" data-open="settings" type="button">
+      <span class="btn-icon" aria-hidden="true">⚙</span>
+      <span><strong>Connexion TikTok</strong><small>Pseudo et clé API</small></span>
+    </button>
+    <button class="btn btn-menu fullscreen-only" data-action="fullscreen" type="button">
+      <span class="btn-icon" aria-hidden="true">⛶</span><span><strong>Plein écran</strong></span>
+    </button>
+  </aside>
+
+  <!-- Bandeau des messages défilants -->
+  <div class="ticker off" id="ticker">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+
+  <!-- Réglages -->
+  <div class="modal" id="settings" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <button class="icon-btn modal-close" data-close type="button" aria-label="Fermer">✕</button>
+      <h2 id="settings-title">Réglages</h2>
+
+      <h3>Connexion TikTok LIVE</h3>
+      <p class="hint">Via <strong>Euler Stream</strong>. Votre pseudo et votre clé restent uniquement sur cette tablette.</p>
+      <form id="tiktok-form" autocomplete="off">
+        <label class="field">
+          <span>Votre pseudo TikTok</span>
+          <input id="tt-user" type="text" inputmode="text" placeholder="@votre_pseudo" autocapitalize="off" spellcheck="false">
+        </label>
+        <label class="field">
+          <span>Clé API Euler Stream</span>
+          <span class="field-row">
+            <input id="tt-key" type="password" placeholder="Collez votre clé ici" autocapitalize="off" spellcheck="false">
+            <button class="icon-btn small" id="tt-key-show" type="button" aria-label="Afficher la clé">👁</button>
+          </span>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Enregistrer et se connecter</button>
+          <button class="btn" id="tt-disconnect" type="button">Déconnecter</button>
+          <button class="btn btn-ghost" id="tt-forget" type="button">Oublier la clé</button>
+        </div>
+        <p class="form-status" id="tt-status" role="status"></p>
+      </form>
+      <p class="hint small">Pas en live ? Répétez le jeu avec de faux spectateurs :</p>
+      <button class="btn" id="tt-simulate" type="button">Simuler des participants</button>
+
+      <h3>Affichage et son</h3>
+      <div class="settings-toggles">
+        <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
+          <span><strong>Messages défilants</strong><small class="state"></small></span><span class="switch" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-menu btn-toggle" data-toggle="sound" type="button" aria-pressed="true">
+          <span><strong>Son</strong><small class="state"></small></span><span class="switch" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-menu fullscreen-only" data-action="fullscreen" type="button">
+          <span><strong>Plein écran</strong><small>Masque les barres du navigateur</small></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <noscript>Cette application a besoin de JavaScript.</noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

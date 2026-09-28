@@ -1,0 +1,9 @@
+{
+  "name": "portes",
+  "private": true,
+  "type": "module",
+  "description": "Les Portes du Destin : jeu des 12 portes pour les lives TikTok de voyance.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

@@ -1,0 +1,64 @@
+:root {
+  --gold: #e8c77a;
+  --gold-light: #f6e3a8;
+  --gold-deep: #b38634;
+  --ink: #f3e9d2;
+  --night: #07100b;
+  --violet: #2a1446;
+  --glass: rgba(18, 10, 28, .72);
+  --radius: 18px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--night);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Ornement doré sous les titres */
+.flourish {
+  width: min(360px, 60%);
+  height: 18px;
+  margin: 6px auto;
+  background:
+    radial-gradient(circle at 50% 50%, var(--gold-light) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 42% 50%, var(--gold) 0 1.8px, transparent 2.3px),
+    radial-gradient(circle at 58% 50%, var(--gold) 0 1.8px, transparent 2.3px),
+    linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 38%, transparent 40%, transparent 60%, var(--gold) 62%, var(--gold) 80%, transparent) center / 100% 1.5px no-repeat;
+  opacity: .9;
+}

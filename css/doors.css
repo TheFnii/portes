@@ -1,0 +1,87 @@
+/* ---------- Portes ---------- */
+
+.door {
+  --w: 138px;
+  position: absolute;
+  width: var(--w);
+  aspect-ratio: 160 / 280;
+  transform: translate(-50%, -95.7%) scale(var(--s, 1));
+  transform-origin: 50% 95.7%;
+  pointer-events: none;
+}
+
+.door > svg,
+.door > div {
+  position: absolute;
+}
+
+.door-portal,
+.door-frame {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.door-leaf {
+  transform-origin: left center;
+  transition: transform 1.9s cubic-bezier(.35, .05, .15, 1), filter 1.9s ease;
+}
+.door-leaf.right { transform-origin: right center; }
+.door-leaf svg { display: block; width: 100%; height: 100%; }
+
+.door.open .door-leaf.left { transform: perspective(calc(var(--w) * 2.2)) rotateY(76deg); filter: brightness(.42); }
+.door.open .door-leaf.right { transform: perspective(calc(var(--w) * 2.2)) rotateY(-76deg); filter: brightness(.42); }
+.door.leaves-1.open .door-leaf.left { transform: perspective(calc(var(--w) * 2.6)) rotateY(78deg); }
+
+.door.open .portal-rays { animation: portal-spin 22s linear infinite; }
+.door.open .portal-stars circle { animation: twinkle 2.6s ease-in-out infinite; }
+
+@keyframes portal-spin { to { transform: rotate(360deg); } }
+@keyframes twinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
+/* Halo lumineux derrière la porte */
+.door-halo {
+  left: -30%;
+  right: -30%;
+  top: -12%;
+  bottom: -6%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 214, 130, .55), rgba(255, 170, 80, .18) 55%, transparent);
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+.door.chosen .door-halo { opacity: 1; animation: halo-pulse 1.4s ease-in-out infinite; }
+.door.open .door-halo { opacity: 1; animation: none; }
+
+@keyframes halo-pulse {
+  0%, 100% { transform: scale(.94); opacity: .65; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+.lantern-glow { animation: lantern 3.2s ease-in-out infinite; }
+@keyframes lantern {
+  0%, 100% { opacity: .8; }
+  45% { opacity: 1; }
+  60% { opacity: .65; }
+}
+
+/* Compteur de participants (mode TikTok) */
+.door-badge {
+  position: absolute;
+  left: 64%;
+  top: 3%;
+  min-width: 2.1em;
+  padding: .12em .45em;
+  border-radius: 999px;
+  background: linear-gradient(#3a1c52, #1c0c2c);
+  border: 1.5px solid var(--gold);
+  color: var(--gold-light);
+  font: 700 20px/1.2 'Cinzel', serif;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(0, 0, 0, .6), 0 0 10px rgba(255, 200, 110, .35);
+  transform: scale(1);
+  transition: transform .25s ease;
+}
+.door-badge.bump { animation: bump .45s ease; }
+@keyframes bump { 40% { transform: scale(1.35); } }
