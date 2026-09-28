@@ -69,19 +69,23 @@
 .door-crowd {
   position: absolute;
   z-index: 2000;
-  width: 170px;
-  transform: translate(-50%, 2px) scale(var(--s, 1));
-  transform-origin: 50% 0;
+  transform: translate(-50%, -50%) scale(var(--s, 1));
+  transform-origin: 50% 50%;
   pointer-events: none;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  transition: left .35s ease, top .35s ease;
+}
+.door-crowd .figs {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-end;
   gap: 2px 3px;
 }
 .person {
-  width: 22px;
-  height: 32px;
+  width: 19px;
+  height: 27px;
+  flex: none;
   animation: person-in .5s cubic-bezier(.2, 1.6, .4, 1) both;
 }
 .person svg {
@@ -92,6 +96,20 @@
   stroke: rgba(40, 20, 0, .85);
   stroke-width: 1.2px;
   paint-order: stroke;
+}
+.crowd-tag {
+  flex: none;
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #2a1646;
+  border: 1.5px solid var(--gold);
+  color: var(--gold-light);
+  font: 700 15px/1 'Cinzel', serif;
 }
 .door-crowd .more {
   align-self: center;
