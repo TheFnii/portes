@@ -41,6 +41,8 @@ export class Round {
     this.open = false;
     this.players = new Map(); // clé → { name, handle, avatar, choice, at }
     this.out = new Map(); // clé → { name, handle, avatar, choices }
+    this.opened = []; // portes déjà ouvertes pendant la session
+    this.won = new Map(); // gagnants cumulés de la session : clé → joueur
   }
 
   setHost(handle) {
@@ -105,6 +107,25 @@ export class Round {
   }
 
   winners(n) {
-    return [...this.players.values()].filter((p) => p.choice === n);
+    return [...this.players.entries()].filter(([, p]) => p.choice === n).map(([key, p]) => ({ ...p, key }));
+  }
+
+  // Portes que le dé peut encore ouvrir pendant cette session.
+  closedDoors() {
+    const doors = [];
+    for (let n = MIN; n <= MAX; n++) if (!this.opened.includes(n)) doors.push(n);
+    return doors;
+  }
+
+  // Ouvre une porte : ses gagnants s'ajoutent aux gagnants cumulés de la session.
+  openDoor(n) {
+    if (!this.opened.includes(n)) this.opened.push(n);
+    const list = this.winners(n);
+    list.forEach((w) => { if (!this.won.has(w.key)) this.won.set(w.key, { ...w, door: n }); });
+    return list;
+  }
+
+  sessionWinners() {
+    return [...this.won.values()];
   }
 }

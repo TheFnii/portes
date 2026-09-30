@@ -1,6 +1,6 @@
 // Service worker : l'application reste utilisable même si le réseau flanche pendant le live.
 // Réseau d'abord (les mises à jour, dont messages.json, arrivent tout de suite), cache en secours.
-const CACHE = 'portes-v5';
+const CACHE = 'portes-v6';
 const SHELL = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const SHELL = [
   'css/doors.css',
   'css/ui.css',
   'css/admin.css',
+  'css/dash.css',
   'fonts/fonts.css',
   'fonts/cinzel-0.woff2',
   'fonts/cinzel-decorative-1.woff2',
@@ -20,6 +21,12 @@ const SHELL = [
   'js/main.js',
   'js/admin.js',
   'js/messages.js',
+  'js/shell.js',
+  'js/dashboard.js',
+  'js/queue.js',
+  'js/gifts.js',
+  'js/features.js',
+  'js/radio.js',
   'js/config.js',
   'js/prefs.js',
   'js/random.js',

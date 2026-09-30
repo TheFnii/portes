@@ -1,5 +1,7 @@
+// Tableau de bord du live + Jeu des Portes.
+
 import { APP_SUBTITLE, APP_TAGLINE, STORAGE } from './config.js';
-import { load, loadFlag, saveFlag } from './prefs.js';
+import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { randomInt } from './random.js';
 import { flowerDefs } from './doors-art.js';
 import { buildBackdrop, LAYOUT } from './scene.js';
@@ -10,15 +12,19 @@ import { Sound } from './sound.js';
 import { Ticker } from './ticker.js';
 import { Round } from './game.js';
 import { TikTokLive } from './tiktok.js';
+import { LiveQueue, Likes } from './queue.js';
+import { roleOf, GiftCounter } from './gifts.js';
+import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
+import { Dashboard } from './dashboard.js';
+import { Radio } from './radio.js';
+import { toast, notice, closeNotice, enterFullscreen, toggleFullscreen, keepAwake, esc } from './shell.js';
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const body = document.body;
 
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-// ---------- Construction de la scène ----------
+// ---------- Construction ----------
 
 $('flower-defs').innerHTML = flowerDefs();
 buildBackdrop($('backdrop'));
@@ -31,6 +37,20 @@ const sound = new Sound();
 const ticker = new Ticker($('ticker'), $('ticker-track'));
 const round = new Round();
 const live = new TikTokLive();
+const radio = new Radio($('radio'));
+
+// Données du live, gardées sur l'appareil (un rechargement de page ne perd rien).
+const queue = new LiveQueue(readJSON(STORAGE.queue, null));
+const likes = new Likes(readJSON(STORAGE.likes, null));
+let pinned = readJSON(STORAGE.pinned, null);
+let features = loadFeatures();
+let giftConfig = loadGiftConfig();
+const giftCounter = new GiftCounter();
+
+const dash = new Dashboard({
+  onRemove: (id) => { queue.remove(id); changed(); },
+  onRemoveDonut: (id) => { queue.removeDonut(id); changed(); },
+});
 
 const diceHit = document.createElement('button');
 diceHit.className = 'dice-hit';
@@ -38,14 +58,42 @@ diceHit.type = 'button';
 diceHit.setAttribute('aria-label', 'Lancer le dé');
 stage.appendChild(diceHit);
 
-const state = { screen: 'home', mode: 'simple', phase: 'idle', result: 0, scale: 1 };
+// screen : 'dash' (tableau de bord) | 'game'
+// phase du jeu : 'start' | 'countdown' | 'collecting' | 'rolling' | 'result' | 'between'
+const state = { screen: 'dash', mode: 'live', phase: 'start', scale: 1 };
 let simulating = false;
+
+// ---------- Sauvegarde ----------
+
+let saveTimer;
+function persist() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    save(STORAGE.queue, JSON.stringify(queue));
+    save(STORAGE.likes, JSON.stringify(likes));
+    save(STORAGE.pinned, pinned ? JSON.stringify(pinned) : null);
+  }, 400);
+}
+
+let dashDirty = false;
+function changed() {
+  persist();
+  if (dashDirty) return;
+  dashDirty = true;
+  requestAnimationFrame(() => {
+    dashDirty = false;
+    dash.renderQueue(queue);
+    dash.renderDonuts(queue);
+    dash.renderLikes(likes);
+  });
+}
 
 // ---------- Mise à l'échelle ----------
 
 function fit() {
-  const tickerTop = ticker.enabled && ticker.messages.length && state.screen === 'game';
-  const top = tickerTop ? 58 : 0;
+  const tickerOn = ticker.enabled && ticker.messages.length > 0;
+  body.classList.toggle('ticker-on', tickerOn);
+  const top = tickerOn && state.screen === 'game' ? 58 : 0;
   const s = Math.min(window.innerWidth / LAYOUT.W, (window.innerHeight - top) / LAYOUT.H);
   state.scale = s;
   stage.style.setProperty('--scale', s.toFixed(4));
@@ -60,149 +108,272 @@ function stageToScreen(x, y) {
   return { x: r.left + (x / LAYOUT.W) * r.width, y: r.top + (y / LAYOUT.H) * r.height };
 }
 
-// ---------- Déblocage audio + écran allumé ----------
-
-let wakeLock = null;
-async function keepAwake() {
-  try {
-    if ('wakeLock' in navigator && !wakeLock && !document.hidden) {
-      wakeLock = await navigator.wakeLock.request('screen');
-      wakeLock.addEventListener('release', () => { wakeLock = null; });
-    }
-  } catch (e) { /* refusé : pas grave */ }
-}
 function unlock() {
   sound.unlock();
   keepAwake();
 }
 document.addEventListener('pointerdown', unlock, { capture: true });
-document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
 
-// ---------- Messages temporaires ----------
+// ---------- Modules activables ----------
 
-let toastTimer;
-function toast(msg, ms = 3200) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+function applyFeatures() {
+  $$('[data-feature]').forEach((el) => el.classList.toggle('feature-off', !features[el.dataset.feature]));
+  const side = [features.donuts, features.likes].filter(Boolean).length;
+  document.querySelector('.dash-mid').classList.toggle('no-side', side === 0);
+  document.querySelector('.dash-side').classList.toggle('single', side === 1);
+  if (!features.radio) radio.pause();
 }
 
-// ---------- Écrans ----------
+// ---------- Tableau de bord ----------
 
-async function goHome() {
-  closeDrawer();
+$('btn-next').addEventListener('click', () => {
+  const done = queue.next();
+  if (!done) return;
+  sound.tink();
+  changed();
+  const r = $('queue-current').getBoundingClientRect();
+  if (queue.current) fx.burst(r.left + 60, r.top + r.height / 2, { count: 18, speed: 150, life: 1, stars: 0.3, size: 0.8 });
+});
+$('btn-undo').addEventListener('click', () => {
+  if (queue.undo()) changed();
+});
+$('btn-open-game').addEventListener('click', openGame);
+
+// ---------- Événements du live ----------
+
+function onGift(g) {
+  const n = giftCounter.count({ ...g, userKey: g.user.key });
+  if (n <= 0) return;
+  logGift(g, n);
+  const role = roleOf(g, giftConfig);
+  if (!role) return;
+  queue.addGift(role, { ...g.user, giftImage: g.giftImage }, n);
+  if (role === 'cat' || role === 'galaxy') sound.diceResult();
+  else sound.join();
+  changed();
+}
+
+let likesDirty = false;
+function onLike({ user, likeCount, totalLikeCount }) {
+  likes.add(user, likeCount, totalLikeCount);
+  persist();
+  if (likesDirty) return;
+  likesDirty = true;
+  setTimeout(() => { likesDirty = false; dash.renderLikes(likes); }, 500);
+}
+
+function onPin(p) {
+  if (p.pinned) {
+    pinned = { text: p.text, name: p.user ? p.user.name : '', pinId: p.pinId };
+    dash.flashPinned();
+    sound.tink();
+  } else if (!p.pinId || !pinned || !pinned.pinId || pinned.pinId === p.pinId) {
+    pinned = null;
+  }
+  dash.renderPinned(pinned);
+  persist();
+}
+
+live.addEventListener('chat', (e) => onChat(e.detail));
+live.addEventListener('gift', (e) => onGift(e.detail));
+live.addEventListener('like', (e) => onLike(e.detail));
+live.addEventListener('pin', (e) => onPin(e.detail));
+
+function renderStatus() {
+  const pill = $('live-status');
+  const st = simulating ? 'waiting' : live.state;
+  pill.dataset.state = st;
+  pill.querySelector('.label').textContent = simulating
+    ? 'Simulation'
+    : st === 'live' ? `En direct · @${live.handle}` : (live.state === 'off' && !hasCreds() ? 'TikTok non configuré' : live.message || 'Non connecté');
+}
+live.addEventListener('status', (e) => {
+  const { state: st, message } = e.detail;
+  renderStatus();
+  if (st === 'error') toast(message, 5000);
+});
+$('live-status').addEventListener('click', () => { location.href = 'admin.html#tiktok'; });
+
+function hasCreds() {
+  return Boolean(load(STORAGE.tiktokUser) && load(STORAGE.tiktokKey));
+}
+
+function ensureLive() {
+  if (!hasCreds()) return;
+  if (['live', 'connecting', 'waiting'].includes(live.state)) return;
+  live.connect(load(STORAGE.tiktokUser), load(STORAGE.tiktokKey));
+}
+
+// ---------- Jeu des Portes : session ----------
+
+function openGame() {
+  if (state.screen === 'game') return;
+  state.screen = 'game';
+  state.phase = 'start';
+  round.reset();
+  queue.startGame();
+  changed();
+  body.classList.remove('at-home');
+  $('game-start').hidden = false;
+  dice.setActive(true);
+  fx.setAmbient(18);
+  radio.duck(true);
+  markOpened();
+  renderFeeds();
+  updateUI();
+  fit();
+}
+
+async function startSession(mode, { force = false } = {}) {
+  if (mode === 'live' && !force && !hasCreds()) {
+    needCreds();
+    return;
+  }
+  $('game-start').hidden = true;
+  state.mode = mode;
+  body.classList.toggle('mode-live', mode === 'live');
+  if (mode === 'live' && !force) ensureLive();
+  state.phase = 'countdown';
+  updateUI();
+  await countdown();
+  if (state.screen !== 'game') return;
+  if (mode === 'live') {
+    round.setHost(load(STORAGE.tiktokUser));
+    round.start();
+    state.phase = 'collecting';
+    toast('Les participations sont ouvertes !');
+  } else {
+    round.start();
+    round.close();
+    state.phase = 'between';
+  }
+  renderFeeds();
+  updateUI();
+}
+
+async function countdown() {
+  const box = $('countdown');
+  const num = $('countdown-num');
+  box.hidden = false;
+  for (const step of ['3', '2', '1', 'Le jeu commence !']) {
+    if (state.screen !== 'game') break;
+    num.textContent = step;
+    num.className = `tick${step.length > 1 ? ' go' : ''}`;
+    void num.offsetWidth;
+    if (step.length > 1) {
+      sound.gameStart();
+      const c = stageToScreen(750, 480);
+      fx.burst(c.x, c.y, { count: 80, speed: 320, life: 2, stars: 0.4 });
+    } else {
+      sound.diceResult();
+    }
+    await wait(step.length > 1 ? 1300 : 950);
+  }
+  box.hidden = true;
+}
+
+async function closeGame() {
+  if (state.screen !== 'game') return;
   rollId++;
+  $('drawer').hidden = true;
+  $('game-start').hidden = true;
+  $('countdown').hidden = true;
   $('result').hidden = true;
   $('dice-number').classList.remove('show');
   doors.highlight(0);
   if (doors.focused) await doors.close();
-  if (state.mode === 'live') round.close();
-  state.screen = 'home';
-  state.phase = 'idle';
+  const winners = state.mode === 'live' ? round.sessionWinners() : [];
+  const added = queue.closeGame(winners);
+  round.reset();
+  markOpened();
+  state.screen = 'dash';
+  state.phase = 'start';
   body.classList.add('at-home');
   body.classList.remove('mode-live', 'rolling');
   dice.setActive(false);
-  fx.setAmbient(26);
+  fx.setAmbient(22);
+  radio.duck(false);
+  updateUI();
+  changed();
   fit();
+  if (added.length) toast(`${added.length} gagnant${added.length > 1 ? 's' : ''} ajouté${added.length > 1 ? 's' : ''} à la liste.`, 4000);
 }
 
-function goGame(mode) {
-  state.mode = mode;
-  state.screen = 'game';
-  state.phase = 'idle';
-  round.reset();
-  body.classList.remove('at-home');
-  body.classList.toggle('mode-live', mode === 'live');
-  dice.setActive(true);
-  fx.setAmbient(18);
-  renderFeeds();
-  updateUI();
-  fit();
-  if (mode === 'live') {
-    if (hasCreds()) ensureLive();
-    else {
-      setTimeout(() => {
-        if (!simulating && state.mode === 'live' && state.screen === 'game' && state.phase === 'idle') needCreds();
-      }, 700);
-    }
-  }
+// Les portes déjà ouvertes pendant la session sont estompées.
+function markOpened() {
+  doors.els.forEach((el, i) => el.classList.toggle('opened', round.opened.includes(i + 1)));
 }
 
 function updateUI() {
+  const inGame = state.screen === 'game';
   const isLive = state.mode === 'live';
   const p = state.phase;
-  $('panel-players').hidden = !isLive;
-  $('panel-out').hidden = !isLive;
-  $('live-status').hidden = !isLive;
+  const collecting = p === 'collecting';
+  $('panel-players').hidden = !inGame || !isLive || p === 'start';
+  $('panel-out').hidden = !inGame || !isLive || p === 'start';
+  $('session-bar').hidden = !inGame || p === 'start' || p === 'countdown';
 
   let heading = APP_SUBTITLE;
   let tagline = APP_TAGLINE;
-  if (isLive) {
-    if (p === 'collecting') {
-      heading = 'Écrivez un chiffre de 1 à 12 dans le chat';
-      tagline = 'Une seule porte par personne : changer de chiffre élimine !';
-    } else {
-      tagline = 'Écrivez votre chiffre dans le chat dès l’ouverture du jeu';
-    }
+  if (isLive && collecting) {
+    heading = 'Écrivez un chiffre de 1 à 12 dans le chat';
+    tagline = 'Une seule porte par personne : changer de chiffre élimine !';
+  } else if (p === 'between') {
+    heading = round.opened.length ? 'Une autre porte ?' : APP_SUBTITLE;
   }
   $('stage-heading').textContent = heading;
   $('stage-tagline').textContent = tagline;
 
+  const left = round.closedDoors().length;
   const btn = $('btn-main');
-  btn.disabled = p === 'rolling' || p === 'result';
-  btn.textContent = isLive && p !== 'collecting' ? 'Lancer le jeu' : 'Lancer le dé';
-  diceHit.disabled = btn.disabled || (isLive && p !== 'collecting');
-  doors.setCounts(isLive && p !== 'idle' ? round.counts() : null);
+  btn.hidden = !inGame || p === 'start' || p === 'countdown';
+  btn.disabled = !(collecting || p === 'between') || !left;
+  btn.textContent = round.opened.length ? 'Relancer le dé' : 'Lancer le dé';
+  diceHit.disabled = btn.disabled || btn.hidden;
+  $('btn-again').disabled = !left;
+  doors.setCounts(inGame && isLive && p !== 'start' && p !== 'countdown' ? round.counts() : null);
   body.classList.toggle('rolling', p === 'rolling');
+
+  renderSessionInfo();
 }
 
-// ---------- Jeu ----------
+function renderSessionInfo() {
+  const won = round.sessionWinners().length;
+  const np = round.players.size;
+  const opened = round.opened.length ? `Portes ouvertes : ${round.opened.join(', ')}` : 'Aucune porte ouverte';
+  $('session-info').textContent = state.mode === 'live'
+    ? `${opened} · 🏆 ${won} gagnant${won > 1 ? 's' : ''} · ${np} participant${np > 1 ? 's' : ''}`
+    : opened;
+}
 
 function mainAction() {
   if (state.screen !== 'game') return;
-  if (state.mode === 'live' && state.phase === 'idle') startCollecting();
-  else if (state.phase === 'idle' || state.phase === 'collecting') roll();
+  if (state.phase === 'collecting' || state.phase === 'between') roll();
 }
 $('btn-main').addEventListener('click', mainAction);
-diceHit.addEventListener('click', () => {
-  if (state.mode === 'simple' || state.phase === 'collecting') roll();
-});
+diceHit.addEventListener('click', mainAction);
 
-function startCollecting({ force = false } = {}) {
-  if (!force && !hasCreds()) {
-    needCreds();
-    return;
-  }
-  if (!force) ensureLive();
-  round.setHost(load(STORAGE.tiktokUser));
-  round.start();
-  state.phase = 'collecting';
-  renderFeeds();
-  updateUI();
-  sound.gameStart();
-  const p = stageToScreen(750, 470);
-  fx.burst(p.x, p.y, { count: 60, speed: 240, life: 1.8, stars: 0.4 });
-  toast('Les participations sont ouvertes !');
-}
-
-// Chaque lancer a un numéro : revenir à l'accueil en plein lancer l'annule proprement.
+// Chaque lancer a un numéro : fermer le jeu en plein lancer l'annule proprement.
 let rollId = 0;
 
 async function roll() {
-  if (state.phase === 'rolling' || state.phase === 'result') return;
-  closeDrawer();
+  if (!['collecting', 'between'].includes(state.phase)) return;
+  const choices = round.closedDoors();
+  if (!choices.length) {
+    toast('Toutes les portes sont déjà ouvertes : fermez le jeu.');
+    return;
+  }
+  $('drawer').hidden = true;
   const id = ++rollId;
   const alive = () => id === rollId && state.screen === 'game';
-  if (state.mode === 'live') round.close();
+  round.close();
   state.phase = 'rolling';
   updateUI();
   const numEl = $('dice-number');
   numEl.classList.remove('show');
 
-  const n = randomInt(1, 12);
-  state.result = n;
+  // Tirage au hasard parmi les portes encore fermées.
+  const n = choices[randomInt(0, choices.length - 1)];
   sound.diceThrow();
   let frame = 0;
   await dice.roll(n, {
@@ -242,21 +413,19 @@ async function roll() {
   fx.portal(doors.openingRect());
   await wait(1500);
   if (!alive()) return;
+  const winners = round.openDoor(n);
   doors.split();
-  showResult(n);
+  showResult(n, winners);
   sound.reveal();
   state.phase = 'result';
   updateUI();
 }
 
-function showResult(n) {
-  const d = doors.data(n);
+function showResult(n, winners) {
   let html = `<p class="result-kicker">Le dé a parlé</p><div class="result-number">${n}</div>`;
   if (state.mode === 'simple') {
     html += `<p class="result-title">Le chiffre ${n} a été choisi</p>`;
-    $('btn-again').textContent = 'Relancer le dé';
   } else {
-    const winners = round.winners(n);
     html += `<p class="result-title">La porte ${n} s’ouvre</p>`;
     if (winners.length) {
       html += `<p class="result-text">${winners.length === 1 ? 'Une personne avait choisi cette porte :' : `${winners.length} personnes avaient choisi cette porte :`}</p><ul class="winners">`;
@@ -270,12 +439,10 @@ function showResult(n) {
       });
       html += '</ul>';
     } else {
-      html += '<p class="result-text">Personne n’avait choisi cette porte…<br>Le destin garde son secret.</p>';
+      html += '<p class="result-text">Personne n’avait choisi cette porte…<br>Relancez le dé pour ouvrir une autre porte.</p>';
     }
-    const np = round.players.size;
-    const no = round.out.size;
-    html += `<p class="result-stats">${np} participant${np > 1 ? 's' : ''} · ${no} éliminé${no > 1 ? 's' : ''}</p>`;
-    $('btn-again').textContent = 'Nouvelle partie';
+    const won = round.sessionWinners().length;
+    html += `<p class="result-stats">🏆 ${won} gagnant${won > 1 ? 's' : ''} depuis le début du jeu · ${round.players.size} participant${round.players.size > 1 ? 's' : ''}</p>`;
   }
   $('result-inner').innerHTML = html;
   $('result-inner').querySelectorAll('img').forEach((img) => {
@@ -291,24 +458,22 @@ function showResult(n) {
   fx.burst(r.left + r.width / 2, r.top + 110, { count: 22, speed: 170, life: 1.3, stars: 0.25, size: 0.8, glow: 'violet' });
 }
 
-async function closeResult() {
+async function backToDoors() {
   $('result').hidden = true;
   await doors.close();
-  state.phase = 'idle';
-  if (state.mode === 'live') round.reset();
+  state.phase = 'between';
+  markOpened();
   renderFeeds();
   updateUI();
 }
 
 $('btn-again').addEventListener('click', async () => {
-  const again = state.mode;
-  await closeResult();
-  if (again === 'live') startCollecting({ force: simulating || !hasCreds() });
-  else roll();
+  await backToDoors();
+  roll();
 });
-$('btn-back').addEventListener('click', closeResult);
+$('btn-back').addEventListener('click', backToDoors);
 
-// ---------- Chat TikTok ----------
+// ---------- Participants (chat) ----------
 
 let feedDirty = false;
 function renderFeedsSoon() {
@@ -337,7 +502,7 @@ function renderFeeds() {
   const feed = $('players-feed');
   if (!players.length) {
     shown.players.clear();
-    feed.innerHTML = `<li class="empty">${state.phase === 'collecting' ? 'En attente des premiers chiffres…' : 'Touchez « Lancer le jeu » pour ouvrir les participations.'}</li>`;
+    feed.innerHTML = `<li class="empty">${state.phase === 'collecting' ? 'En attente des premiers chiffres…' : 'Aucun participant'}</li>`;
   } else {
     feed.innerHTML = feedItems(players.slice(-12).reverse(), shown.players,
       (p) => `<span class="who">${esc(p.name)}</span><span class="num">${p.choice}</span>`);
@@ -354,67 +519,49 @@ function renderFeeds() {
 }
 
 function onChat(msg) {
-  if (state.mode !== 'live' || state.phase !== 'collecting') return;
+  if (state.screen !== 'game' || state.mode !== 'live' || state.phase !== 'collecting') return;
   const r = round.handle(msg);
-  if (r.type === 'join') {
-    doors.setCounts(round.counts());
-    sound.join();
-  } else if (r.type === 'out') {
-    doors.setCounts(round.counts());
-    sound.eliminated();
-  } else {
-    return;
-  }
+  if (r.type === 'join') sound.join();
+  else if (r.type === 'out') sound.eliminated();
+  else return;
+  doors.setCounts(round.counts());
+  renderSessionInfo();
   renderFeedsSoon();
 }
-live.addEventListener('chat', (e) => onChat(e.detail));
 
-function renderStatus() {
-  const pill = $('live-status');
-  const st = simulating ? 'waiting' : live.state;
-  pill.dataset.state = st;
-  pill.querySelector('.label').textContent = simulating
-    ? 'Simulation (faux spectateurs)'
-    : st === 'live' ? `En direct · @${live.handle}` : live.message || 'Non connecté';
+function needCreds() {
+  notice('Connexion TikTok',
+    '<p class="hint">Pour jouer avec le chat, renseignez d’abord votre pseudo TikTok et votre clé API Euler Stream dans les réglages.</p>',
+    [
+      { label: 'Ouvrir les réglages', href: 'admin.html#tiktok', primary: true },
+      { label: 'Simuler des participants', onClick: simulateGame },
+      { label: 'Jouer sans le chat', onClick: () => startSession('simple') },
+    ]);
 }
 
-live.addEventListener('status', (e) => {
-  const { state: st, message } = e.detail;
-  renderStatus();
-  if (state.mode === 'live' && state.screen === 'game' && (st === 'error' || st === 'waiting')) toast(message, 5000);
-});
+// ---------- Simulations (pour répéter sans être en live) ----------
 
-function hasCreds() {
-  return Boolean(load(STORAGE.tiktokUser) && load(STORAGE.tiktokKey));
-}
+const FAKE = ['Luna', 'Céleste', 'Maëlys', 'Inès', 'Sofia', 'Jade', 'Léna', 'Nour', 'Camille', 'Aurore', 'Yasmine', 'Élise',
+  'Manon', 'Chloé', 'Sarah', 'Lilou', 'Anaïs', 'Rose', 'Iris', 'Mila', 'Emma', 'Noa', 'Zoé', 'Lina', 'Alice', 'Julia'];
+const fakeUser = (name) => ({ key: name.toLowerCase(), handle: name.toLowerCase(), name, avatar: '' });
 
-function ensureLive() {
-  if (!hasCreds()) return;
-  if (['live', 'connecting', 'waiting'].includes(live.state)) return;
-  live.connect(load(STORAGE.tiktokUser), load(STORAGE.tiktokKey));
-}
-
-// Simulation : de faux spectateurs écrivent dans le chat (pour répéter sans être en live).
-async function simulate() {
+async function simulateGame() {
   closeNotice();
-  if (state.screen !== 'game' || state.mode !== 'live') goGame('live');
-  if (state.phase === 'result') await closeResult();
-  if (state.phase !== 'collecting') startCollecting({ force: true });
   if (simulating) return;
+  if (state.screen !== 'game') openGame();
   simulating = true;
   renderStatus();
+  if (state.phase === 'start') await startSession('live', { force: true });
   toast('Simulation : de faux spectateurs participent…');
-  const names = ['Luna', 'Céleste', 'Maëlys', 'Inès', 'Sofia', 'Jade', 'Léna', 'Nour', 'Camille', 'Aurore', 'Yasmine', 'Élise',
-    'Manon', 'Chloé', 'Sarah', 'Lilou', 'Anaïs', 'Rose', 'Iris', 'Mila', 'Emma', 'Noa', 'Zoé', 'Lina', 'Alice', 'Julia'];
   const phrases = (n) => [`${n}`, `la ${n} stp`, `je prends la porte ${n} ✨`, `${n} !!`, `porte ${n}`, `${n} 🙏`, `bonsoir ! ${n}`];
-  for (let i = 0; i < names.length && state.phase === 'collecting'; i++) {
-    const name = names[i];
+  for (let i = 0; i < FAKE.length && state.phase === 'collecting'; i++) {
+    const name = FAKE[i];
     const n = randomInt(1, 12);
     const options = phrases(n);
     onChat({ handle: name.toLowerCase(), name, text: options[randomInt(0, options.length - 1)] });
     // De temps en temps, quelqu'un change d'avis : éliminé.
     if (i > 4 && randomInt(1, 6) === 1) {
-      const prev = names[randomInt(0, i - 1)];
+      const prev = FAKE[randomInt(0, i - 1)];
       const p = round.players.get(prev.toLowerCase());
       if (p) onChat({ handle: prev.toLowerCase(), name: prev, text: `non finalement la ${(p.choice % 12) + 1}` });
     }
@@ -424,7 +571,31 @@ async function simulate() {
   renderStatus();
 }
 
-// ---------- Menus, réglages, bascules ----------
+// Faux cadeaux, likes et message épinglé, pour voir le tableau de bord se remplir.
+async function simulateGifts() {
+  if (simulating) return;
+  simulating = true;
+  renderStatus();
+  toast('Simulation : cadeaux, likes et message épinglé…');
+  const script = [
+    ['pin', 'Luna', 'Bienvenue ! Posez vos questions après un Chat porte-bonheur 🐱'],
+    ['gift', 'Céleste', 'Lucky Cat'], ['like', 'Inès', 40], ['gift', 'Jade', 'Galaxy'], ['gift', 'Sofia', 'Doughnut'],
+    ['gift', 'Nour', 'Heart Balloon'], ['like', 'Céleste', 25], ['gift', 'Camille', 'Lucky Cat'], ['gift', 'Aurore', 'Doughnut'],
+    ['like', 'Jade', 60], ['gift', 'Élise', 'Heart Balloon'], ['gift', 'Céleste', 'Lucky Cat'], ['like', 'Manon', 15],
+  ];
+  let i = 0;
+  for (const [type, name, arg] of script) {
+    const user = fakeUser(name);
+    if (type === 'pin') onPin({ pinned: true, text: arg, user, pinId: 'sim' });
+    else if (type === 'like') onLike({ user, likeCount: arg, totalLikeCount: 0 });
+    else onGift({ user, msgId: `sim-${Date.now()}-${i++}`, giftId: `sim-${arg}`, giftName: arg, giftImage: '', combo: false, repeatCount: 1, repeatEnd: true });
+    await wait(700);
+  }
+  simulating = false;
+  renderStatus();
+}
+
+// ---------- Bascules, menus ----------
 
 function setTicker(on) {
   saveFlag(STORAGE.ticker, on);
@@ -452,63 +623,21 @@ function syncToggles() {
   });
 }
 
-function openDrawer() {
-  $('drawer').hidden = false;
-  $('btn-game-menu').setAttribute('aria-expanded', 'true');
-}
-function closeDrawer() {
-  $('drawer').hidden = true;
-  $('btn-game-menu').setAttribute('aria-expanded', 'false');
-}
-$('btn-game-menu').addEventListener('click', () => ($('drawer').hidden ? openDrawer() : closeDrawer()));
+$('btn-game-menu').addEventListener('click', () => {
+  const d = $('drawer');
+  d.hidden = !d.hidden;
+  $('btn-game-menu').setAttribute('aria-expanded', String(!d.hidden));
+});
 document.addEventListener('pointerdown', (e) => {
-  if (!$('drawer').hidden && !e.target.closest('#drawer, #btn-game-menu')) closeDrawer();
+  if (!$('drawer').hidden && !e.target.closest('#drawer, #btn-game-menu')) $('drawer').hidden = true;
 });
 
-// ---------- Petite fenêtre d'information ----------
-
-function notice(title, html, actions = []) {
-  closeDrawer();
-  $('notice-title').textContent = title;
-  $('notice-body').innerHTML = html;
-  const box = $('notice-actions');
-  box.textContent = '';
-  actions.forEach(({ label, href, primary, onClick }) => {
-    const el = document.createElement(href ? 'a' : 'button');
-    el.className = `btn${primary ? ' btn-primary' : ''}`;
-    el.textContent = label;
-    if (href) el.href = href;
-    else {
-      el.type = 'button';
-      el.addEventListener('click', () => { closeNotice(); if (onClick) onClick(); });
-    }
-    box.appendChild(el);
-  });
-  $('notice').hidden = false;
-}
-function closeNotice() {
-  $('notice').hidden = true;
-}
-$('notice').addEventListener('click', (e) => {
-  if (e.target === $('notice') || e.target.closest('[data-close]')) closeNotice();
-});
-
-function needCreds() {
-  notice('Connexion TikTok',
-    '<p class="hint">Pour jouer avec le chat, renseignez d’abord votre pseudo TikTok et votre clé API Euler Stream dans les réglages.</p>',
-    [
-      { label: 'Ouvrir les réglages', href: 'admin.html#tiktok', primary: true },
-      { label: 'Simuler des participants', onClick: simulate },
-    ]);
-}
-
-// ---------- Écran de veille ----------
-
+// Écran de veille : seulement les messages.
 const saver = new Ticker($('screensaver'), $('ss-track'), { speedFactor: 2.4 });
 saver.setEnabled(true);
 
 function openScreensaver() {
-  closeDrawer();
+  $('drawer').hidden = true;
   if (!ticker.messages.length) {
     toast('Aucun message à afficher : ajoutez-en dans les réglages.');
     return;
@@ -527,85 +656,32 @@ $('screensaver').addEventListener('pointerdown', (e) => {
   closeScreensaver();
 });
 
-// ---------- Plein écran ----------
-// iPad : Safari ne permet pas toujours le plein écran d'une page. La solution fiable est
-// d'ajouter l'appli à l'écran d'accueil : elle s'ouvre alors sans aucune barre.
-
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const standalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
-if (standalone) $$('.fullscreen-btn').forEach((el) => { el.hidden = true; });
-
-const isFullscreen = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-
-function fullscreenHelp() {
-  notice('Plein écran sur iPad',
-    `<p class="hint">Safari ne permet pas de masquer ses barres depuis une page web. Installez l’appli sur l’écran d’accueil : elle s’ouvrira en plein écran, sans aucune barre.</p>
-     <ol class="steps">
-       <li>Dans Safari, touchez le bouton <strong>Partager</strong> <span aria-hidden="true">(carré avec une flèche ↑)</span>.</li>
-       <li>Choisissez <strong>Sur l’écran d’accueil</strong>, puis <strong>Ajouter</strong>.</li>
-       <li>Fermez Safari et ouvrez <strong>Portes</strong> depuis sa nouvelle icône.</li>
-     </ol>`,
-    [{ label: 'Compris', primary: true }]);
-}
-
-// helpIfFails : afficher l'aide si le plein écran n'est pas possible (bouton « Plein écran »).
-function enterFullscreen(helpIfFails = true) {
-  if (standalone || isFullscreen()) return;
-  const el = document.documentElement;
-  const req = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (!req) {
-    if (helpIfFails) fullscreenHelp();
-    return;
-  }
-  try {
-    const p = req.call(el);
-    if (p && p.catch) p.catch(() => { if (helpIfFails) fullscreenHelp(); });
-  } catch (e) {
-    if (helpIfFails) fullscreenHelp();
-    return;
-  }
-  if (helpIfFails && isIOS) setTimeout(() => { if (!isFullscreen()) fullscreenHelp(); }, 800);
-}
-
-function toggleFullscreen() {
-  if (isFullscreen()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-  else enterFullscreen(true);
-}
-
-// Délégation des clics de menu
+// Délégation des clics
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-go], [data-toggle], [data-action]');
+  const t = e.target.closest('[data-toggle], [data-action]');
   if (!t) return;
   sound.tink();
-  if (t.dataset.go) goGame(t.dataset.go);
-  else if (t.dataset.toggle === 'ticker') setTicker(!ticker.enabled);
+  const a = t.dataset.action;
+  if (t.dataset.toggle === 'ticker') setTicker(!ticker.enabled);
   else if (t.dataset.toggle === 'sound') setSound(!sound.enabled);
-  else if (t.dataset.action === 'home') goHome();
-  else if (t.dataset.action === 'fullscreen') toggleFullscreen();
-  else if (t.dataset.action === 'screensaver') openScreensaver();
-  else if (t.dataset.action === 'reset') {
-    closeDrawer();
-    if (state.phase === 'result') closeResult();
-    else {
-      round.reset();
-      state.phase = 'idle';
-      renderFeeds();
-      updateUI();
-    }
-    toast('Participants effacés.');
-  }
+  else if (a === 'close-game') closeGame();
+  else if (a === 'start-live') startSession('live');
+  else if (a === 'start-simple') startSession('simple');
+  else if (a === 'fullscreen') toggleFullscreen();
+  else if (a === 'screensaver') openScreensaver();
 });
-
-$('live-status').addEventListener('click', () => { location.href = 'admin.html#tiktok'; });
 
 // Clavier (pratique sur ordinateur)
 document.addEventListener('keydown', (e) => {
-  if (e.target.closest('input')) return;
-  if (e.key === 'Escape') {
-    closeNotice();
-    closeScreensaver();
-    closeDrawer();
-  } else if ((e.key === ' ' || e.key === 'Enter') && state.screen === 'game' && $('notice').hidden && $('screensaver').hidden) {
+  if (e.target.closest('input, textarea')) return;
+  if (!$('notice').hidden || !$('screensaver').hidden) {
+    if (e.key === 'Escape') { closeNotice(); closeScreensaver(); }
+    return;
+  }
+  if (e.key === 'Escape') $('drawer').hidden = true;
+  else if (state.screen === 'dash' && (e.key === 'ArrowRight' || e.key === 'Enter')) $('btn-next').click();
+  else if (state.screen === 'dash' && e.key === 'Backspace') $('btn-undo').click();
+  else if (state.screen === 'game' && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault();
     if (state.phase === 'result') $('btn-again').click();
     else mainAction();
@@ -614,35 +690,68 @@ document.addEventListener('keydown', (e) => {
 
 // ---------- Démarrage ----------
 
-ticker.setEnabled(loadFlag(STORAGE.ticker, true));
 function loadTicker() {
   return ticker.load().then(() => {
     fit();
     if (ticker.error) toast('Le fichier messages.json contient une erreur : le bandeau est masqué.', 6000);
   });
 }
-loadTicker();
-// Retour depuis la page des réglages : relire les messages et la connexion.
+
+// Relit les réglages (retour depuis la page Réglages, ou changement dans un autre onglet).
+function reloadSettings() {
+  features = loadFeatures();
+  giftConfig = loadGiftConfig();
+  applyFeatures();
+  ticker.setEnabled(loadFlag(STORAGE.ticker, true));
+  sound.setEnabled(loadFlag(STORAGE.sound, true));
+  syncToggles();
+  // La liste a été vidée depuis les Réglages (« Nouveau live »).
+  if (!load(STORAGE.queue)) {
+    queue.clear();
+    likes.total = 0;
+    likes.users = {};
+    pinned = null;
+    dash.renderPinned(pinned);
+    changed();
+  }
+  ensureLive();
+  renderStatus();
+}
+
 window.addEventListener('pageshow', (e) => {
   if (e.persisted) {
     loadTicker();
-    ticker.setEnabled(loadFlag(STORAGE.ticker, true));
-    sound.setEnabled(loadFlag(STORAGE.sound, true));
-    syncToggles();
-    if (state.mode === 'live' && state.screen === 'game') ensureLive();
+    reloadSettings();
   }
 });
+window.addEventListener('storage', (e) => {
+  if (!e.key || !e.key.startsWith('portes.')) return;
+  if (e.key === STORAGE.messages) loadTicker();
+  else if ([STORAGE.features, STORAGE.gifts, STORAGE.ticker, STORAGE.sound, STORAGE.queue, STORAGE.tiktokUser, STORAGE.tiktokKey].includes(e.key)) reloadSettings();
+});
+
+body.classList.add('at-home');
+ticker.setEnabled(loadFlag(STORAGE.ticker, true));
+loadTicker();
+applyFeatures();
 syncToggles();
+dash.renderPinned(pinned);
+dash.renderQueue(queue);
+dash.renderDonuts(queue);
+dash.renderLikes(likes);
 renderFeeds();
 updateUI();
 fit();
-fx.setAmbient(26);
+fx.setAmbient(22);
 dice.setActive(false);
+ensureLive();
+renderStatus();
 
-// Lien depuis les réglages : ouvrir directement une simulation.
-if (new URLSearchParams(location.search).has('simulation')) {
+// Liens depuis les Réglages : répéter sans être en live.
+const sim = new URLSearchParams(location.search).get('simulation');
+if (sim !== null) {
   history.replaceState(null, '', location.pathname);
-  setTimeout(simulate, 400);
+  setTimeout(sim === 'cadeaux' ? simulateGifts : simulateGame, 500);
 }
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

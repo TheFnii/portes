@@ -100,3 +100,41 @@ output { color: var(--gold-light); font-weight: 600; }
   border-radius: 12px;
   --ticker-h: 60px;
 }
+
+.gift-roles { display: grid; gap: 12px; }
+.gift-role {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 4px 14px;
+  align-items: center;
+}
+.gift-role .emoji { grid-row: span 2; font-size: 34px; text-align: center; }
+.gift-role strong { font: 600 19px/1.2 'Cinzel', serif; color: var(--gold-light); }
+.gift-role strong small { font: italic 500 18px/1.2 'Cormorant Garamond', serif; color: rgba(246, 227, 168, .7); margin-left: 6px; }
+.gift-role input {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(232, 199, 122, .45);
+  background: rgba(0, 0, 0, .35);
+  color: var(--ink);
+  font-size: 20px;
+  outline: none;
+}
+.gift-log { width: 100%; border-collapse: collapse; font-size: 20px; }
+.gift-log th { text-align: left; font: 600 15px/1 'Cinzel', serif; color: var(--gold); padding: 6px; }
+.gift-log td { padding: 6px; border-top: 1px solid rgba(232, 199, 122, .15); }
+.gift-log td:first-child { width: 44px; }
+.gift-log img { width: 36px; height: 36px; object-fit: contain; }
+.gift-log small { display: block; color: rgba(243, 233, 210, .5); font-size: 15px; }
+.gift-log select {
+  min-height: 44px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(232, 199, 122, .45);
+  background: #1a0f28;
+  color: var(--ink);
+  font-size: 18px;
+}
+.gift-log .empty { color: rgba(243, 233, 210, .5); font-style: italic; }

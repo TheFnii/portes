@@ -117,58 +117,14 @@
 .btn-toggle[aria-pressed='true'] .switch { background: rgba(232, 180, 80, .55); }
 .btn-toggle[aria-pressed='true'] .switch::after { transform: translateX(28px); background: #fff4cf; box-shadow: 0 0 12px rgba(255, 220, 140, .9); }
 
-/* ---------- Accueil ---------- */
-
-.home {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  transition: opacity .8s ease, visibility .8s;
-}
-body:not(.at-home) .home { opacity: 0; visibility: hidden; pointer-events: none; }
-
-.home-veil {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 45%, rgba(40, 18, 60, .35), rgba(0, 0, 0, .45));
-}
-
-.home-content {
-  position: relative;
-  width: min(620px, 100%);
-  text-align: center;
-  transition: opacity .6s ease, transform .6s ease;
-}
+/* Petit sur-titre doré (écran de départ du jeu) */
 .home-kicker {
   margin: 0;
   font: 500 20px/1 'Cinzel', serif;
   letter-spacing: .3em;
   color: var(--gold);
 }
-.home-title {
-  margin: 10px 0 0;
-  font: 700 clamp(44px, 7.5vmin, 84px)/1.02 'Cinzel Decorative', 'Cinzel', serif;
-  color: var(--gold-light);
-  text-shadow: 0 0 30px rgba(255, 196, 110, .6), 0 3px 6px rgba(0, 0, 0, .8);
-}
-.home-title span { display: inline-block; font-size: .78em; }
 
-.home-menu {
-  display: grid;
-  gap: 14px;
-  margin-top: clamp(14px, 3vmin, 30px);
-}
-
-.home-corner {
-  position: absolute;
-  right: max(18px, env(safe-area-inset-right));
-  top: max(18px, env(safe-area-inset-top));
-  display: flex;
-  gap: 12px;
-}
 a.icon-btn, a.btn { text-decoration: none; }
 
 /* ---------- Écran de veille : seulement les messages ---------- */
@@ -252,7 +208,6 @@ body.at-home .game-menu-btn { opacity: 0; pointer-events: none; }
 .live-status[data-state='waiting'] .dot { background: #f2c14e; animation: blink 1s ease-in-out infinite; }
 .live-status[data-state='error'] .dot { background: #ef5b5b; }
 @keyframes blink { 50% { opacity: .3; } }
-body.at-home .live-status { opacity: 0; pointer-events: none; }
 
 .drawer {
   position: fixed;
@@ -331,10 +286,12 @@ body:not(.mode-live) .live-only { display: none; }
 .ticker-sep { color: var(--gold); font-size: calc(var(--ticker-font, 30px) * .7); text-shadow: 0 0 10px rgba(255, 210, 120, .9); }
 @keyframes ticker { to { transform: translateX(-50%); } }
 
+/* Sur le tableau de bord, le ruban est juste au-dessus des boutons du bas */
 body.at-home .ticker {
-  --ticker-h: 84px;
-  --ticker-font: 40px;
-  top: calc(100% - 84px - max(5vh, 24px));
+  --ticker-h: 56px;
+  --ticker-font: 28px;
+  top: auto;
+  bottom: var(--dash-bottom-h);
 }
 
 /* ---------- Réglages ---------- */
@@ -507,8 +464,6 @@ body.at-home .ticker {
 /* ---------- Petits écrans ---------- */
 
 @media (max-height: 720px) {
-  body.at-home .ticker { --ticker-h: 62px; --ticker-font: 30px; top: calc(100% - 62px - 16px); }
-  .home-menu { gap: 10px; }
   .btn-menu { min-height: 64px; padding: 8px 18px; }
   .btn-menu strong { font-size: 21px; }
   .btn-menu small { font-size: 17px; }

@@ -45,6 +45,9 @@
 .door.leaves-1.open .door-leaf.left { transform: perspective(calc(var(--w) * 2.6)) rotateY(78deg); }
 
 
+/* Porte déjà ouverte pendant la session : estompée */
+.door.opened { opacity: .42; }
+
 /* Halo lumineux derrière la porte */
 .door-halo {
   left: -30%;

@@ -49,6 +49,24 @@
       </form>
     </section>
 
+    <!-- Cadeaux -->
+    <section class="card" id="cadeaux">
+      <h2>Cadeaux</h2>
+      <p class="hint">Chaque rôle est déclenché par les cadeaux listés (noms séparés par des virgules ; majuscules et accents ne comptent pas). TikTok envoie souvent les noms en anglais.</p>
+      <div class="gift-roles" id="gift-roles"></div>
+      <h3>Cadeaux reçus récemment</h3>
+      <p class="hint">Pour remplacer un cadeau ou en ajouter un, choisissez son rôle ici : c’est le réglage le plus sûr (il utilise l’identifiant du cadeau).</p>
+      <table class="gift-log">
+        <thead><tr><th></th><th>Cadeau</th><th>Reçus</th><th>Rôle</th></tr></thead>
+        <tbody id="gift-log"></tbody>
+      </table>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="gifts-save" type="button">Enregistrer les cadeaux</button>
+        <button class="btn btn-ghost" id="gifts-reset" type="button">Noms par défaut</button>
+      </div>
+      <p class="form-status" id="gifts-status" role="status"></p>
+    </section>
+
     <!-- Messages défilants -->
     <section class="card" id="messages">
       <h2>Messages défilants</h2>
@@ -70,8 +88,10 @@
     </section>
 
     <!-- Affichage et son -->
-    <section class="card">
+    <section class="card" id="affichage">
       <h2>Affichage et son</h2>
+      <p class="hint">Activez ou masquez chaque partie du tableau de bord.</p>
+      <div class="settings-toggles" id="feature-toggles"></div>
       <div class="settings-toggles">
         <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
           <span><strong>Bandeau des messages</strong><small class="state"></small></span><span class="switch" aria-hidden="true"></span>
@@ -89,11 +109,22 @@
       <p class="hint">Sur Android (Chrome) : menu ⋮ → <strong>Ajouter à l’écran d’accueil</strong>.</p>
     </section>
 
+    <!-- Nouveau live -->
+    <section class="card">
+      <h2>Nouveau live</h2>
+      <p class="hint">La liste des personnes, les Donuts, les likes et le message épinglé restent enregistrés même si la page se recharge. Videz-les au début d’un nouveau live.</p>
+      <button class="btn" id="live-reset" type="button">Tout vider pour un nouveau live</button>
+      <p class="form-status" id="reset-status" role="status"></p>
+    </section>
+
     <!-- Répétition -->
     <section class="card">
       <h2>Répéter sans être en live</h2>
-      <p class="hint">De faux spectateurs remplissent les portes, certains changent d’avis et sont éliminés.</p>
-      <a class="btn" href="index.html?simulation">Lancer une simulation</a>
+      <p class="hint">De faux spectateurs participent : pratique pour s’entraîner ou vérifier l’affichage.</p>
+      <div class="form-actions">
+        <a class="btn" href="index.html?simulation=cadeaux">Simuler des cadeaux et des likes</a>
+        <a class="btn" href="index.html?simulation">Simuler le Jeu des Portes</a>
+      </div>
     </section>
   </main>
 

@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/scene.css">
   <link rel="stylesheet" href="css/doors.css">
   <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/dash.css">
 </head>
 <body class="at-home">
   <svg class="defs" aria-hidden="true" width="0" height="0"><defs id="flower-defs"></defs></svg>
@@ -61,56 +62,102 @@
     <section class="result" id="result" hidden>
       <div class="result-inner" id="result-inner"></div>
       <div class="result-actions">
-        <button class="btn btn-primary" id="btn-again" type="button">Nouvelle partie</button>
+        <button class="btn btn-primary" id="btn-again" type="button">Relancer le dé</button>
         <button class="btn" id="btn-back" type="button">Retour aux portes</button>
+        <button class="btn btn-ghost" data-action="close-game" type="button">Fermer le jeu</button>
       </div>
     </section>
   </div>
 
   <canvas class="fx" id="fx" aria-hidden="true"></canvas>
 
-  <!-- Accueil -->
-  <section class="home" id="home">
-    <div class="home-veil"></div>
-    <div class="home-content">
-      <p class="home-kicker">✦ Jeu de voyance ✦</p>
-      <h1 class="home-title">Les Portes<br><span>du Destin</span></h1>
-      <div class="flourish" aria-hidden="true"></div>
-      <nav class="home-menu" id="home-menu">
-        <button class="btn btn-menu" data-go="simple" type="button">
-          <span class="btn-icon" aria-hidden="true">🚪</span>
-          <span><strong>Jeu des Portes</strong><small>Le dé choisit une porte</small></span>
-        </button>
-        <button class="btn btn-menu" data-go="live" type="button">
-          <span class="btn-icon" aria-hidden="true">✨</span>
-          <span><strong>Jeu des Portes · TikTok</strong><small>Le chat participe, les gagnants s’affichent</small></span>
-        </button>
-        <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
-          <span class="btn-icon" aria-hidden="true">📜</span>
-          <span><strong>Messages défilants</strong><small class="state"></small></span>
-          <span class="switch" aria-hidden="true"></span>
-        </button>
-        <button class="btn btn-menu" data-action="screensaver" type="button">
-          <span class="btn-icon" aria-hidden="true">🌙</span>
-          <span><strong>Écran de veille</strong><small>Seulement les messages, en plein écran</small></span>
-        </button>
-      </nav>
+  <!-- Tableau de bord du live (accueil) -->
+  <section class="dash" id="dash">
+    <header class="dash-top">
+      <h1 class="dash-brand">Les Portes <span>du Destin</span></h1>
+      <div class="dash-top-right">
+        <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
+        <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
+        <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
+      </div>
+    </header>
+
+    <section class="panel pinned" id="pinned" data-feature="pinned">
+      <span class="pinned-icon" aria-hidden="true">📌</span>
+      <div class="pinned-body">
+        <small id="pinned-who">Message épinglé</small>
+        <p id="pinned-text" class="empty">Aucun message épinglé pour l’instant</p>
+      </div>
+    </section>
+
+    <div class="dash-mid">
+      <section class="panel queue" id="queue-box" data-feature="list">
+        <header class="panel-head">
+          <h2>À traiter</h2>
+          <span class="count" id="queue-count">0</span>
+          <span class="queue-pending" id="queue-pending" hidden></span>
+        </header>
+        <div class="queue-current" id="queue-current"></div>
+        <ol class="queue-list" id="queue-list"></ol>
+      </section>
+
+      <aside class="dash-side">
+        <section class="panel donuts" id="donut-box" data-feature="donuts">
+          <header class="panel-head"><h3>🍩 Messages de l’univers</h3><span class="count" id="donut-count">0</span></header>
+          <ul class="side-list" id="donut-list"></ul>
+        </section>
+        <section class="panel likers" id="likes-box" data-feature="likes">
+          <header class="panel-head"><h3>❤ Top likeurs</h3><span class="count" id="likes-total">0</span></header>
+          <ol class="side-list" id="likes-list"></ol>
+        </section>
+      </aside>
     </div>
-    <div class="home-corner">
-      <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
-      <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
-    </div>
+
+    <footer class="dash-bottom">
+      <button class="btn corner-game" id="btn-open-game" data-feature="game" type="button">
+        <span class="btn-icon" aria-hidden="true">🚪</span><span><strong>Jeu des Portes</strong></span>
+      </button>
+      <div class="next-wrap" data-feature="list">
+        <button class="icon-btn" id="btn-undo" type="button" title="Annuler" aria-label="Annuler la dernière action">↶</button>
+        <button class="btn btn-primary btn-next" id="btn-next" type="button">Personne suivante</button>
+      </div>
+      <div class="radio" id="radio" data-feature="radio"></div>
+    </footer>
   </section>
+
+  <!-- Jeu des Portes : écran de départ et compte à rebours -->
+  <div class="game-start" id="game-start" hidden>
+    <div class="game-start-card">
+      <p class="home-kicker">✦ Jeu des Portes ✦</p>
+      <h2>Une nouvelle partie commence</h2>
+      <div class="flourish" aria-hidden="true"></div>
+      <p class="hint">Au signal, chacun écrit un chiffre de 1 à 12 dans le chat. Une seule porte par personne : changer de chiffre élimine.
+        Vous pourrez relancer le dé autant de fois que vous voulez ; tous les gagnants sont gardés jusqu’à la fermeture du jeu.</p>
+      <div class="game-start-actions">
+        <button class="btn btn-primary" data-action="start-live" type="button">Commencer avec le chat</button>
+        <button class="btn" data-action="start-simple" type="button">Sans le chat (tirage simple)</button>
+        <button class="btn btn-ghost" data-action="close-game" type="button">Retour au tableau de bord</button>
+      </div>
+    </div>
+  </div>
+  <div class="countdown" id="countdown" hidden><span id="countdown-num"></span></div>
+
+  <!-- Barre de session du jeu -->
+  <div class="session-bar" id="session-bar" hidden>
+    <span class="session-info" id="session-info"></span>
+    <button class="btn btn-ghost small-btn" data-action="close-game" type="button">Fermer le jeu</button>
+  </div>
 
   <!-- Menu du jeu -->
   <button class="icon-btn game-menu-btn" id="btn-game-menu" type="button" aria-label="Menu du jeu" aria-expanded="false">☰</button>
-  <button class="live-status" id="live-status" type="button" hidden>
+  <button class="live-status" id="live-status" type="button">
     <span class="dot"></span><span class="label">Non connecté</span>
   </button>
   <aside class="drawer" id="drawer" hidden>
     <h2>Menu du jeu</h2>
-    <button class="btn btn-menu" data-action="home" type="button">
-      <span class="btn-icon" aria-hidden="true">⌂</span><span><strong>Accueil</strong></span>
+    <button class="btn btn-menu" data-action="close-game" type="button">
+      <span class="btn-icon" aria-hidden="true">⌂</span>
+      <span><strong>Fermer le jeu</strong><small>Les gagnants rejoignent la liste</small></span>
     </button>
     <button class="btn btn-menu btn-toggle" data-toggle="ticker" type="button" aria-pressed="true">
       <span class="btn-icon" aria-hidden="true">📜</span>
@@ -121,10 +168,6 @@
       <span class="btn-icon" aria-hidden="true">♪</span>
       <span><strong>Son</strong><small class="state"></small></span>
       <span class="switch" aria-hidden="true"></span>
-    </button>
-    <button class="btn btn-menu live-only" data-action="reset" type="button">
-      <span class="btn-icon" aria-hidden="true">↺</span>
-      <span><strong>Nouvelle partie</strong><small>Efface les participants</small></span>
     </button>
     <button class="btn btn-menu" data-action="screensaver" type="button">
       <span class="btn-icon" aria-hidden="true">🌙</span>

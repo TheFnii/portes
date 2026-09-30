@@ -5,6 +5,8 @@ import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { loadMessages, loadFileMessages, saveLocalMessages, clearLocalMessages } from './messages.js';
 import { Ticker } from './ticker.js';
 import { TikTokLive } from './tiktok.js';
+import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
+import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -150,3 +152,75 @@ document.querySelectorAll('[data-toggle]').forEach((b) => {
   });
 });
 syncToggles();
+
+// ---------- Modules du tableau de bord ----------
+
+function renderFeatures() {
+  const f = loadFeatures();
+  $('feature-toggles').innerHTML = Object.entries(FEATURES).map(([k, v]) => `
+    <button class="btn btn-menu btn-toggle" data-feature-toggle="${k}" type="button" aria-pressed="${f[k]}">
+      <span><strong>${v.label}</strong><small class="state">${f[k] ? 'Affiché' : 'Masqué'}</small></span><span class="switch" aria-hidden="true"></span>
+    </button>`).join('');
+}
+$('feature-toggles').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-feature-toggle]');
+  if (!b) return;
+  const f = loadFeatures();
+  f[b.dataset.featureToggle] = !f[b.dataset.featureToggle];
+  saveFeatures(f);
+  renderFeatures();
+});
+renderFeatures();
+
+// ---------- Cadeaux ----------
+
+const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function renderGifts(cfg = loadGiftConfig()) {
+  $('gift-roles').innerHTML = Object.entries(ROLES).map(([role, r]) => `
+    <label class="gift-role">
+      <span class="emoji" aria-hidden="true">${r.emoji}</span>
+      <strong>${r.label}<small>${r.effect}</small></strong>
+      <input data-role="${role}" type="text" value="${esc((cfg.names[role] || []).join(', '))}" autocapitalize="off" spellcheck="false">
+    </label>`).join('');
+
+  const log = loadGiftLog();
+  const options = (sel) => [['', 'Automatique (par le nom)'], ...Object.entries(ROLES).map(([k, r]) => [k, `${r.emoji} ${r.label}`]), ['none', 'Aucun rôle']]
+    .map(([v, l]) => `<option value="${v}"${v === sel ? ' selected' : ''}>${l}</option>`).join('');
+  $('gift-log').innerHTML = log.length
+    ? log.map((g) => `<tr>
+        <td>${g.giftImage ? `<img src="${esc(g.giftImage)}" alt="" referrerpolicy="no-referrer">` : '🎁'}</td>
+        <td>${esc(g.giftName || '?')}<small>n° ${esc(g.giftId || '?')}</small></td>
+        <td>${g.count}</td>
+        <td><select data-gift-id="${esc(g.giftId)}"${g.giftId ? '' : ' disabled'}>${options(cfg.byId[g.giftId] || '')}</select></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" class="empty">Aucun cadeau reçu pour l’instant. Ils apparaîtront ici pendant le live.</td></tr>';
+}
+
+$('gifts-save').addEventListener('click', () => {
+  const names = {};
+  document.querySelectorAll('[data-role]').forEach((i) => {
+    names[i.dataset.role] = i.value.split(',').map((x) => x.trim()).filter(Boolean);
+  });
+  const byId = {};
+  document.querySelectorAll('[data-gift-id]').forEach((sel) => {
+    if (sel.value && sel.dataset.giftId) byId[sel.dataset.giftId] = sel.value;
+  });
+  saveGiftConfig({ names, byId });
+  status($('gifts-status'), '✓ Cadeaux enregistrés.', 'live');
+});
+
+$('gifts-reset').addEventListener('click', () => {
+  const cfg = loadGiftConfig();
+  renderGifts({ names: { ...DEFAULT_GIFT_NAMES }, byId: cfg.byId });
+  status($('gifts-status'), 'Noms par défaut rétablis : touchez « Enregistrer les cadeaux » pour valider.');
+});
+renderGifts();
+
+// ---------- Nouveau live ----------
+
+$('live-reset').addEventListener('click', () => {
+  if (!window.confirm('Vider la liste des personnes, les Donuts, les likes et le message épinglé ?')) return;
+  [STORAGE.queue, STORAGE.likes, STORAGE.pinned].forEach((k) => save(k, null));
+  status($('reset-status'), '✓ Tout est vidé. Bon live !', 'live');
+});

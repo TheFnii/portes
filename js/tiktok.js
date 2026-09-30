@@ -4,6 +4,9 @@
 // Événements émis :
 //   'status' → { state: 'off' | 'connecting' | 'live' | 'waiting' | 'error', message }
 //   'chat'   → { userId, handle, name, avatar, text }
+//   'gift'   → { user, msgId, giftId, giftName, giftImage, combo, groupId, repeatCount, repeatEnd }
+//   'like'   → { user, likeCount, totalLikeCount }
+//   'pin'    → { pinned: true, text, user, pinId } ou { pinned: false, pinId }
 
 import { EULER_WS_URL } from './config.js';
 import { normalizeHandle } from './game.js';
@@ -22,6 +25,23 @@ const CLOSE = {
   4556: { msg: 'TikTok ne répond pas, reconnexion…', retry: 5 },
   4557: { msg: 'Impossible de lire les infos du live, reconnexion…', retry: 5 },
 };
+
+function imageOf(img) {
+  if (!img) return '';
+  const list = img.url || img.urls || img.mUrls || img.urlList || [];
+  return (Array.isArray(list) ? list.find((u) => /^https:/.test(u)) : '') || '';
+}
+
+// Personne (spectateur) sous une forme simple ; la clé sert à reconnaître la même personne.
+export function userOf(user = {}) {
+  const handle = String(user.uniqueId || user.displayId || '').toLowerCase();
+  return {
+    key: handle || String(user.userId || user.id || ''),
+    handle,
+    name: user.nickname || user.uniqueId || '',
+    avatar: avatarOf(user),
+  };
+}
 
 function avatarOf(user) {
   const pic = user && (user.profilePicture || user.profilePictureMedium || user.avatarThumb);
@@ -150,6 +170,31 @@ export class TikTokLive extends EventTarget {
           avatar: avatarOf(user),
           text: d.comment ?? d.content ?? '',
         });
+      } else if (m.type === 'WebcastGiftMessage') {
+        const g = d.giftDetails || d.gift || {};
+        const user = userOf(d.user);
+        this.emit('gift', {
+          user,
+          msgId: d.common?.msgId || d.msgId || '',
+          giftId: String(d.giftId || g.id || ''),
+          giftName: g.giftName || g.name || d.giftName || '',
+          giftImage: imageOf(g.giftImage || g.icon || g.image),
+          combo: Boolean(g.combo || g.giftType === 1),
+          groupId: String(d.groupId || ''),
+          repeatCount: Number(d.repeatCount) || 1,
+          repeatEnd: Boolean(Number(d.repeatEnd)),
+        });
+      } else if (m.type === 'WebcastLikeMessage') {
+        this.emit('like', { user: userOf(d.user), likeCount: Number(d.likeCount) || 0, totalLikeCount: Number(d.totalLikeCount) || 0 });
+      } else if (m.type === 'WebcastRoomPinMessage') {
+        // Message épinglé par l'animatrice. Un message sans contenu signale un retrait.
+        const chat = d.chatMessage;
+        const text = chat && (chat.comment ?? chat.content);
+        if (text && Number(d.action) !== 2) {
+          this.emit('pin', { pinned: true, text, user: userOf(chat.user), pinId: String(d.pinId || '') });
+        } else {
+          this.emit('pin', { pinned: false, pinId: String(d.pinId || '') });
+        }
       } else if (m.type === 'room.status') {
         if (d.state === 'connected') this.setState('live', `Connecté au live de @${this.handle}`);
         else if (d.state === 'reconnecting' || d.state === 'connecting') this.setState('connecting', 'Reconnexion au live…');

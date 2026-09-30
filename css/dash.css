@@ -1,0 +1,417 @@
+/* ---------- Tableau de bord du live ---------- */
+
+:root {
+  --dash-bottom-h: calc(96px + env(safe-area-inset-bottom));
+  --dash-gap: clamp(10px, 1.6vmin, 18px);
+}
+
+.dash {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) var(--dash-ticker-space, 0px) var(--dash-bottom-h);
+  grid-template-areas: 'top' 'pinned' 'mid' 'ticker' 'bottom';
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dash-gap);
+  padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
+  transition: opacity .6s ease, visibility .6s;
+}
+body:not(.at-home) .dash { opacity: 0; visibility: hidden; pointer-events: none; }
+body.ticker-on .dash { --dash-ticker-space: 40px; }
+.dash-top { grid-area: top; }
+.pinned { grid-area: pinned; }
+.dash-mid { grid-area: mid; }
+.dash-bottom { grid-area: bottom; }
+
+/* Les modules désactivés dans les Réglages disparaissent */
+[data-feature].feature-off { display: none !important; }
+
+.dash-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 58px;
+}
+.dash-brand {
+  margin: 0;
+  font: 700 clamp(24px, 3.4vmin, 36px)/1 'Cinzel Decorative', 'Cinzel', serif;
+  color: var(--gold-light);
+  text-shadow: 0 0 20px rgba(255, 196, 110, .5);
+  white-space: nowrap;
+}
+.dash-brand span { font-size: .8em; }
+.dash-top-right { display: flex; gap: 10px; align-items: center; }
+/* L'indicateur de connexion TikTok se loge dans la barre du haut */
+body.at-home .live-status { right: calc(max(18px, env(safe-area-inset-right)) + 3 * 68px); top: max(16px, env(safe-area-inset-top)); }
+
+/* Cadres « verre magique » */
+.panel {
+  position: relative;
+  min-height: 0;
+  border-radius: 24px;
+  background: linear-gradient(160deg, rgba(40, 18, 62, .86), rgba(12, 8, 22, .88));
+  border: 1px solid rgba(232, 199, 122, .45);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .45), inset 0 0 24px rgba(232, 199, 122, .06);
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.panel-head h2,
+.panel-head h3 {
+  margin: 0;
+  font: 600 24px/1.1 'Cinzel', serif;
+  color: var(--gold-light);
+}
+.panel-head h2 { font-size: 28px; }
+.panel .count {
+  min-width: 42px;
+  padding: 3px 12px;
+  border-radius: 99px;
+  background: rgba(232, 199, 122, .18);
+  color: var(--gold-light);
+  font: 700 20px/1.2 'Cinzel', serif;
+  text-align: center;
+}
+
+/* Message épinglé */
+.pinned {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px;
+  min-height: 84px;
+}
+.pinned-icon { font-size: 34px; }
+.pinned-body { min-width: 0; }
+.pinned-body small { font: 600 16px/1.2 'Cinzel', serif; color: var(--gold); letter-spacing: .06em; }
+.pinned-body p {
+  margin: 2px 0 0;
+  font: 600 clamp(22px, 3vmin, 32px)/1.2 'Cormorant Garamond', serif;
+  color: #fff8e6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pinned-body p.empty { color: rgba(243, 233, 210, .45); font-style: italic; font-weight: 500; }
+.pinned.flash { animation: pin-flash 1.2s ease; }
+@keyframes pin-flash { 30% { box-shadow: 0 0 40px rgba(255, 210, 120, .8); } }
+
+/* Zone centrale */
+.dash-mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
+  gap: var(--dash-gap);
+  min-height: 0;
+}
+.dash-mid.no-side { grid-template-columns: minmax(0, 1fr); }
+.dash-side {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--dash-gap);
+  min-height: 0;
+}
+.dash-side.single { grid-template-rows: minmax(0, 1fr); }
+
+/* Liste des personnes à traiter */
+.queue {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+}
+.queue-pending {
+  margin-left: auto;
+  font-style: italic;
+  font-size: 19px;
+  color: rgba(246, 227, 168, .75);
+}
+
+.queue-current {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 214, 130, .22), rgba(255, 180, 90, .06));
+  border: 1.5px solid rgba(255, 220, 150, .75);
+  box-shadow: 0 0 26px rgba(255, 200, 110, .25);
+}
+.queue-current.empty {
+  justify-content: center;
+  border-style: dashed;
+  border-color: rgba(232, 199, 122, .35);
+  background: none;
+  box-shadow: none;
+  color: rgba(243, 233, 210, .55);
+  font-style: italic;
+  font-size: 24px;
+  min-height: 84px;
+}
+.queue-current .who strong {
+  display: block;
+  font: 700 clamp(28px, 4.4vmin, 46px)/1.1 'Cinzel', serif;
+  color: #fff4d0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-current .who small { font-size: 21px; color: rgba(246, 227, 168, .8); }
+.queue-current .kicker {
+  font: 600 14px/1 'Cinzel', serif;
+  letter-spacing: .2em;
+  color: var(--gold);
+}
+.queue-current .who { flex: 1; min-width: 0; }
+.queue-current .gift-icon { width: 64px; height: 64px; font-size: 44px; }
+.queue-current.pop { animation: current-pop .6s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes current-pop { from { transform: scale(.94); opacity: .3; } }
+
+.queue-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  scrollbar-width: none;
+}
+.queue-list::-webkit-scrollbar { display: none; }
+.queue-list li,
+.side-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 4px;
+  border-bottom: 1px solid rgba(232, 199, 122, .14);
+  font-size: 25px;
+}
+.queue-list li.new,
+.side-list li.new { animation: feed-in .45s ease; }
+.queue-list .rank {
+  flex: none;
+  width: 32px;
+  font: 700 18px/1 'Cinzel', serif;
+  color: rgba(246, 227, 168, .6);
+  text-align: right;
+}
+.queue-list .name,
+.side-list .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-list .tag {
+  flex: none;
+  font: 600 16px/1 'Cinzel', serif;
+  padding: 5px 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .08);
+  color: rgba(246, 227, 168, .85);
+}
+.queue-list li.sep {
+  border: 0;
+  padding: 10px 0 2px 44px;
+  font: 600 15px/1 'Cinzel', serif;
+  letter-spacing: .15em;
+  color: var(--gold);
+}
+
+.gift-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  font-size: 28px;
+  line-height: 1;
+}
+.gift-icon img { width: 100%; height: 100%; object-fit: contain; }
+
+.x-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 199, 122, .35);
+  background: rgba(0, 0, 0, .25);
+  color: rgba(246, 227, 168, .8);
+  font-size: 20px;
+  line-height: 1;
+}
+.x-btn:active { transform: scale(.94); }
+
+/* Colonne de droite : Donuts et top likeurs */
+.donuts,
+.likers {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  min-height: 0;
+}
+.side-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  scrollbar-width: none;
+}
+.side-list::-webkit-scrollbar { display: none; }
+.side-list li { font-size: 22px; padding: 6px 2px; }
+.side-list .empty { color: rgba(243, 233, 210, .45); font-style: italic; border: 0; font-size: 19px; }
+.side-list .mult { flex: none; font: 700 17px/1 'Cinzel', serif; color: var(--gold); }
+.likers .side-list li .medal { flex: none; width: 30px; text-align: center; font-size: 22px; }
+.likers .side-list li .likes { flex: none; font: 700 18px/1 'Cinzel', serif; color: #ffb3c4; }
+.likers .panel-head .count { background: rgba(255, 140, 170, .18); color: #ffd0da; }
+
+/* Barre du bas */
+.dash-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.corner-game {
+  justify-self: start;
+  white-space: nowrap;
+  max-width: 100%;
+  min-height: 70px;
+  border-radius: 22px;
+  font-size: 22px;
+}
+.next-wrap { display: flex; align-items: center; gap: 12px; }
+.btn-next {
+  min-height: 74px;
+  min-width: min(380px, 30vw);
+  white-space: nowrap;
+  font-size: 28px !important;
+}
+
+/* Radio */
+.radio {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  padding: 8px 12px 8px 10px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, rgba(40, 18, 62, .86), rgba(12, 8, 22, .88));
+  border: 1px solid rgba(232, 199, 122, .45);
+}
+.radio-disc {
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #e8c77a 0 5px, #2a1646 6px 9px, transparent 10px),
+    repeating-radial-gradient(circle, #1a1024 0 2px, #2a1a38 3px 4px);
+  border: 1.5px solid rgba(232, 199, 122, .6);
+}
+.radio.playing .radio-disc { animation: spin 4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.radio-info { min-width: 0; max-width: min(200px, 14vw); }
+.radio-info small { display: block; font: 600 13px/1 'Cinzel', serif; letter-spacing: .15em; color: var(--gold); }
+.radio-info strong {
+  display: block;
+  font: 600 20px/1.3 'Cormorant Garamond', serif;
+  color: #fff4d0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.radio-buttons { display: flex; gap: 6px; align-items: center; }
+.radio-buttons .icon-btn.small { width: 46px; height: 46px; font-size: 18px; }
+
+/* ---------- Jeu des Portes : départ, compte à rebours, session ---------- */
+
+.game-start {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(20, 8, 32, .55), rgba(4, 2, 8, .8));
+  animation: fade-in .5s ease;
+}
+.game-start-card {
+  width: min(680px, 100%);
+  padding: 30px 34px 34px;
+  border-radius: 30px;
+  text-align: center;
+  background: linear-gradient(165deg, rgba(44, 20, 66, .95), rgba(14, 8, 24, .96));
+  border: 1px solid rgba(232, 199, 122, .6);
+  box-shadow: 0 0 60px rgba(255, 200, 120, .2), 0 30px 80px rgba(0, 0, 0, .6);
+}
+.game-start-card h2 { margin: 12px 0 0; font: 700 38px/1.15 'Cinzel', serif; color: var(--gold-light); }
+.game-start-card .hint { font-size: 22px; line-height: 1.4; }
+.game-start-actions { display: grid; gap: 12px; margin-top: 22px; }
+
+.countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(30, 10, 50, .5), rgba(0, 0, 0, .65));
+}
+.countdown span {
+  font: 700 clamp(120px, 34vmin, 320px)/1 'Cinzel', serif;
+  color: #fff3c4;
+  text-align: center;
+  text-shadow: 0 0 40px rgba(255, 200, 100, .95), 0 0 100px rgba(255, 150, 60, .6);
+}
+.countdown span.go { font-size: clamp(54px, 11vmin, 120px); padding: 0 20px; }
+.countdown span.tick { animation: count-tick .95s cubic-bezier(.2, .9, .3, 1) both; }
+@keyframes count-tick {
+  from { transform: scale(2.2); opacity: 0; }
+  30% { transform: scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  to { transform: scale(.8); opacity: 0; }
+}
+
+.session-bar {
+  position: fixed;
+  z-index: 55;
+  left: calc(max(16px, env(safe-area-inset-left)) + 72px);
+  top: calc(var(--ticker-space, 0px) + 14px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 460px);
+  padding: 6px 8px 6px 20px;
+  border-radius: 99px;
+  background: rgba(20, 10, 30, .82);
+  border: 1.5px solid rgba(232, 199, 122, .5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .45);
+  font: 600 17px/1.2 'Cinzel', serif;
+  color: var(--gold-light);
+}
+.session-bar .btn { flex: none; white-space: nowrap; }
+.session-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.small-btn { min-height: 44px !important; padding: 6px 18px !important; font-size: 17px !important; }
+body.focusing .session-bar { opacity: 0; pointer-events: none; }
+
+@media (max-width: 1100px) {
+  .corner-game span:not(.btn-icon) { display: none; }
+  .corner-game { padding: 10px 14px; }
+  .radio-info { display: none; }
+}
+@media (max-width: 900px), (max-height: 640px) {
+  .radio-info { display: none; }
+  .corner-game span:not(.btn-icon) { display: none; }
+  .btn-next { min-width: 0; font-size: 22px !important; }
+}

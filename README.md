@@ -1,8 +1,7 @@
 # Les Portes du Destin
 
-Une page plein écran pour animer les lives TikTok de voyance, pensée pour une tablette en mode paysage.
-Douze portes enchantées sont disposées en arc dans un jardin, autour d’un dé à 12 faces.
-On lance le dé : il roule, le chiffre sort, la porte correspondante s’avance, s’ouvre dans un flot de lumière, et le résultat s’affiche.
+Le tableau de bord de mes lives TikTok de voyance, en plein écran sur tablette (mode paysage).
+Il réunit la liste des personnes à traiter (gagnants du jeu et priorités cadeaux), les messages épinglés, les messages de l’univers, le top des likeurs, un ruban de messages, une radio… et le **Jeu des Portes** : douze portes enchantées en arc autour d’un dé à 12 faces.
 
 - **L’application** : `https://thefnii.github.io/portes/`
 
@@ -28,24 +27,57 @@ L’application demande à la tablette de garder l’écran allumé, si le navig
 
 ---
 
-## Les écrans
+## Le tableau de bord (accueil)
 
-### L’accueil
-- **Jeu des Portes** : la version simple, sans connexion TikTok.
-- **Jeu des Portes · TikTok** : le chat participe et les gagnants s’affichent.
-- **Messages défilants** : active ou coupe le bandeau de messages.
-- **Écran de veille** : seulement les messages, en très grand, sur fond sombre, sans rien d’autre. À laisser pendant le live entre deux jeux. Touchez l’écran pour revenir.
-- En haut à droite : **⛶** plein écran et **⚙** réglages.
+- **En haut** : l’état de la connexion TikTok, 🌙 écran de veille, ⛶ plein écran, ⚙ réglages.
+- **📌 Message épinglé** : le message que vous épinglez dans le live s’affiche en grand.
+- **Au centre, la liste « À traiter »** : la personne **en cours** en grand, puis les suivantes, avec l’icône du cadeau (ou 🏆 pour un gagnant du jeu). Le ✕ retire une personne.
+- **À droite** : 🍩 **Messages de l’univers** (les Donuts ; touchez ✓ une fois le message lu) et ❤ **Top likeurs**.
+- **En bas** : le ruban des messages, puis 🚪 **Jeu des Portes** (à gauche), **Personne suivante** (au centre, avec ↶ pour annuler) et la **radio** (à droite).
 
-### La page Réglages
-Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙) : connexion TikTok, modification des messages, son, aide au plein écran et simulation. Ces réglages restent enregistrés sur l’appareil utilisé.
+La liste, les Donuts, les likes et le message épinglé sont gardés sur l’appareil : un rechargement de page en plein live ne fait rien perdre. Au début d’un nouveau live : **⚙ Réglages → Nouveau live**.
 
-### Le jeu
-- Touchez **Lancer le dé**, ou directement le dé.
-- Le bouton **☰**, en haut à gauche, ouvre le menu du jeu : retour à l’accueil, messages défilants, son, nouvelle partie, écran de veille, plein écran et réglages.
-- Sur ordinateur, la barre **Espace** fait la même chose que le grand bouton doré.
+Chaque partie (liste, message épinglé, Donuts, top likeurs, jeu, radio, ruban) peut être masquée dans **⚙ Réglages → Affichage et son**.
 
-Le tirage est vraiment aléatoire : il utilise le générateur cryptographique du navigateur, et chaque face a exactement une chance sur 12.
+### L’ordre de la liste
+1. **Priorités** : 🐱 Chat porte-bonheur (1 question) et 🌌 Galaxie (3 questions), dans l’ordre exact d’envoi des cadeaux. Chaque cadeau compte : 3 chats = 3 questions, 2 galaxies = 6 questions.
+2. **Gagnants du Jeu des Portes**, ajoutés quand le jeu se ferme.
+3. **🎈 Cœurs ballon**, toujours sous les gagnants :
+   - envoyés **avant le premier jeu** ou **pendant un jeu** : mis en attente (« cœurs ballon en attente » en haut de la liste), puis ajoutés quand le jeu se ferme ;
+   - envoyés **entre deux jeux** : ajoutés tout de suite.
+
+Les 🍩 Donuts ne vont pas dans la liste : ils ont leur propre case.
+
+### La radio
+Elle lit la playlist de la radio du Grimoire : un morceau ajouté là-bas apparaît ici automatiquement. Pendant le Jeu des Portes, son volume baisse pour laisser entendre le dé et les portes.
+
+### Écran de veille
+🌙 : seulement les messages, en très grand, sur fond sombre. Touchez l’écran pour revenir.
+
+---
+
+## Le Jeu des Portes
+
+1. **🚪 Jeu des Portes** ouvre l’écran de départ : **Commencer avec le chat**, ou **Sans le chat** (tirage simple).
+2. Compte à rebours **3… 2… 1… Le jeu commence !** : les spectateurs écrivent leur chiffre de 1 à 12.
+3. **Lancer le dé** : les participations se ferment, la porte s’ouvre et affiche ses gagnants.
+4. Pas assez de monde derrière cette porte ? **Relancer le dé** : il ne peut tomber que sur une porte **pas encore ouverte** (les portes ouvertes sont estompées). Relancez autant de fois que vous voulez.
+5. Tous les gagnants s’accumulent (la barre en haut indique les portes ouvertes et le nombre de gagnants).
+6. **Fermer le jeu** : les gagnants rejoignent la liste du tableau de bord, suivis des cœurs ballon en attente.
+
+Le bouton **☰** ouvre le menu du jeu (fermer le jeu, messages, son, écran de veille, plein écran, réglages). Sur ordinateur, **Espace** lance le dé ; sur le tableau de bord, **→** passe à la personne suivante.
+
+Le tirage est vraiment aléatoire : il utilise le générateur cryptographique du navigateur.
+
+---
+
+## La page Réglages
+Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙) : connexion TikTok, cadeaux, messages défilants, affichage et son, nouveau live, simulations. Ces réglages restent enregistrés sur l’appareil utilisé.
+
+### Cadeaux (remplaçables)
+Chaque rôle (Chat porte-bonheur, Galaxie, Cœur ballon, Donut) est déclenché par une liste de noms de cadeaux, modifiable. TikTok envoie souvent les noms **en anglais** (par exemple *Galaxy*, *Doughnut*) ; les noms les plus probables sont déjà remplis.
+
+Le plus sûr : pendant un live, les cadeaux reçus apparaissent dans **Cadeaux reçus récemment**. Choisissez le rôle de chacun (ou « Aucun rôle ») puis **Enregistrer les cadeaux**. C’est aussi comme ça qu’on remplace un cadeau par un autre.
 
 ---
 
@@ -106,13 +138,14 @@ Le pseudo et la clé restent uniquement dans le navigateur de la tablette ; ils 
 
 L’indicateur en haut à droite du jeu montre l’état de la connexion : vert quand vous êtes connecté, orange pendant la connexion ou quand vous n’êtes pas encore en live. Dans ce dernier cas, l’application réessaie toute seule.
 
-### Déroulement d’une partie
-1. **Lancer le jeu** : les participations s’ouvrent.
-2. Les spectateurs écrivent un chiffre de 1 à 12 dans le chat, seul (« 7 ») ou dans une phrase (« je prends la 7 ✨ »). Les chiffres en emoji comme 7️⃣ ou 🔟 comptent aussi.
-3. Près de chaque porte, un petit personnage apparaît pour chaque personne qui l’a choisie (au-delà de 8, un « +N » s’affiche). Chaque groupe porte le numéro de sa porte et se place automatiquement là où il ne cache rien. Le panneau **Participants** montre les derniers inscrits.
-4. **Lancer le dé** ferme les participations et lance le dé.
-5. La porte s’ouvre et affiche la liste des gagnants, avec leur photo de profil quand TikTok la fournit.
-6. **Nouvelle partie** efface les participants et rouvre aussitôt les participations.
+### Ce que l’application lit dans le live
+- **Le chat** : les chiffres du Jeu des Portes.
+- **Les cadeaux** : nom, identifiant, expéditeur et nombre envoyé (combos compris).
+- **Les likes** : par personne, pour le top des likeurs, et le total du live.
+- **Le message épinglé** : affiché dans la case 📌 (et retiré quand vous le désépinglez).
+
+### Pendant le jeu
+Les spectateurs écrivent un chiffre de 1 à 12 dans le chat, seul (« 7 ») ou dans une phrase (« je prends la 7 ✨ ») ; les chiffres en emoji comme 7️⃣ ou 🔟 comptent aussi. Près de chaque porte, un petit personnage apparaît pour chaque personne qui l’a choisie (au-delà de 8, un « +N »). Chaque groupe porte le numéro de sa porte et se place là où il ne cache rien.
 
 ### Les règles appliquées automatiquement
 - **Une seule participation par personne.** Répéter le même chiffre ne change rien.
@@ -121,7 +154,9 @@ L’indicateur en haut à droite du jeu montre l’état de la connexion : vert 
 - Vos propres messages sont ignorés : vous pouvez écrire « tapez un chiffre entre 1 et 12 » sans être éliminé.
 
 ### Répéter sans être en live
-**⚙ Réglages → Lancer une simulation** : de faux spectateurs remplissent les portes, et certains changent d’avis et sont éliminés. C’est l’idéal pour s’entraîner ou vérifier l’affichage avant le live.
+**⚙ Réglages → Répéter sans être en live** :
+- **Simuler des cadeaux et des likes** remplit le tableau de bord (priorités, Donuts, cœurs ballon, likes, message épinglé) ;
+- **Simuler le Jeu des Portes** : de faux spectateurs remplissent les portes, certains changent d’avis et sont éliminés.
 
 ---
 
@@ -134,7 +169,7 @@ Par défaut, l’application synthétise ses propres sons. Pour utiliser les vô
 | `de.mp3`       | le dé est lancé (le fichier couvre tout le roulé) |
 | `porte.mp3`    | la porte s’ouvre                                  |
 | `resultat.mp3` | le message ou la liste des gagnants apparaît      |
-| `jeu.mp3`      | « Lancer le jeu » : les participations s’ouvrent  |
+| `jeu.mp3`      | « Le jeu commence ! » : les participations s’ouvrent |
 
 Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez le fichier pour revenir au son d’origine.
 
@@ -150,7 +185,13 @@ manifest.webmanifest  installation sur la tablette
 sw.js                 fonctionnement hors ligne
 css/                  styles (base, scène, portes, interface)
 js/
-  main.js             enchaînement des écrans et du jeu
+  main.js             tableau de bord, événements du live, Jeu des Portes
+  dashboard.js        affichage du tableau de bord
+  queue.js            liste à traiter (priorités, gagnants, cœurs, Donuts) et likes
+  gifts.js            rôles des cadeaux et comptage des combos
+  features.js         modules activables, réglages des cadeaux
+  radio.js            radio (playlist du Grimoire)
+  shell.js            petites fenêtres, plein écran, écran allumé
   admin.js            page des réglages
   messages.js         lecture des messages (réglages ou messages.json)
   config.js           titres, noms des fichiers de sons, réglages
@@ -162,7 +203,7 @@ js/
   fx.js               particules et lumières
   sound.js            sons synthétisés (ou fichiers de sounds/)
   ticker.js           bandeau des messages
-  game.js             règles du jeu (participations, éliminations)
+  game.js             règles du jeu (participations, éliminations, relances)
   tiktok.js           connexion au chat via Euler Stream
 fonts/                polices Cinzel et Cormorant Garamond (licence OFL)
 icons/                icônes de l’application
@@ -173,7 +214,7 @@ tests/                tests des règles du jeu
 Pour changer l’apparence d’une porte (couleur, fleurs, forme de l’arche, médaillon), modifiez sa fiche dans `js/doors-data.js`. Les options possibles sont listées en haut du fichier.
 
 ### Tests
-Les règles du jeu sont couvertes par des tests automatiques (Node.js 20 ou plus) :
+Les règles du jeu, de la liste et des cadeaux sont couvertes par des tests automatiques (Node.js 20 ou plus) :
 
 ```
 npm test

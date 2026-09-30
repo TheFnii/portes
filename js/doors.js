@@ -131,7 +131,7 @@ export class DoorStage {
     this.els.forEach((el, i) => {
       const { crowd } = el;
       const c = counts ? counts[i + 1] : 0;
-      crowd.hidden = !counts;
+      crowd.hidden = !counts || !c;
       if (!counts) {
         crowd.textContent = '';
         return;
