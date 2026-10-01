@@ -1,5 +1,8 @@
 # Images des cadeaux
 
+> Plus simple : **Réglages → Images et sons des cadeaux** permet de déposer chaque image
+> directement depuis la tablette, sans passer par GitHub.
+
 Déposez vos images dans ces dossiers **avec exactement ces noms** (l'extension peut être
 `.png`, `.webp`, `.jpg`, `.jpeg`, `.gif` ou `.svg` ; le PNG transparent est conseillé).
 Tant qu'une image manque, l'application garde son dessin ou son emoji.

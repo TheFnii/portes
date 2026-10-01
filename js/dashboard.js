@@ -162,7 +162,11 @@ export class Dashboard {
   renderDonuts(queue) {
     const d = queue.donuts;
     const head = $('donut-head-icon');
-    if (head && image('logoEnveloppe') && !head.querySelector('img')) head.innerHTML = logo('donut', '', '✉️');
+    const src = image('logoEnveloppe') || '';
+    if (head && head.dataset.src !== src) {
+      head.dataset.src = src;
+      head.innerHTML = logo('donut', '', '✉️');
+    }
     $('donut-count').textContent = d.length;
     $('donut-list').innerHTML = d.length
       ? d.map((e) => `<li><span class="env-mini gift-icon" aria-hidden="true">${logo('donut', '', '✉️')}</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}

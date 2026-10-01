@@ -18,7 +18,7 @@ import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
-import { imagesReady } from './images.js';
+import { imagesReady, refreshImages } from './images.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
 import { normalizeHandle } from './game.js';
@@ -814,6 +814,11 @@ window.addEventListener('storage', (e) => {
   if (!e.key || !e.key.startsWith('portes.')) return;
   if (e.key === STORAGE.messages) loadTicker();
   else if (e.key === STORAGE.board) loadBoard();
+  else if (e.key === STORAGE.media) {
+    // Image ou son déposé dans les Réglages : on le prend tout de suite.
+    refreshImages().then(() => changed());
+    sound.loadFiles();
+  }
   else if ([STORAGE.features, STORAGE.gifts, STORAGE.settings, STORAGE.ticker, STORAGE.sound, STORAGE.queue, STORAGE.tiktokUser, STORAGE.tiktokKey].includes(e.key)) reloadSettings();
 });
 

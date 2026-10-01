@@ -8,6 +8,7 @@ import { TikTokLive } from './tiktok.js';
 import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
 import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
 import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
+import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -296,4 +297,102 @@ $('live-reset').addEventListener('click', () => {
   if (!window.confirm('Vider la liste, les enveloppes, les tops, les paliers et le message épinglé ?')) return;
   [STORAGE.queue, STORAGE.likes, STORAGE.gifters, STORAGE.milestone, STORAGE.pinned].forEach((k) => save(k, null));
   status($('reset-status'), '✓ Tout est vidé. Bon live !', 'live');
+});
+
+// ---------- Images et sons déposés ----------
+
+const MEDIA_SLOTS = {
+  'media-logos': [
+    ['img:logoChat', 'Chat porte-bonheur', 'liste à traiter', 384],
+    ['img:logoGalaxie', 'Galaxie', 'liste à traiter', 384],
+    ['img:logoEnveloppe', 'Enveloppe', 'case « Message de l’univers »', 384],
+  ],
+  'media-anims': [
+    ['img:animChat', 'Chat porte-bonheur', 'grande animation', 1400],
+    ['img:animGalaxie', 'Galaxie', 'grande animation', 1400],
+    ['img:animEnveloppe', 'Enveloppe', 'virevolte, le pseudo est écrit dessus', 1400],
+  ],
+  'media-sounds': [
+    ['snd:chat', 'Chat porte-bonheur', 'miaulement'],
+    ['snd:galaxie', 'Galaxie', 'harpe'],
+    ['snd:enveloppe', 'Enveloppe', 'papier froissé'],
+    ['snd:palier', 'Palier de likes', 'fanfare'],
+    ['snd:de', 'Dé', 'le dé qui roule'],
+    ['snd:porte', 'Porte', 'la porte s’ouvre'],
+    ['snd:resultat', 'Résultat', 'le résultat apparaît'],
+    ['snd:jeu', 'Début du jeu', '« Le jeu commence ! »'],
+  ],
+};
+const mediaUrls = {};
+
+function mediaSlot([key, label, where]) {
+  const isSound = key.startsWith('snd:');
+  return `<div class="media-slot" data-media="${key}">
+    <div class="media-preview">${isSound ? '<button class="btn media-play" type="button" hidden>▶ Écouter</button>' : ''}<span class="media-empty">${isSound ? 'Son d’origine' : 'Dessin d’origine'}</span></div>
+    <strong>${esc(label)}</strong><small>${esc(where)}</small>
+    <div class="media-actions">
+      <label class="btn btn-primary media-pick">Choisir<input type="file" accept="${isSound ? 'audio/*,.mp3,.m4a,.wav' : 'image/*'}" hidden></label>
+      <button class="btn btn-ghost media-remove" type="button" hidden>Retirer</button>
+    </div>
+    <p class="form-status" role="status"></p>
+  </div>`;
+}
+
+async function showMedia(slot) {
+  const key = slot.dataset.media;
+  const blob = await getMedia(key);
+  if (mediaUrls[key]) URL.revokeObjectURL(mediaUrls[key]);
+  mediaUrls[key] = blob ? URL.createObjectURL(blob) : null;
+  const prev = slot.querySelector('.media-preview');
+  const old = prev.querySelector('img');
+  if (old) old.remove();
+  if (key.startsWith('img:') && blob) prev.insertAdjacentHTML('afterbegin', `<img src="${mediaUrls[key]}" alt="">`);
+  const play = prev.querySelector('.media-play');
+  if (play) play.hidden = !blob;
+  prev.querySelector('.media-empty').hidden = !!blob;
+  slot.querySelector('.media-remove').hidden = !blob;
+}
+
+function mediaChanged() {
+  try { localStorage.setItem(STORAGE.media, String(Date.now())); } catch (e) { /* ignore */ }
+}
+
+Object.entries(MEDIA_SLOTS).forEach(([id, slots]) => {
+  const box = $(id);
+  box.innerHTML = slots.map(mediaSlot).join('');
+  box.querySelectorAll('.media-slot').forEach(showMedia);
+});
+
+document.querySelectorAll('.media-slot').forEach((slot) => {
+  const key = slot.dataset.media;
+  const max = (Object.values(MEDIA_SLOTS).flat().find((s) => s[0] === key) || [])[3];
+  const status = slot.querySelector('.form-status');
+  slot.querySelector('input[type=file]').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const isSound = key.startsWith('snd:');
+    if (isSound ? !/^audio\//.test(file.type) && !/\.(mp3|m4a|wav|aac|ogg)$/i.test(file.name) : !/^image\//.test(file.type)) {
+      status.textContent = isSound ? 'Ce fichier n’est pas un son.' : 'Ce fichier n’est pas une image.';
+      return;
+    }
+    status.textContent = 'Enregistrement…';
+    try {
+      const blob = isSound ? file : await shrinkImage(file, max || 1400);
+      await putMedia(key, blob);
+      await showMedia(slot);
+      mediaChanged();
+      status.textContent = 'Enregistré ✓';
+    } catch (err) {
+      status.textContent = 'Impossible d’enregistrer ce fichier sur cet appareil.';
+    }
+  });
+  slot.querySelector('.media-remove').addEventListener('click', async () => {
+    await deleteMedia(key).catch(() => {});
+    await showMedia(slot);
+    mediaChanged();
+    status.textContent = 'Retiré : retour au dessin ou au son d’origine.';
+  });
+  const play = slot.querySelector('.media-play');
+  if (play) play.addEventListener('click', () => { if (mediaUrls[key]) new Audio(mediaUrls[key]).play().catch(() => {}); });
 });

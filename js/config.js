@@ -57,6 +57,7 @@ export const STORAGE = {
   gifters: 'portes.gifters',
   milestone: 'portes.milestone',
   radioVolume: 'portes.radio.volume',
+  media: 'portes.media',          // change quand une image ou un son est déposé dans les Réglages
 };
 
 // Messages de la case centrale (règles du live), modifiables comme ceux du ruban.

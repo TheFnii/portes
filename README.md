@@ -197,7 +197,9 @@ Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez l
 
 ## Logos et illustrations des cadeaux
 
-Déposez vos images dans le dossier **`images/`** avec ces noms (extension `.png`, `.webp`, `.jpg`, `.gif` ou `.svg`) :
+Le plus simple : **Réglages → Images et sons des cadeaux**, puis **Choisir** pour chaque logo, illustration ou son. Les fichiers sont gardés dans l’appareil (déposez-les sur la tablette du live) et passent avant ceux du dépôt GitHub.
+
+Pour qu’ils soient sur tous les appareils, déposez-les plutôt dans le dossier **`images/`** avec ces noms (extension `.png`, `.webp`, `.jpg`, `.gif` ou `.svg`) :
 
 | Fichier                     | Où il apparaît                                            |
 | --------------------------- | --------------------------------------------------------- |
@@ -230,7 +232,8 @@ js/
   queue.js            liste à traiter, classements (likes, gifters), paliers de likes
   settings.js         tout ce qui est personnalisable (textes, disposition…)
   celebrate.js        grandes animations (Chat, Galaxie, enveloppe, palier)
-  images.js           recherche des logos et illustrations fournis (images/)
+  images.js           recherche des logos et illustrations fournis (Réglages ou images/)
+  media.js            images et sons déposés dans les Réglages (gardés dans l’appareil)
   gifts.js            rôles des cadeaux et comptage des combos
   features.js         modules activables, réglages des cadeaux
   radio.js            radio (playlist du Grimoire)

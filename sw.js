@@ -1,6 +1,6 @@
 // Service worker : l'application reste utilisable même si le réseau flanche pendant le live.
 // Réseau d'abord (les mises à jour, dont messages.json, arrivent tout de suite), cache en secours.
-const CACHE = 'portes-v8';
+const CACHE = 'portes-v9';
 const SHELL = [
   './',
   'index.html',
@@ -32,6 +32,7 @@ const SHELL = [
   'js/settings.js',
   'js/celebrate.js',
   'js/images.js',
+  'js/media.js',
   'js/config.js',
   'js/prefs.js',
   'js/random.js',

@@ -2,6 +2,7 @@
 // Un fichier déposé dans sounds/ (voir config.js) remplace le son synthétisé correspondant.
 
 import { SOUND_FILES, STORAGE } from './config.js';
+import { getMedia } from './media.js';
 
 const KEY = STORAGE.sound;
 
@@ -41,12 +42,14 @@ export class Sound {
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
 
-  // Charge les sons personnalisés présents dans sounds/ (les fichiers absents sont ignorés).
+  // Charge les sons personnalisés : ceux déposés dans les Réglages, sinon ceux du dossier
+  // sounds/ (les fichiers absents sont ignorés).
   loadFiles() {
+    if (!this.ctx) return;
     this.files = {};
     Object.entries(SOUND_FILES).forEach(([name, url]) => {
-      fetch(url, { cache: 'no-cache' })
-        .then((r) => (r.ok ? r.arrayBuffer() : null))
+      getMedia(`snd:${name}`)
+        .then((blob) => (blob ? blob.arrayBuffer() : fetch(url, { cache: 'no-cache' }).then((r) => (r.ok ? r.arrayBuffer() : null))))
         .then((buf) => (buf ? new Promise((ok, ko) => this.ctx.decodeAudioData(buf, ok, ko)) : null))
         .then((audio) => { if (audio) this.files[name] = audio; })
         .catch(() => {});
