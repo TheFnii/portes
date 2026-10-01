@@ -1,9 +1,8 @@
 // Cadeaux TikTok : reconnaître le rôle de chaque cadeau et compter les combos.
 //
 // Rôles :
-//   cat    → Chat porte-bonheur : 1 question prioritaire par cadeau
-//   galaxy → Galaxie : 3 questions prioritaires par cadeau
-//   heart  → Cœur ballon : ajouté sous les gagnants du jeu
+//   cat    → Chat porte-bonheur : 1 question prioritaire par cadeau (réglable)
+//   galaxy → Galaxie : 3 questions prioritaires par cadeau (réglable)
 //   donut  → Donut : message de l'univers (case à part)
 //
 // Les noms envoyés par TikTok peuvent être en anglais ou changer : le rôle se reconnaît d'abord
@@ -12,14 +11,12 @@
 export const ROLES = {
   cat: { label: 'Chat porte-bonheur', emoji: '🐱', effect: '1 question prioritaire', questions: 1 },
   galaxy: { label: 'Galaxie', emoji: '🌌', effect: '3 questions prioritaires', questions: 3 },
-  heart: { label: 'Cœur ballon', emoji: '🎈', effect: 'Sous les gagnants du jeu' },
-  donut: { label: 'Donut', emoji: '🍩', effect: 'Message de l’univers' },
+  donut: { label: 'Donut', emoji: '✉️', effect: 'Message de l’univers' },
 };
 
 export const DEFAULT_GIFT_NAMES = {
   cat: ['Chat porte-bonheur', 'Lucky Cat', 'Fortune Cat', 'Maneki Neko'],
   galaxy: ['Galaxie', 'Galaxy'],
-  heart: ['Cœur ballon', 'Heart Balloon', 'Balloon Heart', 'Love Balloon'],
   donut: ['Donut', 'Doughnut', 'Beignet'],
 };
 

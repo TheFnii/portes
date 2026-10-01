@@ -1,0 +1,224 @@
+/* ---------- Grandes animations : Chat, Galaxie, enveloppe, palier ---------- */
+
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  pointer-events: none;
+}
+.celebrate .confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+
+.cel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(30, 12, 50, .78), rgba(4, 2, 10, .82));
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+.cel.in { opacity: 1; }
+.cel.out { opacity: 0; }
+
+.cel-text {
+  margin: 18px 0 0;
+  font: italic 600 clamp(28px, 4.4vmin, 48px)/1.2 'Cormorant Garamond', serif;
+  color: #f7ead0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+}
+.cel-name {
+  margin: 6px 0 0;
+  max-width: 90vw;
+  font: 700 clamp(44px, 9vmin, 110px)/1.05 'Cinzel', serif;
+  color: #fff3c4;
+  text-shadow: 0 0 30px rgba(255, 200, 100, .9), 0 0 70px rgba(255, 150, 60, .5), 0 4px 6px rgba(0, 0, 0, .8);
+  overflow-wrap: anywhere;
+}
+.cel.in .cel-text { animation: cel-rise .7s .25s cubic-bezier(.2, .9, .3, 1) both; }
+.cel.in .cel-name { animation: cel-rise .8s .45s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes cel-rise { from { opacity: 0; transform: translateY(30px) scale(.9); } }
+
+/* Chat porte-bonheur */
+.cel-icon {
+  position: relative;
+  width: min(38vmin, 340px);
+  aspect-ratio: 1;
+}
+.cel-icon svg,
+.cel-icon img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, .6)); }
+.cel-cat.in .cel-icon { animation: cel-pop 1s cubic-bezier(.2, 1.5, .4, 1) both, cel-wave 1.6s 1s ease-in-out infinite; }
+@keyframes cel-pop { from { transform: scale(.1) rotate(-25deg); opacity: 0; } }
+@keyframes cel-wave { 50% { transform: rotate(-4deg) scale(1.03); } }
+.cel-rays {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 140vmax;
+  height: 140vmax;
+  margin: -70vmax 0 0 -70vmax;
+  background: repeating-conic-gradient(rgba(255, 220, 140, .16) 0 6deg, transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0, transparent 45%);
+  mask-image: radial-gradient(circle, #000 0, transparent 45%);
+  animation: cel-spin 24s linear infinite;
+}
+@keyframes cel-spin { to { transform: rotate(360deg); } }
+
+/* Galaxie */
+.cel-galaxy-disc {
+  position: relative;
+  width: min(52vmin, 460px);
+  aspect-ratio: 1;
+}
+.cel-galaxy.in .cel-galaxy-disc { animation: cel-pop 1.2s cubic-bezier(.2, 1.3, .4, 1) both; }
+.cel-spiral {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 0deg, transparent 0 10%, rgba(190, 140, 255, .55) 18%, transparent 32%, transparent 50%, rgba(120, 180, 255, .5) 62%, transparent 76%),
+    radial-gradient(circle, rgba(255, 240, 255, .9) 0, rgba(200, 150, 255, .55) 18%, rgba(90, 50, 180, .35) 45%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, #000 35%, transparent 70%);
+  mask-image: radial-gradient(circle, #000 35%, transparent 70%);
+  animation: cel-spin 7s linear infinite;
+}
+.cel-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22%;
+  height: 22%;
+  margin: -11% 0 0 -11%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0, #ffe9ff 30%, rgba(220, 170, 255, 0) 70%);
+  animation: cel-pulse 1.6s ease-in-out infinite;
+}
+@keyframes cel-pulse { 50% { transform: scale(1.35); opacity: .8; } }
+.cel-galaxy-disc i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 2px rgba(220, 200, 255, .9);
+  transform: scale(var(--s, 1));
+  animation: cel-twinkle 1.4s ease-in-out infinite;
+}
+@keyframes cel-twinkle { 50% { opacity: .15; } }
+
+/* Enveloppe du Donut */
+.cel-donut { perspective: 1200px; }
+.comet {
+  position: absolute;
+  left: -20vw;
+  width: 22vw;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 240, 200, .9));
+  box-shadow: 0 0 12px rgba(255, 220, 150, .8);
+  transform: rotate(-12deg);
+  animation: comet 1.6s ease-in infinite;
+}
+@keyframes comet { to { transform: translateX(140vw) rotate(-12deg); } }
+.env-fly {
+  width: min(64vmin, 520px);
+  aspect-ratio: 320 / 210;
+  animation: env-swirl 2.3s cubic-bezier(.3, .1, .3, 1) both;
+}
+@keyframes env-swirl {
+  0% { transform: translate(-60vw, -30vh) rotate(-60deg) scale(.3); }
+  30% { transform: translate(30vw, -18vh) rotate(160deg) scale(.55); }
+  60% { transform: translate(-22vw, 12vh) rotate(330deg) scale(.75); }
+  85% { transform: translate(4vw, -4vh) rotate(380deg) scale(.95); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+}
+.env-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(.3, 1.2, .4, 1);
+}
+.cel-donut.landed .env-card { transform: rotateY(180deg); }
+.env-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.env-face svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .55)); }
+.env-front {
+  transform: rotateY(180deg);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fbf3e2, #ead9b6);
+  border: 3px solid #b08a4a;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, .55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6% 8%;
+  color: #3a2412;
+}
+.env-stamp {
+  position: absolute;
+  right: 5%;
+  top: 7%;
+  width: 14%;
+  aspect-ratio: 4 / 5;
+  display: grid;
+  place-items: center;
+  border: 2px dashed #9b1c2c;
+  color: #9b1c2c;
+  font-size: clamp(18px, 3vmin, 32px);
+}
+.env-to { font: italic 500 clamp(18px, 3vmin, 28px)/1.2 'Cormorant Garamond', serif; color: #6b4a2a; }
+.env-name {
+  margin-top: 6px;
+  font: 700 clamp(28px, 6vmin, 60px)/1.1 'Cinzel', serif;
+  color: #2a1606;
+  overflow-wrap: anywhere;
+  border-bottom: 2px solid rgba(107, 74, 42, .4);
+  padding-bottom: 4px;
+}
+
+/* Palier de likes */
+.cel-medal { font-size: clamp(90px, 22vmin, 200px); line-height: 1; }
+.cel-milestone.in .cel-medal { animation: cel-pop 1s cubic-bezier(.2, 1.5, .4, 1) both, cel-wave 1.4s 1s ease-in-out infinite; }
+.cel-title {
+  margin: 10px 0 0;
+  font: 700 clamp(30px, 5.5vmin, 64px)/1.1 'Cinzel', serif;
+  color: #ffb3c4;
+  text-shadow: 0 0 24px rgba(255, 120, 160, .8);
+}
+.cel.in .cel-title { animation: cel-rise .7s .2s cubic-bezier(.2, .9, .3, 1) both; }
+
+/* Annonce discrète */
+.cel-banner {
+  inset: auto 0 auto 0;
+  top: 14vh;
+  background: none;
+}
+.cel-banner p {
+  margin: 0 auto;
+  max-width: 90vw;
+  padding: 14px 30px;
+  border-radius: 99px;
+  background: rgba(40, 14, 40, .92);
+  border: 1.5px solid #ffb3c4;
+  color: #ffd6df;
+  font: 600 clamp(20px, 3vmin, 30px)/1.25 'Cinzel', serif;
+  box-shadow: 0 0 30px rgba(255, 120, 160, .45);
+}
+.cel-banner.in p { animation: cel-rise .6s cubic-bezier(.2, 1.3, .4, 1) both; }

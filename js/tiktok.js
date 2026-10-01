@@ -4,7 +4,7 @@
 // Événements émis :
 //   'status' → { state: 'off' | 'connecting' | 'live' | 'waiting' | 'error', message }
 //   'chat'   → { userId, handle, name, avatar, text }
-//   'gift'   → { user, msgId, giftId, giftName, giftImage, combo, groupId, repeatCount, repeatEnd }
+//   'gift'   → { user, msgId, giftId, giftName, giftImage, combo, groupId, repeatCount, repeatEnd, diamonds }
 //   'like'   → { user, likeCount, totalLikeCount }
 //   'pin'    → { pinned: true, text, user, pinId } ou { pinned: false, pinId }
 
@@ -183,6 +183,7 @@ export class TikTokLive extends EventTarget {
           groupId: String(d.groupId || ''),
           repeatCount: Number(d.repeatCount) || 1,
           repeatEnd: Boolean(Number(d.repeatEnd)),
+          diamonds: Number(g.diamondCount) || 0,
         });
       } else if (m.type === 'WebcastLikeMessage') {
         this.emit('like', { user: userOf(d.user), likeCount: Number(d.likeCount) || 0, totalLikeCount: Number(d.totalLikeCount) || 0 });

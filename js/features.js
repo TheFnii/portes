@@ -5,10 +5,12 @@ import { load, save } from './prefs.js';
 import { DEFAULT_GIFT_NAMES } from './gifts.js';
 
 export const FEATURES = {
-  list: { label: 'Liste des personnes à traiter', on: true },
-  pinned: { label: 'Messages épinglés du live', on: true },
-  donuts: { label: 'Messages de l’univers (Donuts)', on: true },
-  likes: { label: 'Top des likeurs', on: true },
+  pinned: { label: 'Message épinglé du live', on: true },
+  donuts: { label: 'Message de l’univers (enveloppes des Donuts)', on: true },
+  likes: { label: 'Top Likes', on: true },
+  gifters: { label: 'Top Gifters', on: true },
+  board: { label: 'Case centrale (messages qui défilent)', on: true },
+  list: { label: 'Liste à traiter', on: true },
   game: { label: 'Jeu des Portes', on: true },
   radio: { label: 'Radio', on: true },
 };

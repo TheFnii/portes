@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/doors.css">
   <link rel="stylesheet" href="css/ui.css">
   <link rel="stylesheet" href="css/dash.css">
+  <link rel="stylesheet" href="css/celebrate.css">
 </head>
 <body class="at-home">
   <svg class="defs" aria-hidden="true" width="0" height="0"><defs id="flower-defs"></defs></svg>
@@ -73,66 +74,73 @@
 
   <!-- Tableau de bord du live (accueil) -->
   <section class="dash" id="dash">
-    <header class="dash-top">
-      <h1 class="dash-brand">Les Portes <span>du Destin</span></h1>
-      <div class="dash-top-right">
-        <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
-        <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
-        <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
-      </div>
-    </header>
-
-    <section class="panel pinned" id="pinned" data-feature="pinned">
-      <span class="pinned-icon" aria-hidden="true">📌</span>
-      <div class="pinned-body">
-        <small id="pinned-who">Message épinglé</small>
-        <p id="pinned-text" class="empty">Aucun message épinglé pour l’instant</p>
-      </div>
-    </section>
-
-    <div class="dash-mid">
-      <section class="panel queue" id="queue-box" data-feature="list">
-        <header class="panel-head">
-          <h2>À traiter</h2>
-          <span class="count" id="queue-count">0</span>
-          <span class="queue-pending" id="queue-pending" hidden></span>
-        </header>
-        <div class="queue-current" id="queue-current"></div>
-        <ol class="queue-list" id="queue-list"></ol>
+    <div class="dash-main" id="dash-main">
+      <section class="panel pinned" id="pinned" data-feature="pinned">
+        <span class="pinned-icon" aria-hidden="true">📌</span>
+        <p id="pinned-text" class="empty"></p>
       </section>
 
-      <aside class="dash-side">
-        <section class="panel donuts" id="donut-box" data-feature="donuts">
-          <header class="panel-head"><h3>🍩 Messages de l’univers</h3><span class="count" id="donut-count">0</span></header>
-          <ul class="side-list" id="donut-list"></ul>
-        </section>
+      <section class="panel donuts" id="donut-box" data-feature="donuts">
+        <header class="panel-head"><h3><span class="env-mini" aria-hidden="true">✉️</span> <span data-text="univTitle">Message de l’univers</span></h3><span class="count" id="donut-count">0</span></header>
+        <ul class="side-list" id="donut-list"></ul>
+      </section>
+
+      <aside class="dash-tops" id="dash-tops">
         <section class="panel likers" id="likes-box" data-feature="likes">
-          <header class="panel-head"><h3>❤ Top likeurs</h3><span class="count" id="likes-total">0</span></header>
+          <header class="panel-head"><h3>❤ <span data-text="likesTitle">Top Likes</span></h3><span class="count" id="likes-total">0</span></header>
           <ol class="side-list" id="likes-list"></ol>
         </section>
+        <section class="panel gifters" id="gifters-box" data-feature="gifters">
+          <header class="panel-head"><h3>🎁 <span data-text="giftersTitle">Top Gifters</span></h3><span class="count" id="gifters-total">0</span></header>
+          <ol class="side-list" id="gifters-list"></ol>
+        </section>
       </aside>
+
+      <section class="panel board" id="board-box" data-feature="board">
+        <h2 class="board-title" data-text="boardTitle"></h2>
+        <div class="board-window"><div class="board-track" id="board-track"></div></div>
+      </section>
+
+      <section class="queue-col" id="queue-col" data-feature="list">
+        <section class="panel queue" id="queue-box">
+          <header class="panel-head">
+            <h2 id="queue-title"></h2>
+            <span class="milestone-chip" id="milestone-chip" hidden></span>
+          </header>
+          <div class="queue-current" id="queue-current"></div>
+          <ol class="queue-list" id="queue-list"></ol>
+        </section>
+        <div class="queue-buttons">
+          <button class="btn" id="btn-undo" type="button"><span aria-hidden="true">↶</span> <span data-text="undoButton">Retour en arrière</span></button>
+          <button class="btn btn-primary btn-next" id="btn-next" type="button" data-text="nextButton">Personne suivante</button>
+        </div>
+      </section>
     </div>
 
     <footer class="dash-bottom">
-      <button class="btn corner-game" id="btn-open-game" data-feature="game" type="button">
-        <span class="btn-icon" aria-hidden="true">🚪</span><span><strong>Jeu des Portes</strong></span>
-      </button>
-      <div class="next-wrap" data-feature="list">
-        <button class="icon-btn" id="btn-undo" type="button" title="Annuler" aria-label="Annuler la dernière action">↶</button>
-        <button class="btn btn-primary btn-next" id="btn-next" type="button">Personne suivante</button>
+      <div class="dash-tools">
+        <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
+        <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
+        <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
       </div>
+      <button class="btn corner-game" id="btn-open-game" data-feature="game" type="button">
+        <span class="btn-icon keyhole" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4.2"/><path d="M9.6 12.4 L8 20 h8 l-1.6 -7.6z"/></svg></span>
+        <span data-text="gameButton">Jeu des Portes</span>
+      </button>
       <div class="radio" id="radio" data-feature="radio"></div>
     </footer>
   </section>
+
+  <!-- Grandes animations (cadeaux, palier) -->
+  <div class="celebrate" id="celebrate" hidden></div>
 
   <!-- Jeu des Portes : écran de départ et compte à rebours -->
   <div class="game-start" id="game-start" hidden>
     <div class="game-start-card">
       <p class="home-kicker">✦ Jeu des Portes ✦</p>
-      <h2>Une nouvelle partie commence</h2>
+      <h2 data-text="startTitle">Une nouvelle partie commence</h2>
       <div class="flourish" aria-hidden="true"></div>
-      <p class="hint">Au signal, chacun écrit un chiffre de 1 à 12 dans le chat. Une seule porte par personne : changer de chiffre élimine.
-        Vous pourrez relancer le dé autant de fois que vous voulez ; tous les gagnants sont gardés jusqu’à la fermeture du jeu.</p>
+      <p class="hint" data-text="startText"></p>
       <div class="game-start-actions">
         <button class="btn btn-primary" data-action="start-live" type="button">Commencer avec le chat</button>
         <button class="btn" data-action="start-simple" type="button">Sans le chat (tirage simple)</button>

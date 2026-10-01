@@ -29,30 +29,35 @@ L’application demande à la tablette de garder l’écran allumé, si le navig
 
 ## Le tableau de bord (accueil)
 
-- **En haut** : l’état de la connexion TikTok, 🌙 écran de veille, ⛶ plein écran, ⚙ réglages.
-- **📌 Message épinglé** : le message que vous épinglez dans le live s’affiche en grand.
-- **Au centre, la liste « À traiter »** : la personne **en cours** en grand, puis les suivantes, avec l’icône du cadeau (ou 🏆 pour un gagnant du jeu). Le ✕ retire une personne.
-- **À droite** : 🍩 **Messages de l’univers** (les Donuts ; touchez ✓ une fois le message lu) et ❤ **Top likeurs**.
-- **En bas** : le ruban des messages, puis 🚪 **Jeu des Portes** (à gauche), **Personne suivante** (au centre, avec ↶ pour annuler) et la **radio** (à droite).
+- **En haut** : 📌 le **message épinglé** du live, en grand (la taille du texte s’adapte à sa longueur), et à côté la case **✉️ Message de l’univers** (les Donuts : touchez ✓ une fois le message lu).
+- **À gauche** : ❤ **Top Likes** et 🎁 **Top Gifters** (pièces offertes).
+- **Au centre** : une grande case où vos **messages et règles** défilent doucement.
+- **À droite (environ 1/3)** : la **liste à traiter**, titrée « X tirages avant le prochain jeu », avec la personne **en cours** en grand. Dessous : **Retour en arrière** et **Personne suivante**. Le ✕ retire une personne.
+- **En bas** : le ruban des messages, puis 🌙 veille, ⚙ réglages, ⛶ plein écran et l’état de la connexion TikTok à gauche ; le bouton **Jeu des Portes** (serrure) au milieu ; la **radio** à droite.
 
-La liste, les Donuts, les likes et le message épinglé sont gardés sur l’appareil : un rechargement de page en plein live ne fait rien perdre. Au début d’un nouveau live : **⚙ Réglages → Nouveau live**.
-
-Chaque partie (liste, message épinglé, Donuts, top likeurs, jeu, radio, ruban) peut être masquée dans **⚙ Réglages → Affichage et son**.
+Tout est sauvegardé sur l’appareil : un rechargement de page en plein live ne fait rien perdre. Au début d’un nouveau live : **⚙ Réglages → Nouveau live**.
 
 ### L’ordre de la liste
-1. **Priorités** : 🐱 Chat porte-bonheur (1 question) et 🌌 Galaxie (3 questions), dans l’ordre exact d’envoi des cadeaux. Chaque cadeau compte : 3 chats = 3 questions, 2 galaxies = 6 questions.
+1. **Priorités** : 🐱 Chat porte-bonheur (1 question) et 🌌 Galaxie (3 questions), dans l’ordre exact d’envoi des cadeaux. Chaque cadeau compte : 3 chats = 3 questions.
 2. **Gagnants du Jeu des Portes**, ajoutés quand le jeu se ferme.
-3. **🎈 Cœurs ballon**, toujours sous les gagnants :
-   - envoyés **avant le premier jeu** ou **pendant un jeu** : mis en attente (« cœurs ballon en attente » en haut de la liste), puis ajoutés quand le jeu se ferme ;
-   - envoyés **entre deux jeux** : ajoutés tout de suite.
+3. **🏅 Paliers de likes** (100k, 150k, 200k…), tout en bas.
 
-Les 🍩 Donuts ne vont pas dans la liste : ils ont leur propre case.
+### Les animations
+- **Chat porte-bonheur** : le chat apparaît en grand avec un miaulement, « 1 question en priorité pour : [pseudo] ».
+- **Galaxie** : une galaxie scintille au milieu de l’écran, son de harpe, « 3 questions en priorité pour : [pseudo] ».
+- **Donut** : une enveloppe virevolte parmi les étoiles et les comètes, s’arrête, se retourne côté destinataire avec le pseudo, puis file dans la case « Message de l’univers ».
+- **Palier de likes** : le pseudo s’affiche en grand avec une fanfare et des confettis.
+
+Les animations passent l’une après l’autre. Chacune peut être désactivée dans les Réglages.
+
+### Les paliers de likes
+À partir de **99 800 likes**, un bandeau annonce que le palier approche. Dès que le compteur atteint **réellement 100 000** (puis 150 000, 200 000…), la **première personne qui l’écrit dans le chat** (« 100k », « 100 000 », « 100000 » ou « palier ») remporte le palier. Les messages envoyés avant d’atteindre le palier ne comptent pas. Les nombres et les mots acceptés sont réglables.
 
 ### La radio
-Elle lit la playlist de la radio du Grimoire : un morceau ajouté là-bas apparaît ici automatiquement. Pendant le Jeu des Portes, son volume baisse pour laisser entendre le dé et les portes.
+Elle lit la playlist de la radio du Grimoire. Quand elle joue, le titre du morceau s’affiche. **Touchez le lecteur** : un petit menu s’ouvre avec le **volume** et la **playlist** (touchez un titre pour le jouer) ; touchez en dehors ou la flèche ← pour le fermer. Pendant le Jeu des Portes, le volume baisse.
 
 ### Écran de veille
-🌙 : seulement les messages, en très grand, sur fond sombre. Touchez l’écran pour revenir.
+🌙 : seulement les messages du ruban, en très grand, sur fond sombre. Touchez l’écran pour revenir.
 
 ---
 
@@ -63,7 +68,7 @@ Elle lit la playlist de la radio du Grimoire : un morceau ajouté là-bas appara
 3. **Lancer le dé** : les participations se ferment, la porte s’ouvre et affiche ses gagnants.
 4. Pas assez de monde derrière cette porte ? **Relancer le dé** : il ne peut tomber que sur une porte **pas encore ouverte** (les portes ouvertes sont estompées). Relancez autant de fois que vous voulez.
 5. Tous les gagnants s’accumulent (la barre en haut indique les portes ouvertes et le nombre de gagnants).
-6. **Fermer le jeu** : les gagnants rejoignent la liste du tableau de bord, suivis des cœurs ballon en attente.
+6. **Fermer le jeu** : les gagnants rejoignent la liste du tableau de bord.
 
 Le bouton **☰** ouvre le menu du jeu (fermer le jeu, messages, son, écran de veille, plein écran, réglages). Sur ordinateur, **Espace** lance le dé ; sur le tableau de bord, **→** passe à la personne suivante.
 
@@ -72,18 +77,29 @@ Le tirage est vraiment aléatoire : il utilise le générateur cryptographique d
 ---
 
 ## La page Réglages
-Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙) : connexion TikTok, cadeaux, messages défilants, affichage et son, nouveau live, simulations. Ces réglages restent enregistrés sur l’appareil utilisé.
+Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙). Ces réglages restent enregistrés sur l’appareil utilisé.
+
+- **Connexion TikTok** : pseudo, clé API, test de connexion.
+- **Cadeaux** : quels cadeaux déclenchent le Chat porte-bonheur, la Galaxie et le Donut (remplaçables).
+- **Ruban défilant** et **Case centrale** : vos messages, un par ligne, et leur vitesse.
+- **Personnalisation** : presque tout est modifiable.
+  - *Disposition* : côté de la liste (droite ou gauche), largeurs des colonnes, hauteur du message épinglé, taille des textes, nombre de personnes dans les tops.
+  - *Textes du tableau de bord* : titre de la liste, boutons, titres des cases.
+  - *Animations des cadeaux* : chacune activable, ses textes, le nombre de questions par Chat et par Galaxie, la durée.
+  - *Paliers de likes* : premier palier, intervalle, alerte, mots acceptés, textes.
+  - *Textes du Jeu des Portes* : titres, écran de départ, compte à rebours (activable), résultats.
+  - Dans les textes, **{n}**, **{q}** et **{palier}** sont remplacés automatiquement. **Tout remettre par défaut** annule tout.
+- **Affichage et son** : chaque case du tableau de bord peut être masquée (message épinglé, enveloppes, Top Likes, Top Gifters, case centrale, liste, jeu, radio) ; le ruban et le son.
+- **Nouveau live** et **simulations**.
 
 ### Cadeaux (remplaçables)
-Chaque rôle (Chat porte-bonheur, Galaxie, Cœur ballon, Donut) est déclenché par une liste de noms de cadeaux, modifiable. TikTok envoie souvent les noms **en anglais** (par exemple *Galaxy*, *Doughnut*) ; les noms les plus probables sont déjà remplis.
-
-Le plus sûr : pendant un live, les cadeaux reçus apparaissent dans **Cadeaux reçus récemment**. Choisissez le rôle de chacun (ou « Aucun rôle ») puis **Enregistrer les cadeaux**. C’est aussi comme ça qu’on remplace un cadeau par un autre.
+Chaque rôle est déclenché par une liste de noms de cadeaux, modifiable. TikTok envoie souvent les noms **en anglais** (par exemple *Galaxy*, *Doughnut*). Le plus sûr : pendant un live, les cadeaux reçus apparaissent dans **Cadeaux reçus récemment** ; choisissez le rôle de chacun puis **Enregistrer les cadeaux**.
 
 ---
 
-## Modifier les messages défilants
+## Modifier les messages défilants (ruban et case centrale)
 
-Deux possibilités :
+Le ruban du bas lit **`messages.json`**, la case centrale lit **`regles.json`**. Les deux se modifient de la même façon. Deux possibilités :
 
 **1. Depuis les réglages (le plus simple)** : ⚙ → **Messages défilants**, un message par ligne, réglez la vitesse, vérifiez l’aperçu puis **Enregistrer les messages**. Ils s’affichent aussitôt, mais seulement sur cet appareil. **Revenir aux messages du fichier** rétablit ceux de GitHub.
 
@@ -140,8 +156,8 @@ L’indicateur en haut à droite du jeu montre l’état de la connexion : vert 
 
 ### Ce que l’application lit dans le live
 - **Le chat** : les chiffres du Jeu des Portes.
-- **Les cadeaux** : nom, identifiant, expéditeur et nombre envoyé (combos compris).
-- **Les likes** : par personne, pour le top des likeurs, et le total du live.
+- **Les cadeaux** : nom, identifiant, valeur en pièces, expéditeur et nombre envoyé (combos compris) : liste, animations et Top Gifters.
+- **Les likes** : par personne pour le Top Likes, et le total du live pour les paliers.
 - **Le message épinglé** : affiché dans la case 📌 (et retiré quand vous le désépinglez).
 
 ### Pendant le jeu
@@ -155,7 +171,7 @@ Les spectateurs écrivent un chiffre de 1 à 12 dans le chat, seul (« 7 ») ou 
 
 ### Répéter sans être en live
 **⚙ Réglages → Répéter sans être en live** :
-- **Simuler des cadeaux et des likes** remplit le tableau de bord (priorités, Donuts, cœurs ballon, likes, message épinglé) ;
+- **Simuler cadeaux, likes et palier** : les animations, la liste, les enveloppes, les tops et un palier de 100k ;
 - **Simuler le Jeu des Portes** : de faux spectateurs remplissent les portes, certains changent d’avis et sont éliminés.
 
 ---
@@ -170,6 +186,10 @@ Par défaut, l’application synthétise ses propres sons. Pour utiliser les vô
 | `porte.mp3`    | la porte s’ouvre                                  |
 | `resultat.mp3` | le message ou la liste des gagnants apparaît      |
 | `jeu.mp3`      | « Le jeu commence ! » : les participations s’ouvrent |
+| `chat.mp3`     | Chat porte-bonheur (miaulement)                   |
+| `galaxie.mp3`  | Galaxie (harpe)                                   |
+| `enveloppe.mp3`| Donut : l’enveloppe virevolte                     |
+| `palier.mp3`   | palier de likes atteint                           |
 
 Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez le fichier pour revenir au son d’origine.
 
@@ -180,14 +200,17 @@ Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez l
 ```
 index.html            la page unique
 admin.html            la page des réglages
-messages.json         les messages défilants par défaut (modifiables sur GitHub)
+messages.json         les messages du ruban (modifiables sur GitHub)
+regles.json           les messages de la case centrale (modifiables sur GitHub)
 manifest.webmanifest  installation sur la tablette
 sw.js                 fonctionnement hors ligne
 css/                  styles (base, scène, portes, interface)
 js/
   main.js             tableau de bord, événements du live, Jeu des Portes
   dashboard.js        affichage du tableau de bord
-  queue.js            liste à traiter (priorités, gagnants, cœurs, Donuts) et likes
+  queue.js            liste à traiter, classements (likes, gifters), paliers de likes
+  settings.js         tout ce qui est personnalisable (textes, disposition…)
+  celebrate.js        grandes animations (Chat, Galaxie, enveloppe, palier)
   gifts.js            rôles des cadeaux et comptage des combos
   features.js         modules activables, réglages des cadeaux
   radio.js            radio (playlist du Grimoire)

@@ -17,6 +17,10 @@ export const SOUND_FILES = {
   porte: 'sounds/porte.mp3',      // la porte qui s'ouvre
   resultat: 'sounds/resultat.mp3', // le résultat apparaît
   jeu: 'sounds/jeu.mp3',          // « Le jeu commence ! »
+  chat: 'sounds/chat.mp3',        // Chat porte-bonheur
+  galaxie: 'sounds/galaxie.mp3',  // Galaxie
+  enveloppe: 'sounds/enveloppe.mp3', // Donut : l'enveloppe arrive
+  palier: 'sounds/palier.mp3',    // palier de likes
 };
 
 // Euler Stream (lecture du chat TikTok LIVE).
@@ -36,7 +40,15 @@ export const STORAGE = {
   gifts: 'portes.gifts',
   giftLog: 'portes.giftlog',
   radio: 'portes.radio',
+  settings: 'portes.settings',
+  board: 'portes.board',
+  gifters: 'portes.gifters',
+  milestone: 'portes.milestone',
+  radioVolume: 'portes.radio.volume',
 };
+
+// Messages de la case centrale (règles du live), modifiables comme ceux du ruban.
+export const BOARD_FILE = 'regles.json';
 
 // Radio : lit la playlist du Grimoire (même site, donc toujours à jour).
 export const RADIO_PLAYLIST_URL = '/Book/book.json';

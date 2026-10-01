@@ -1,7 +1,13 @@
-// Messages défilants : ceux saisis dans les réglages (enregistrés sur cet appareil)
-// ont priorité sur le fichier messages.json du dépôt GitHub.
+// Messages défilants (ruban et case centrale) : ceux saisis dans les réglages (enregistrés sur
+// cet appareil) ont priorité sur le fichier du dépôt GitHub (messages.json ou regles.json).
 
-import { MESSAGES_FILE, DEFAULT_SPEED, STORAGE } from './config.js';
+import { MESSAGES_FILE, BOARD_FILE, DEFAULT_SPEED, STORAGE } from './config.js';
+
+// Deux listes de messages : le ruban du bas et la case centrale.
+export const SOURCES = {
+  ticker: { file: MESSAGES_FILE, key: STORAGE.messages },
+  board: { file: BOARD_FILE, key: STORAGE.board },
+};
 import { load, save } from './prefs.js';
 
 function clean(list) {
@@ -13,16 +19,17 @@ function speedOf(v) {
   return n > 5 && n < 1000 ? n : DEFAULT_SPEED;
 }
 
-export async function loadFileMessages() {
-  const res = await fetch(MESSAGES_FILE, { cache: 'no-cache' });
-  if (!res.ok) throw new Error(`messages.json : ${res.status}`);
+export async function loadFileMessages(kind = 'ticker') {
+  const { file } = SOURCES[kind];
+  const res = await fetch(file, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`${file} : ${res.status}`);
   const data = await res.json();
   return { messages: clean(Array.isArray(data) ? data : data.messages), speed: speedOf(data.vitesse) };
 }
 
-export function loadLocalMessages() {
+export function loadLocalMessages(kind = 'ticker') {
   try {
-    const raw = load(STORAGE.messages);
+    const raw = load(SOURCES[kind].key);
     if (!raw) return null;
     const data = JSON.parse(raw);
     return { messages: clean(data.messages), speed: speedOf(data.vitesse) };
@@ -31,22 +38,22 @@ export function loadLocalMessages() {
   }
 }
 
-export function saveLocalMessages(messages, speed) {
-  save(STORAGE.messages, JSON.stringify({ messages: clean(messages), vitesse: speedOf(speed) }));
+export function saveLocalMessages(messages, speed, kind = 'ticker') {
+  save(SOURCES[kind].key, JSON.stringify({ messages: clean(messages), vitesse: speedOf(speed) }));
 }
 
-export function clearLocalMessages() {
-  save(STORAGE.messages, null);
+export function clearLocalMessages(kind = 'ticker') {
+  save(SOURCES[kind].key, null);
 }
 
 // Renvoie { messages, speed, source: 'local' | 'file', error }
-export async function loadMessages() {
-  const local = loadLocalMessages();
+export async function loadMessages(kind = 'ticker') {
+  const local = loadLocalMessages(kind);
   if (local) return { ...local, source: 'local', error: false };
   try {
-    return { ...(await loadFileMessages()), source: 'file', error: false };
+    return { ...(await loadFileMessages(kind)), source: 'file', error: false };
   } catch (e) {
-    console.warn('messages.json illisible :', e);
+    console.warn(`${SOURCES[kind].file} illisible :`, e);
     return { messages: [], speed: DEFAULT_SPEED, source: 'file', error: true };
   }
 }

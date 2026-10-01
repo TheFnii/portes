@@ -7,8 +7,11 @@ import { Ticker } from './ticker.js';
 import { TikTokLive } from './tiktok.js';
 import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
 import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
+import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
+const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 
 function status(el, text, state = '') {
   el.textContent = text;
@@ -78,61 +81,130 @@ $('tt-test').addEventListener('click', () => {
   t.connect(user, key);
 });
 
-// ---------- Messages défilants ----------
+// ---------- Messages qui défilent (ruban du bas et case centrale) ----------
+
+// prefix : « msg » (ruban) ou « board » (case centrale) ; kind : liste de messages concernée.
+function messageEditor(prefix, kind, file, onPreview) {
+  const el = (id) => $(`${prefix}-${id}`);
+  const lines = () => el('text').value.split('\n').map((l) => l.trim()).filter(Boolean);
+  const show = () => {
+    const speed = Number(el('speed').value);
+    el('speed-out').textContent = speed;
+    if (onPreview) onPreview(lines(), speed);
+  };
+  const fillForm = ({ messages, speed }) => {
+    el('text').value = messages.join('\n');
+    el('speed').value = speed;
+    show();
+  };
+  let timer;
+  el('text').addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(show, 400);
+  });
+  el('speed').addEventListener('input', show);
+  el('save').addEventListener('click', () => {
+    const list = lines();
+    if (!list.length) {
+      status(el('status'), 'Ajoutez au moins un message.', 'error');
+      return;
+    }
+    saveLocalMessages(list, Number(el('speed').value), kind);
+    status(el('status'), `✓ ${list.length} message${list.length > 1 ? 's' : ''} enregistré${list.length > 1 ? 's' : ''} sur cet appareil.`, 'live');
+  });
+  el('reset').addEventListener('click', async () => {
+    clearLocalMessages(kind);
+    try {
+      fillForm(await loadFileMessages(kind));
+      status(el('status'), `Messages du fichier ${file} (GitHub) rétablis.`, 'live');
+    } catch (e) {
+      status(el('status'), `Le fichier ${file} est illisible.`, 'error');
+    }
+  });
+  loadMessages(kind).then((data) => {
+    fillForm(data);
+    if (data.error) status(el('status'), `Le fichier ${file} contient une erreur.`, 'error');
+    else status(el('status'), data.source === 'local'
+      ? 'Messages actuels : ceux enregistrés sur cet appareil.'
+      : `Messages actuels : ceux du fichier ${file} (GitHub).`);
+  });
+}
 
 const preview = new Ticker($('preview'), $('preview-track'));
 preview.setEnabled(true);
+messageEditor('msg', 'ticker', 'messages.json', (list, speed) => preview.setData(list, speed));
+messageEditor('board', 'board', 'regles.json');
 
-function currentLines() {
-  return $('msg-text').value.split('\n').map((l) => l.trim()).filter(Boolean);
-}
+// ---------- Personnalisation : textes, disposition, paliers, animations ----------
 
-function showPreview() {
-  const speed = Number($('msg-speed').value);
-  $('msg-speed-out').textContent = speed;
-  preview.setData(currentLines(), speed);
-}
-
-function fill({ messages, speed }) {
-  $('msg-text').value = messages.join('\n');
-  $('msg-speed').value = speed;
-  showPreview();
-}
-
-let previewTimer;
-$('msg-text').addEventListener('input', () => {
-  clearTimeout(previewTimer);
-  previewTimer = setTimeout(showPreview, 400);
-});
-$('msg-speed').addEventListener('input', showPreview);
-
-$('msg-save').addEventListener('click', () => {
-  const lines = currentLines();
-  if (!lines.length) {
-    status($('msg-status'), 'Ajoutez au moins un message.', 'error');
-    return;
+function settingField(item, value) {
+  const id = `set-${item.key}`;
+  const attrs = `id="${id}" data-setting="${item.key}"`;
+  if (item.type === 'bool') {
+    return `<button class="btn btn-menu btn-toggle" ${attrs} type="button" aria-pressed="${value}">
+      <span><strong>${esc(item.label)}</strong><small class="state">${value ? 'Oui' : 'Non'}</small></span><span class="switch" aria-hidden="true"></span></button>`;
   }
-  saveLocalMessages(lines, Number($('msg-speed').value));
-  status($('msg-status'), `✓ ${lines.length} message${lines.length > 1 ? 's' : ''} enregistré${lines.length > 1 ? 's' : ''} sur cet appareil.`, 'live');
-});
+  let input;
+  if (item.type === 'select') {
+    input = `<select ${attrs}>${item.options.map(([v, l]) => `<option value="${v}"${v === value ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  } else if (item.type === 'range') {
+    input = `<span class="range-row"><input ${attrs} type="range" min="${item.min}" max="${item.max}" step="1" value="${value}"><output>${value}${item.unit || ''}</output></span>`;
+  } else if (item.type === 'number') {
+    input = `<input ${attrs} type="number" inputmode="numeric" min="${item.min}" max="${item.max}" value="${value}">`;
+  } else if (item.type === 'textarea') {
+    input = `<textarea ${attrs} rows="3">${esc(value)}</textarea>`;
+  } else {
+    input = `<input ${attrs} type="text" value="${esc(value)}" placeholder="${esc(item.def)}">`;
+  }
+  return `<label class="field"><span>${esc(item.label)}</span>${input}</label>`;
+}
 
-$('msg-reset').addEventListener('click', async () => {
-  clearLocalMessages();
-  try {
-    fill(await loadFileMessages());
-    status($('msg-status'), 'Messages du fichier messages.json (GitHub) rétablis.', 'live');
-  } catch (e) {
-    status($('msg-status'), 'Le fichier messages.json est illisible.', 'error');
+function renderSettings(values = loadSettings()) {
+  $('custom-groups').innerHTML = SETTINGS.map((g, i) => `
+    <details class="set-group"${i === 0 ? ' open' : ''}>
+      <summary>${esc(g.group)}</summary>
+      <div class="set-items">${g.items.map((it) => settingField(it, values[it.key])).join('')}</div>
+    </details>`).join('');
+}
+
+function readSettings() {
+  const out = loadSettings();
+  SETTINGS.forEach((g) => g.items.forEach((it) => {
+    const el = $(`set-${it.key}`);
+    if (!el) return;
+    if (it.type === 'bool') out[it.key] = el.getAttribute('aria-pressed') === 'true';
+    else if (it.type === 'range' || it.type === 'number') {
+      const v = Number(el.value);
+      out[it.key] = Number.isFinite(v) ? Math.min(it.max, Math.max(it.min, v)) : it.def;
+    } else out[it.key] = el.value;
+  }));
+  return out;
+}
+
+$('custom-groups').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-setting]');
+  if (!b) return;
+  const on = b.getAttribute('aria-pressed') !== 'true';
+  b.setAttribute('aria-pressed', String(on));
+  b.querySelector('.state').textContent = on ? 'Oui' : 'Non';
+});
+$('custom-groups').addEventListener('input', (e) => {
+  if (e.target.type === 'range') {
+    const it = SETTINGS.flatMap((g) => g.items).find((x) => x.key === e.target.dataset.setting);
+    e.target.nextElementSibling.textContent = `${e.target.value}${it.unit || ''}`;
   }
 });
-
-loadMessages().then((data) => {
-  fill(data);
-  if (data.error) status($('msg-status'), 'Le fichier messages.json contient une erreur.', 'error');
-  else status($('msg-status'), data.source === 'local'
-    ? 'Messages actuels : ceux enregistrés sur cet appareil.'
-    : 'Messages actuels : ceux du fichier messages.json (GitHub).');
+$('custom-save').addEventListener('click', () => {
+  saveSettings(readSettings());
+  status($('custom-status'), '✓ Réglages enregistrés. Ils s’appliquent dès le retour au tableau de bord.', 'live');
 });
+$('custom-reset').addEventListener('click', () => {
+  if (!window.confirm('Remettre tous les textes et la disposition par défaut ?')) return;
+  saveSettings(DEFAULTS);
+  renderSettings(DEFAULTS);
+  status($('custom-status'), 'Réglages par défaut rétablis.', 'live');
+});
+renderSettings();
 
 // ---------- Affichage et son ----------
 
@@ -174,7 +246,6 @@ renderFeatures();
 
 // ---------- Cadeaux ----------
 
-const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function renderGifts(cfg = loadGiftConfig()) {
   $('gift-roles').innerHTML = Object.entries(ROLES).map(([role, r]) => `
@@ -220,7 +291,7 @@ renderGifts();
 // ---------- Nouveau live ----------
 
 $('live-reset').addEventListener('click', () => {
-  if (!window.confirm('Vider la liste des personnes, les Donuts, les likes et le message épinglé ?')) return;
-  [STORAGE.queue, STORAGE.likes, STORAGE.pinned].forEach((k) => save(k, null));
+  if (!window.confirm('Vider la liste, les enveloppes, les tops, les paliers et le message épinglé ?')) return;
+  [STORAGE.queue, STORAGE.likes, STORAGE.gifters, STORAGE.milestone, STORAGE.pinned].forEach((k) => save(k, null));
   status($('reset-status'), '✓ Tout est vidé. Bon live !', 'live');
 });

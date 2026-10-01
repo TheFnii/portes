@@ -69,7 +69,7 @@
 
     <!-- Messages défilants -->
     <section class="card" id="messages">
-      <h2>Messages défilants</h2>
+      <h2>Ruban défilant (bas de l’écran)</h2>
       <p class="hint">Un message par ligne. Les emojis sont les bienvenus ✨🔮🌙</p>
       <textarea id="msg-text" rows="8" spellcheck="true" placeholder="Bienvenue dans mon live ✨"></textarea>
       <label class="field">
@@ -85,6 +85,34 @@
         <button class="btn btn-ghost" id="msg-reset" type="button">Revenir aux messages du fichier</button>
       </div>
       <p class="form-status" id="msg-status" role="status"></p>
+    </section>
+
+    <!-- Case centrale -->
+    <section class="card" id="case-centrale">
+      <h2>Case centrale (règles, messages)</h2>
+      <p class="hint">Les messages défilent lentement de bas en haut dans la grande case du milieu. Un message par ligne.</p>
+      <textarea id="board-text" rows="8" spellcheck="true" placeholder="🐱 Chat porte-bonheur : 1 question en priorité"></textarea>
+      <label class="field">
+        <span>Vitesse de défilement : <output id="board-speed-out">30</output></span>
+        <input id="board-speed" type="range" min="10" max="90" step="2" value="30">
+      </label>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="board-save" type="button">Enregistrer les messages</button>
+        <button class="btn btn-ghost" id="board-reset" type="button">Revenir aux messages du fichier</button>
+      </div>
+      <p class="form-status" id="board-status" role="status"></p>
+    </section>
+
+    <!-- Personnalisation -->
+    <section class="card" id="personnalisation">
+      <h2>Personnalisation</h2>
+      <p class="hint">Textes, disposition, paliers de likes, animations et Jeu des Portes. Les mots entre accolades sont remplacés automatiquement : <strong>{n}</strong> nombre, <strong>{q}</strong> questions, <strong>{palier}</strong> palier (100k…).</p>
+      <div id="custom-groups"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="custom-save" type="button">Enregistrer la personnalisation</button>
+        <button class="btn btn-ghost" id="custom-reset" type="button">Tout remettre par défaut</button>
+      </div>
+      <p class="form-status" id="custom-status" role="status"></p>
     </section>
 
     <!-- Affichage et son -->
@@ -112,7 +140,7 @@
     <!-- Nouveau live -->
     <section class="card">
       <h2>Nouveau live</h2>
-      <p class="hint">La liste des personnes, les Donuts, les likes et le message épinglé restent enregistrés même si la page se recharge. Videz-les au début d’un nouveau live.</p>
+      <p class="hint">La liste à traiter, les enveloppes, les tops, les paliers et le message épinglé restent enregistrés même si la page se recharge. Videz-les au début d’un nouveau live.</p>
       <button class="btn" id="live-reset" type="button">Tout vider pour un nouveau live</button>
       <p class="form-status" id="reset-status" role="status"></p>
     </section>
@@ -122,7 +150,7 @@
       <h2>Répéter sans être en live</h2>
       <p class="hint">De faux spectateurs participent : pratique pour s’entraîner ou vérifier l’affichage.</p>
       <div class="form-actions">
-        <a class="btn" href="index.html?simulation=cadeaux">Simuler des cadeaux et des likes</a>
+        <a class="btn" href="index.html?simulation=cadeaux">Simuler cadeaux, likes et palier</a>
         <a class="btn" href="index.html?simulation">Simuler le Jeu des Portes</a>
       </div>
     </section>

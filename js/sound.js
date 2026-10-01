@@ -333,6 +333,127 @@ export class Sound {
     o.stop(t + 0.4);
   }
 
+  // Chat porte-bonheur : un petit miaulement (voix glissée à travers deux formants).
+  meow() {
+    if (!this.ready) return;
+    if (this.file('chat')) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime + 0.02;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.linearRampToValueAtTime(760, t + 0.22);
+    o.frequency.linearRampToValueAtTime(640, t + 0.5);
+    o.frequency.linearRampToValueAtTime(470, t + 0.75);
+    const vib = ctx.createOscillator();
+    vib.frequency.value = 7;
+    const vg = ctx.createGain();
+    vg.gain.value = 9;
+    vib.connect(vg).connect(o.frequency);
+    const f1 = ctx.createBiquadFilter();
+    f1.type = 'bandpass';
+    f1.Q.value = 6;
+    f1.frequency.setValueAtTime(700, t);
+    f1.frequency.linearRampToValueAtTime(1500, t + 0.25);
+    f1.frequency.linearRampToValueAtTime(900, t + 0.75);
+    const f2 = ctx.createBiquadFilter();
+    f2.type = 'bandpass';
+    f2.Q.value = 8;
+    f2.frequency.value = 2600;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.5, t + 0.09);
+    g.gain.setValueAtTime(0.45, t + 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+    const g2 = ctx.createGain();
+    g2.gain.value = 0.35;
+    o.connect(f1).connect(g);
+    o.connect(f2).connect(g2).connect(g);
+    g.connect(this.master);
+    g.connect(this.reverb);
+    o.start(t); vib.start(t);
+    o.stop(t + 0.9); vib.stop(t + 0.9);
+    [1568, 2093, 2637].forEach((f, i) => this.bell(f, t + 0.6 + i * 0.08, 0.04, 1.6));
+  }
+
+  // Galaxie : arpège de harpe cristallin et scintillement.
+  harp() {
+    if (!this.ready) return;
+    if (this.file('galaxie')) return;
+    const t = this.ctx.currentTime + 0.02;
+    const notes = [261.6, 329.6, 392, 493.9, 587.3, 659.3, 784, 987.8, 1174.7, 1318.5, 1568, 1975.5];
+    notes.forEach((f, i) => this.pluck(f, t + i * 0.075, 0.09 - i * 0.004));
+    this.shimmer(t + 0.3, 2.4, 0.06);
+    this.pad([130.8, 196, 261.6], t, 0.05, 0.4, 3.6);
+  }
+
+  // Corde pincée : partiels harmoniques qui s'éteignent vite.
+  pluck(freq, t, gain) {
+    const ctx = this.ctx;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(gain, t + 0.004);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+    out.connect(this.master);
+    out.connect(this.reverb);
+    [[1, 1], [2, 0.35], [3, 0.15], [4, 0.06]].forEach(([m, a]) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq * m;
+      g.gain.value = a;
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + 2.5);
+    });
+  }
+
+  // Donut : l'enveloppe virevolte (souffle, froissements) puis se pose (carillon).
+  envelope(landAfter = 2.2) {
+    if (!this.ready) return;
+    if (this.file('enveloppe')) return;
+    const t = this.ctx.currentTime + 0.02;
+    this.rustle(t, 1.2, 0.16, 500, 2800, 0.7);
+    for (let i = 0; i < 6; i++) this.rustle(t + 0.2 + i * 0.28, 0.14, 0.12, 3200, 1800, 1.4);
+    this.shimmer(t + 0.2, landAfter, 0.04);
+    [1046.5, 1318.5, 1568, 2093].forEach((f, i) => this.glass(f, t + landAfter + i * 0.09, 0.06 - i * 0.008, 2.6));
+  }
+
+  // Palier de likes : fanfare et cloches.
+  fanfare() {
+    if (!this.ready) return;
+    if (this.file('palier')) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime + 0.02;
+    const chords = [[392, 493.9, 587.3], [392, 493.9, 587.3], [523.3, 659.3, 784]];
+    const times = [0, 0.18, 0.42];
+    chords.forEach((ch, i) => {
+      const st = t + times[i];
+      const dur = i === 2 ? 1.6 : 0.16;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(1200, st);
+      lp.frequency.linearRampToValueAtTime(3200, st + 0.08);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(0.09, st + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+      lp.connect(g);
+      g.connect(this.master);
+      g.connect(this.reverb);
+      ch.forEach((f) => {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.value = f;
+        o.connect(lp);
+        o.start(st);
+        o.stop(st + dur + 0.05);
+      });
+    });
+    [1568, 2093, 2637, 3136].forEach((f, i) => this.bell(f, t + 0.5 + i * 0.07, 0.06, 2.2));
+    this.shimmer(t + 0.4, 2, 0.06);
+  }
+
   // Petit tintement (clic de bouton, sommaire…).
   tink() {
     if (!this.ready) return;

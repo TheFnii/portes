@@ -1,6 +1,6 @@
 // Tableau de bord du live + Jeu des Portes.
 
-import { APP_SUBTITLE, APP_TAGLINE, STORAGE } from './config.js';
+import { STORAGE } from './config.js';
 import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { randomInt } from './random.js';
 import { flowerDefs } from './doors-art.js';
@@ -12,11 +12,15 @@ import { Sound } from './sound.js';
 import { Ticker } from './ticker.js';
 import { Round } from './game.js';
 import { TikTokLive } from './tiktok.js';
-import { LiveQueue, Likes } from './queue.js';
+import { LiveQueue, Ranking, Milestones } from './queue.js';
 import { roleOf, GiftCounter } from './gifts.js';
 import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
+import { Celebrate } from './celebrate.js';
+import { loadSettings, fill } from './settings.js';
+import { loadMessages } from './messages.js';
+import { normalizeHandle } from './game.js';
 import { toast, notice, closeNotice, enterFullscreen, toggleFullscreen, keepAwake, esc } from './shell.js';
 
 const $ = (id) => document.getElementById(id);
@@ -41,11 +45,18 @@ const radio = new Radio($('radio'));
 
 // Données du live, gardées sur l'appareil (un rechargement de page ne perd rien).
 const queue = new LiveQueue(readJSON(STORAGE.queue, null));
-const likes = new Likes(readJSON(STORAGE.likes, null));
+const likes = new Ranking(readJSON(STORAGE.likes, null));
+const gifters = new Ranking(readJSON(STORAGE.gifters, null));
 let pinned = readJSON(STORAGE.pinned, null);
 let features = loadFeatures();
 let giftConfig = loadGiftConfig();
+let settings = loadSettings();
 const giftCounter = new GiftCounter();
+const milestones = new Milestones();
+milestones.reached = Number(load(STORAGE.milestone, 0)) || 0;
+let milestoneAnnounced = 0; // palier déjà annoncé (« bientôt »)
+
+const celebrate = new Celebrate({ root: $('celebrate'), fx, sound, getSettings: () => settings });
 
 const dash = new Dashboard({
   onRemove: (id) => { queue.remove(id); changed(); },
@@ -71,6 +82,8 @@ function persist() {
   saveTimer = setTimeout(() => {
     save(STORAGE.queue, JSON.stringify(queue));
     save(STORAGE.likes, JSON.stringify(likes));
+    save(STORAGE.gifters, JSON.stringify(gifters));
+    save(STORAGE.milestone, milestones.reached ? String(milestones.reached) : null);
     save(STORAGE.pinned, pinned ? JSON.stringify(pinned) : null);
   }, 400);
 }
@@ -85,6 +98,7 @@ function changed() {
     dash.renderQueue(queue);
     dash.renderDonuts(queue);
     dash.renderLikes(likes);
+    dash.renderGifters(gifters);
   });
 }
 
@@ -118,10 +132,15 @@ document.addEventListener('pointerdown', unlock, { capture: true });
 
 function applyFeatures() {
   $$('[data-feature]').forEach((el) => el.classList.toggle('feature-off', !features[el.dataset.feature]));
-  const side = [features.donuts, features.likes].filter(Boolean).length;
-  document.querySelector('.dash-mid').classList.toggle('no-side', side === 0);
-  document.querySelector('.dash-side').classList.toggle('single', side === 1);
   if (!features.radio) radio.pause();
+  milestones.configure({
+    first: settings.milestoneFirst,
+    step: settings.milestoneStep,
+    alert: settings.milestoneAlert,
+    words: String(settings.milestoneWords || '').split(','),
+  });
+  dash.applySettings(settings, features);
+  changed();
 }
 
 // ---------- Tableau de bord ----------
@@ -145,11 +164,26 @@ function onGift(g) {
   const n = giftCounter.count({ ...g, userKey: g.user.key });
   if (n <= 0) return;
   logGift(g, n);
+  if (g.diamonds > 0) gifters.add(g.user, g.diamonds * n);
   const role = roleOf(g, giftConfig);
-  if (!role) return;
-  queue.addGift(role, { ...g.user, giftImage: g.giftImage }, n);
-  if (role === 'cat' || role === 'galaxy') sound.diceResult();
-  else sound.join();
+  const user = { ...g.user, giftImage: g.giftImage };
+  if (role === 'cat' || role === 'galaxy') {
+    const q = n * Math.max(1, Number(role === 'cat' ? settings.catQuestions : settings.galaxyQuestions) || 1);
+    queue.addPriority(user, role, q);
+    const text = role === 'cat' ? fill(q === 1 ? settings.catText : settings.catTextPlural, { q }) : fill(settings.galaxyText, { q });
+    const anim = role === 'cat' ? settings.animCat : settings.animGalaxy;
+    if (anim) celebrate.play(role, { name: user.name, text, giftImage: g.giftImage });
+    else sound.diceResult();
+  } else if (role === 'donut') {
+    // Le pseudo rejoint la case « Message de l'univers » une fois l'enveloppe arrivée.
+    const add = () => { queue.addDonut(user, n); changed(); };
+    if (settings.animDonut && features.donuts) {
+      celebrate.play('donut', { name: user.name, text: settings.donutText, target: $('donut-box') }).then(add);
+    } else {
+      sound.join();
+      add();
+    }
+  }
   changed();
 }
 
@@ -157,9 +191,50 @@ let likesDirty = false;
 function onLike({ user, likeCount, totalLikeCount }) {
   likes.add(user, likeCount, totalLikeCount);
   persist();
+  checkMilestone();
   if (likesDirty) return;
   likesDirty = true;
   setTimeout(() => { likesDirty = false; dash.renderLikes(likes); }, 500);
+}
+
+// ---------- Paliers de likes ----------
+
+function milestonesOn() {
+  return settings.milestones && features.list;
+}
+
+function checkMilestone() {
+  if (!milestonesOn()) {
+    dash.milestoneChip('');
+    return;
+  }
+  const st = milestones.status(likes.total);
+  const palier = Milestones.label(milestones.next());
+  if (st === 'idle') {
+    dash.milestoneChip('');
+  } else if (st === 'alert') {
+    dash.milestoneChip(`🏅 ${palier} bientôt`);
+    if (milestoneAnnounced !== milestones.next()) {
+      milestoneAnnounced = milestones.next();
+      celebrate.play('banner', { text: fill(settings.milestoneAlertText, { palier }) });
+    }
+  } else {
+    dash.milestoneChip(`🏅 ${palier} atteint !`);
+  }
+}
+
+function claimMilestone(msg) {
+  if (!milestonesOn()) return;
+  const handle = normalizeHandle(msg.handle);
+  if (handle && handle === normalizeHandle(load(STORAGE.tiktokUser))) return;
+  const won = milestones.claim(msg.text, likes.total);
+  if (!won) return;
+  const palier = Milestones.label(won);
+  const user = { key: handle || String(msg.userId || msg.name), handle, name: msg.name || handle, avatar: msg.avatar || '' };
+  queue.addMilestone(user, fill(settings.milestoneLabel, { palier }));
+  celebrate.play('milestone', { name: user.name, title: fill(settings.milestoneTitle, { palier }) });
+  changed();
+  checkMilestone();
 }
 
 function onPin(p) {
@@ -174,7 +249,7 @@ function onPin(p) {
   persist();
 }
 
-live.addEventListener('chat', (e) => onChat(e.detail));
+live.addEventListener('chat', (e) => { claimMilestone(e.detail); onChat(e.detail); });
 live.addEventListener('gift', (e) => onGift(e.detail));
 live.addEventListener('like', (e) => onLike(e.detail));
 live.addEventListener('pin', (e) => onPin(e.detail));
@@ -211,8 +286,6 @@ function openGame() {
   state.screen = 'game';
   state.phase = 'start';
   round.reset();
-  queue.startGame();
-  changed();
   body.classList.remove('at-home');
   $('game-start').hidden = false;
   dice.setActive(true);
@@ -235,7 +308,7 @@ async function startSession(mode, { force = false } = {}) {
   if (mode === 'live' && !force) ensureLive();
   state.phase = 'countdown';
   updateUI();
-  await countdown();
+  if (settings.countdown) await countdown();
   if (state.screen !== 'game') return;
   if (mode === 'live') {
     round.setHost(load(STORAGE.tiktokUser));
@@ -255,7 +328,7 @@ async function countdown() {
   const box = $('countdown');
   const num = $('countdown-num');
   box.hidden = false;
-  for (const step of ['3', '2', '1', 'Le jeu commence !']) {
+  for (const step of ['3', '2', '1', settings.countdownGo || '✦']) {
     if (state.screen !== 'game') break;
     num.textContent = step;
     num.className = `tick${step.length > 1 ? ' go' : ''}`;
@@ -313,13 +386,13 @@ function updateUI() {
   $('panel-out').hidden = !inGame || !isLive || p === 'start';
   $('session-bar').hidden = !inGame || p === 'start' || p === 'countdown';
 
-  let heading = APP_SUBTITLE;
-  let tagline = APP_TAGLINE;
+  let heading = settings.gameTitle;
+  let tagline = settings.gameTagline;
   if (isLive && collecting) {
-    heading = 'Écrivez un chiffre de 1 à 12 dans le chat';
-    tagline = 'Une seule porte par personne : changer de chiffre élimine !';
-  } else if (p === 'between') {
-    heading = round.opened.length ? 'Une autre porte ?' : APP_SUBTITLE;
+    heading = settings.gameCollectTitle;
+    tagline = settings.gameCollectTagline;
+  } else if (p === 'between' && round.opened.length) {
+    heading = settings.gameAgainTitle;
   }
   $('stage-heading').textContent = heading;
   $('stage-tagline').textContent = tagline;
@@ -424,9 +497,9 @@ async function roll() {
 function showResult(n, winners) {
   let html = `<p class="result-kicker">Le dé a parlé</p><div class="result-number">${n}</div>`;
   if (state.mode === 'simple') {
-    html += `<p class="result-title">Le chiffre ${n} a été choisi</p>`;
+    html += `<p class="result-title">${esc(fill(settings.resultSimple, { n }))}</p>`;
   } else {
-    html += `<p class="result-title">La porte ${n} s’ouvre</p>`;
+    html += `<p class="result-title">${esc(fill(settings.resultLive, { n }))}</p>`;
     if (winners.length) {
       html += `<p class="result-text">${winners.length === 1 ? 'Une personne avait choisi cette porte :' : `${winners.length} personnes avaient choisi cette porte :`}</p><ul class="winners">`;
       winners.forEach((w, i) => {
@@ -439,7 +512,7 @@ function showResult(n, winners) {
       });
       html += '</ul>';
     } else {
-      html += '<p class="result-text">Personne n’avait choisi cette porte…<br>Relancez le dé pour ouvrir une autre porte.</p>';
+      html += `<p class="result-text">${esc(settings.resultNobody)}</p>`;
     }
     const won = round.sessionWinners().length;
     html += `<p class="result-stats">🏆 ${won} gagnant${won > 1 ? 's' : ''} depuis le début du jeu · ${round.players.size} participant${round.players.size > 1 ? 's' : ''}</p>`;
@@ -579,17 +652,18 @@ async function simulateGifts() {
   toast('Simulation : cadeaux, likes et message épinglé…');
   const script = [
     ['pin', 'Luna', 'Bienvenue ! Posez vos questions après un Chat porte-bonheur 🐱'],
-    ['gift', 'Céleste', 'Lucky Cat'], ['like', 'Inès', 40], ['gift', 'Jade', 'Galaxy'], ['gift', 'Sofia', 'Doughnut'],
-    ['gift', 'Nour', 'Heart Balloon'], ['like', 'Céleste', 25], ['gift', 'Camille', 'Lucky Cat'], ['gift', 'Aurore', 'Doughnut'],
-    ['like', 'Jade', 60], ['gift', 'Élise', 'Heart Balloon'], ['gift', 'Céleste', 'Lucky Cat'], ['like', 'Manon', 15],
+    ['gift', 'Céleste', 'Lucky Cat', 99], ['like', 'Inès', 40], ['gift', 'Jade', 'Galaxy', 1000], ['gift', 'Sofia', 'Doughnut', 30],
+    ['like', 'Céleste', 25], ['gift', 'Camille', 'Rose', 1], ['like', 'Jade', 60], ['gift', 'Aurore', 'Lucky Cat', 99],
+    ['like', 'Manon', 99700], ['like', 'Nour', 150], ['chat', 'Iris', 'allez les 100k !!'], ['like', 'Lina', 120], ['chat', 'Zoé', 'on a fait 100k 🎉'],
   ];
   let i = 0;
-  for (const [type, name, arg] of script) {
+  for (const [type, name, arg, extra] of script) {
     const user = fakeUser(name);
     if (type === 'pin') onPin({ pinned: true, text: arg, user, pinId: 'sim' });
     else if (type === 'like') onLike({ user, likeCount: arg, totalLikeCount: 0 });
-    else onGift({ user, msgId: `sim-${Date.now()}-${i++}`, giftId: `sim-${arg}`, giftName: arg, giftImage: '', combo: false, repeatCount: 1, repeatEnd: true });
-    await wait(700);
+    else if (type === 'chat') claimMilestone({ handle: user.handle, name, text: arg });
+    else onGift({ user, msgId: `sim-${Date.now()}-${i++}`, giftId: `sim-${arg}`, giftName: arg, giftImage: '', combo: false, repeatCount: 1, repeatEnd: true, diamonds: extra });
+    await wait(type === 'like' ? 900 : 1200);
   }
   simulating = false;
   renderStatus();
@@ -690,6 +764,11 @@ document.addEventListener('keydown', (e) => {
 
 // ---------- Démarrage ----------
 
+// Case centrale : messages qui défilent (Réglages ou regles.json).
+function loadBoard() {
+  return loadMessages('board').then((d) => dash.renderBoard(d.messages, d.speed));
+}
+
 function loadTicker() {
   return ticker.load().then(() => {
     fit();
@@ -701,6 +780,8 @@ function loadTicker() {
 function reloadSettings() {
   features = loadFeatures();
   giftConfig = loadGiftConfig();
+  settings = loadSettings();
+  loadBoard();
   applyFeatures();
   ticker.setEnabled(loadFlag(STORAGE.ticker, true));
   sound.setEnabled(loadFlag(STORAGE.sound, true));
@@ -710,6 +791,10 @@ function reloadSettings() {
     queue.clear();
     likes.total = 0;
     likes.users = {};
+    gifters.total = 0;
+    gifters.users = {};
+    milestones.reached = 0;
+    milestoneAnnounced = 0;
     pinned = null;
     dash.renderPinned(pinned);
     changed();
@@ -727,7 +812,8 @@ window.addEventListener('pageshow', (e) => {
 window.addEventListener('storage', (e) => {
   if (!e.key || !e.key.startsWith('portes.')) return;
   if (e.key === STORAGE.messages) loadTicker();
-  else if ([STORAGE.features, STORAGE.gifts, STORAGE.ticker, STORAGE.sound, STORAGE.queue, STORAGE.tiktokUser, STORAGE.tiktokKey].includes(e.key)) reloadSettings();
+  else if (e.key === STORAGE.board) loadBoard();
+  else if ([STORAGE.features, STORAGE.gifts, STORAGE.settings, STORAGE.ticker, STORAGE.sound, STORAGE.queue, STORAGE.tiktokUser, STORAGE.tiktokKey].includes(e.key)) reloadSettings();
 });
 
 body.classList.add('at-home');
@@ -739,6 +825,9 @@ dash.renderPinned(pinned);
 dash.renderQueue(queue);
 dash.renderDonuts(queue);
 dash.renderLikes(likes);
+dash.renderGifters(gifters);
+loadBoard();
+checkMilestone();
 renderFeeds();
 updateUI();
 fit();
