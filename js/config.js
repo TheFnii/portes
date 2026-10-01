@@ -23,6 +23,18 @@ export const SOUND_FILES = {
   palier: 'sounds/palier.mp3',    // palier de likes
 };
 
+// Images fournies (voir images/LISEZMOI.md). Sans fichier, l'application garde ses dessins.
+// Indiquer le chemin SANS extension : .png, .webp, .jpg, .jpeg, .gif et .svg sont essayés.
+export const IMAGES = {
+  logoChat: 'images/logos/chat',               // liste à traiter : Chat porte-bonheur
+  logoGalaxie: 'images/logos/galaxie',         // liste à traiter : Galaxie
+  logoEnveloppe: 'images/logos/enveloppe',     // case « Message de l'univers »
+  animChat: 'images/animations/chat',          // animation du Chat porte-bonheur
+  animGalaxie: 'images/animations/galaxie',    // animation de la Galaxie
+  animEnveloppe: 'images/animations/enveloppe', // animation de l'enveloppe (Donut)
+};
+export const IMAGE_EXTENSIONS = ['png', 'webp', 'jpg', 'jpeg', 'gif', 'svg'];
+
 // Euler Stream (lecture du chat TikTok LIVE).
 export const EULER_WS_URL = 'wss://ws.eulerstream.com';
 

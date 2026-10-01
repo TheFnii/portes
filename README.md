@@ -188,10 +188,29 @@ Par défaut, l’application synthétise ses propres sons. Pour utiliser les vô
 | `jeu.mp3`      | « Le jeu commence ! » : les participations s’ouvrent |
 | `chat.mp3`     | Chat porte-bonheur (miaulement)                   |
 | `galaxie.mp3`  | Galaxie (harpe)                                   |
-| `enveloppe.mp3`| Donut : l’enveloppe virevolte                     |
+| `enveloppe.mp3`| Donut : l’enveloppe virevolte (papier froissé)    |
 | `palier.mp3`   | palier de likes atteint                           |
 
 Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez le fichier pour revenir au son d’origine.
+
+---
+
+## Logos et illustrations des cadeaux
+
+Déposez vos images dans le dossier **`images/`** avec ces noms (extension `.png`, `.webp`, `.jpg`, `.gif` ou `.svg`) :
+
+| Fichier                     | Où il apparaît                                            |
+| --------------------------- | --------------------------------------------------------- |
+| `logos/chat.png`            | liste à traiter : Chat porte-bonheur                      |
+| `logos/galaxie.png`         | liste à traiter : Galaxie                                 |
+| `logos/enveloppe.png`       | case « Message de l’univers »                             |
+| `animations/chat.png`       | grande animation du Chat porte-bonheur                    |
+| `animations/galaxie.png`    | grande animation de la Galaxie                            |
+| `animations/enveloppe.png`  | enveloppe qui virevolte (le pseudo est écrit par-dessus)  |
+
+Tant qu’une image manque, l’application garde son dessin. La position, la taille, la couleur et l’écriture du pseudo sur l’enveloppe se règlent dans **Réglages → Personnalisation → Animations des cadeaux**. Détails dans `images/LISEZMOI.md`.
+
+Dans les Top Gifters, la pièce dorée indique le nombre de pièces TikTok offertes par chaque personne.
 
 ---
 
@@ -211,6 +230,7 @@ js/
   queue.js            liste à traiter, classements (likes, gifters), paliers de likes
   settings.js         tout ce qui est personnalisable (textes, disposition…)
   celebrate.js        grandes animations (Chat, Galaxie, enveloppe, palier)
+  images.js           recherche des logos et illustrations fournis (images/)
   gifts.js            rôles des cadeaux et comptage des combos
   features.js         modules activables, réglages des cadeaux
   radio.js            radio (playlist du Grimoire)
@@ -230,6 +250,7 @@ js/
   tiktok.js           connexion au chat via Euler Stream
 fonts/                polices Cinzel et Cormorant Garamond (licence OFL)
 icons/                icônes de l’application
+images/               logos et illustrations des cadeaux (facultatif)
 sounds/               sons personnalisés (facultatif)
 tests/                tests des règles du jeu
 ```

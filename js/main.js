@@ -18,6 +18,7 @@ import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
+import { imagesReady } from './images.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
 import { normalizeHandle } from './game.js';
@@ -828,6 +829,8 @@ dash.renderLikes(likes);
 dash.renderGifters(gifters);
 loadBoard();
 checkMilestone();
+// Les logos fournis (images/logos) remplacent les emojis dès qu'ils sont trouvés.
+imagesReady.then(() => changed());
 renderFeeds();
 updateUI();
 fit();

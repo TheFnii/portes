@@ -2,6 +2,7 @@
 // palier de likes. Elles passent l'une après l'autre (jamais deux en même temps).
 
 import { esc } from './shell.js';
+import { image } from './images.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -97,11 +98,24 @@ export class Celebrate {
     return { x: window.innerWidth / 2, y: window.innerHeight * 0.42 };
   }
 
+  // Particules magiques qui jaillissent autour de l'illustration pendant `ms`.
+  magic(ms, glow) {
+    const c = this.center();
+    const r = Math.min(window.innerWidth, window.innerHeight) * 0.22;
+    const id = setInterval(() => {
+      const a = Math.random() * Math.PI * 2;
+      this.fx.burst(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r * 0.9, { count: 10, speed: 120, life: 1.4, stars: 0.75, size: 0.9, glow });
+    }, 160);
+    setTimeout(() => clearInterval(id), ms);
+  }
+
   async cat({ name, text, giftImage }) {
-    const img = giftImage ? `<img src="${esc(giftImage)}" alt="" referrerpolicy="no-referrer">` : CAT_SVG;
+    // Illustration fournie (images/animations/chat), sinon l'image du cadeau, sinon le dessin.
+    const url = image('animChat') || giftImage;
+    const img = url ? `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer">` : CAT_SVG;
     const el = this.stage('cel-cat', `
       <div class="cel-rays"></div>
-      <div class="cel-icon">${img}</div>
+      <div class="cel-icon${image('animChat') ? ' custom' : ''}">${img}</div>
       <p class="cel-text">${esc(text)}</p>
       <p class="cel-name">${esc(name)}</p>`);
     const fallback = el.querySelector('img');
@@ -110,6 +124,7 @@ export class Celebrate {
     const c = this.center();
     await wait(350);
     this.fx.burst(c.x, c.y, { count: 90, speed: 380, life: 2, stars: 0.45, size: 1.3 });
+    this.magic(this.seconds * 1000 - 600);
     await this.finish(el);
   }
 
@@ -120,12 +135,16 @@ export class Celebrate {
       const r = 20 + Math.random() * 30;
       stars += `<i style="left:${(50 + Math.cos(a) * r).toFixed(1)}%;top:${(50 + Math.sin(a) * r).toFixed(1)}%;animation-delay:${(-Math.random() * 2).toFixed(2)}s;--s:${(0.5 + Math.random()).toFixed(2)}"></i>`;
     }
+    // Illustration fournie (images/animations/galaxie), sinon la galaxie dessinée.
+    const url = image('animGalaxie');
+    const art = url ? `<img class="cel-galaxy-img" src="${esc(url)}" alt="">` : '<div class="cel-spiral"></div><div class="cel-core"></div>';
     const el = this.stage('cel-galaxy', `
-      <div class="cel-galaxy-disc"><div class="cel-spiral"></div><div class="cel-core"></div>${stars}</div>
+      <div class="cel-galaxy-disc${url ? ' custom' : ''}">${art}${stars}</div>
       <p class="cel-text">${esc(text)}</p>
       <p class="cel-name">${esc(name)}</p>`);
     this.sound.harp();
     const c = this.center();
+    this.magic(this.seconds * 1000 - 600, 'violet');
     for (let i = 0; i < 4; i++) {
       await wait(450);
       this.fx.burst(c.x + (Math.random() - 0.5) * 200, c.y + (Math.random() - 0.5) * 120, { count: 40, speed: 220, life: 1.8, stars: 0.6, glow: 'violet' });
@@ -136,21 +155,27 @@ export class Celebrate {
   // L'enveloppe virevolte parmi les étoiles et les comètes, s'arrête, se retourne côté
   // destinataire (avec le pseudo), puis file vers la case « Message de l'univers ».
   async donut({ name, text, target }) {
+    const s = this.getSettings();
+    const url = image('animEnveloppe');
     let comets = '';
     for (let i = 0; i < 6; i++) {
       comets += `<b class="comet" style="top:${(8 + Math.random() * 70).toFixed(0)}%;animation-delay:${(i * 0.35).toFixed(2)}s"></b>`;
     }
     const el = this.stage('cel-donut', `
       ${comets}
-      <div class="env-fly">
+      ${url && text ? `<p class="cel-text env-caption">${esc(text)}</p>` : ''}
+      <div class="env-fly${url ? ' custom' : ''}">${url ? `
+        <div class="env-art">
+          <img src="${esc(url)}" alt="">
+          <span class="env-name-on ${s.envNameFont === 'cinzel' ? 'cinzel' : 'script'}" style="left:${s.envNameX}%;top:${s.envNameY}%;color:${esc(s.envNameColor)};--env-size:${(s.envNameSize / 100).toFixed(2)}">${esc(name)}</span>
+        </div>` : `
         <div class="env-card">
           <div class="env-face env-back">${ENVELOPE_BACK}</div>
           <div class="env-face env-front">
-            <span class="env-stamp">✦</span>
             <span class="env-to">${esc(text)}</span>
             <span class="env-name">${esc(name)}</span>
           </div>
-        </div>
+        </div>`}
       </div>`);
     this.sound.envelope(2.2);
     const c = this.center();

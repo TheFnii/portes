@@ -2,10 +2,25 @@
 // liste à traiter, messages de l'univers. Disposition et textes viennent des Réglages.
 
 import { ROLES } from './gifts.js';
+import { image, LOGO_OF_ROLE } from './images.js';
 import { fill } from './settings.js';
 import { esc } from './shell.js';
 
 const $ = (id) => document.getElementById(id);
+
+// Pièce dorée des Top Gifters (nombre de pièces TikTok offertes).
+export const COIN = `<svg class="coin" viewBox="0 0 32 32" aria-label="pièces" role="img">
+  <defs><radialGradient id="coin-g" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#f4c542"/><stop offset="1" stop-color="#b07a12"/></radialGradient></defs>
+  <circle cx="16" cy="16" r="15" fill="url(#coin-g)" stroke="#8a5a0a" stroke-width="1.5"/>
+  <circle cx="16" cy="16" r="11" fill="none" stroke="#fff0a8" stroke-opacity=".7" stroke-width="1.2"/>
+  <path d="M16 9.5l1.9 4 4.4.5-3.3 3 .9 4.3-3.9-2.2-3.9 2.2.9-4.3-3.3-3 4.4-.5z" fill="#c98d14" stroke="#fff3b8" stroke-width=".6"/>
+</svg>`;
+
+// Logo fourni (images/logos) en priorité, puis l'image du cadeau TikTok, puis l'emoji.
+function logo(role, fallbackUrl, emoji) {
+  const url = (LOGO_OF_ROLE[role] && image(LOGO_OF_ROLE[role])) || fallbackUrl;
+  return url ? `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer" loading="lazy" data-emoji="${emoji}">` : emoji;
+}
 
 export class Dashboard {
   constructor({ onRemove, onRemoveDonut }) {
@@ -89,7 +104,7 @@ export class Dashboard {
     if (e.type === 'milestone') return '<span class="gift-icon" title="Palier de likes">🏅</span>';
     const role = ROLES[e.gift];
     const emoji = role ? role.emoji : '🎁';
-    const img = e.giftImage ? `<img src="${esc(e.giftImage)}" alt="" referrerpolicy="no-referrer" loading="lazy" data-emoji="${emoji}">` : emoji;
+    const img = logo(e.gift, e.giftImage, emoji);
     return `<span class="gift-icon" title="${esc(role ? role.label : '')}">${img}</span>`;
   }
 
@@ -146,9 +161,11 @@ export class Dashboard {
 
   renderDonuts(queue) {
     const d = queue.donuts;
+    const head = $('donut-head-icon');
+    if (head && image('logoEnveloppe') && !head.querySelector('img')) head.innerHTML = logo('donut', '', '✉️');
     $('donut-count').textContent = d.length;
     $('donut-list').innerHTML = d.length
-      ? d.map((e) => `<li><span class="env-mini" aria-hidden="true">✉️</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}
+      ? d.map((e) => `<li><span class="env-mini gift-icon" aria-hidden="true">${logo('donut', '', '✉️')}</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}
           <button class="x-btn" data-remove="${esc(e.id)}" type="button" aria-label="Message lu pour ${esc(e.name)}">✓</button></li>`).join('')
       : `<li class="empty">${esc(this.s.univEmpty || '')}</li>`;
   }
@@ -157,7 +174,7 @@ export class Dashboard {
 
   renderTop(listId, totalId, ranking, unit) {
     const n = this.s.topCount || 6;
-    $(totalId).textContent = Math.round(ranking.total).toLocaleString('fr-FR');
+    $(totalId).innerHTML = Math.round(ranking.total).toLocaleString('fr-FR') + unit;
     const medals = ['🥇', '🥈', '🥉'];
     const top = ranking.top(n);
     $(listId).innerHTML = top.length
@@ -171,7 +188,7 @@ export class Dashboard {
   }
 
   renderGifters(gifters) {
-    this.renderTop('gifters-list', 'gifters-total', gifters, ' 🪙');
+    this.renderTop('gifters-list', 'gifters-total', gifters, COIN);
   }
 
   // ---------- Message épinglé ----------

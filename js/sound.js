@@ -408,15 +408,41 @@ export class Sound {
     });
   }
 
-  // Donut : l'enveloppe virevolte (souffle, froissements) puis se pose (carillon).
+  // Donut : papier froissé pendant que l'enveloppe virevolte, petit tintement quand elle se pose.
   envelope(landAfter = 2.2) {
     if (!this.ready) return;
     if (this.file('enveloppe')) return;
     const t = this.ctx.currentTime + 0.02;
-    this.rustle(t, 1.2, 0.16, 500, 2800, 0.7);
-    for (let i = 0; i < 6; i++) this.rustle(t + 0.2 + i * 0.28, 0.14, 0.12, 3200, 1800, 1.4);
-    this.shimmer(t + 0.2, landAfter, 0.04);
-    [1046.5, 1318.5, 1568, 2093].forEach((f, i) => this.glass(f, t + landAfter + i * 0.09, 0.06 - i * 0.008, 2.6));
+    this.crumple(t, landAfter + 0.2, 0.22);
+    this.rustle(t, 0.9, 0.08, 500, 2400, 0.7);
+    this.shimmer(t + 0.2, landAfter, 0.025);
+    [1318.5, 1568, 2093].forEach((f, i) => this.glass(f, t + landAfter + i * 0.08, 0.04 - i * 0.008, 2.2));
+  }
+
+  // Papier froissé : une pluie irrégulière de petits craquements secs.
+  crumple(t, dur, gain) {
+    const ctx = this.ctx;
+    let at = t;
+    while (at < t + dur) {
+      const len = 0.006 + Math.random() * 0.035;
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1800 + Math.random() * 4500;
+      bp.Q.value = 0.8 + Math.random() * 1.5;
+      const g = ctx.createGain();
+      // Les craquements s'intensifient puis se calment, par vagues.
+      const wave = 0.35 + 0.65 * Math.abs(Math.sin(((at - t) / dur) * Math.PI * 2.5));
+      const peak = gain * wave * (0.3 + Math.random() * 0.7);
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(peak, at + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+      src.connect(bp).connect(g).connect(this.master);
+      src.start(at, Math.random() * 1.5);
+      src.stop(at + len + 0.01);
+      at += 0.012 + Math.random() * Math.random() * 0.09;
+    }
   }
 
   // Palier de likes : fanfare et cloches.

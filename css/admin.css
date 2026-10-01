@@ -175,3 +175,11 @@ output { color: var(--gold-light); font-weight: 600; }
 .range-row { display: flex; align-items: center; gap: 12px; }
 .range-row input { flex: 1; accent-color: #e2b451; min-height: 36px; }
 .range-row output { min-width: 64px; text-align: right; font-weight: 600; color: var(--gold-light); }
+.set-items .field input[type='color'] {
+  width: 90px;
+  height: 52px;
+  padding: 4px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(232, 199, 122, .45);
+  background: rgba(0, 0, 0, .35);
+}

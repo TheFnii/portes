@@ -10,6 +10,10 @@ Pour remplacer un son, déposez dans ce dossier un fichier **MP3** portant exact
 | `porte.mp3`    | la porte s'ouvre                                 |
 | `resultat.mp3` | le message ou la liste des gagnants apparaît     |
 | `jeu.mp3`      | « Le jeu commence ! » : les participations s'ouvrent |
+| `chat.mp3`     | Chat porte-bonheur (miaulement)                  |
+| `galaxie.mp3`  | Galaxie (harpe)                                  |
+| `enveloppe.mp3`| Donut : l'enveloppe virevolte (papier froissé)   |
+| `palier.mp3`   | palier de likes atteint                          |
 
 Sur GitHub : ouvrez le dossier `sounds` → **Add file** → **Upload files**, glissez le fichier, puis **Commit changes**.
 Pour revenir au son d'origine, supprimez le fichier.

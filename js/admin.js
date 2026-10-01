@@ -151,6 +151,8 @@ function settingField(item, value) {
     input = `<span class="range-row"><input ${attrs} type="range" min="${item.min}" max="${item.max}" step="1" value="${value}"><output>${value}${item.unit || ''}</output></span>`;
   } else if (item.type === 'number') {
     input = `<input ${attrs} type="number" inputmode="numeric" min="${item.min}" max="${item.max}" value="${value}">`;
+  } else if (item.type === 'color') {
+    input = `<input ${attrs} type="color" value="${esc(value)}">`;
   } else if (item.type === 'textarea') {
     input = `<textarea ${attrs} rows="3">${esc(value)}</textarea>`;
   } else {
