@@ -208,7 +208,8 @@ Pour qu’ils soient sur tous les appareils, déposez-les plutôt dans le dossie
 | `logos/enveloppe.png`       | case « Message de l’univers »                             |
 | `animations/chat.png`       | grande animation du Chat porte-bonheur                    |
 | `animations/galaxie.png`    | grande animation de la Galaxie                            |
-| `animations/enveloppe.png`  | enveloppe qui virevolte (le pseudo est écrit par-dessus)  |
+| `animations/enveloppe-dos.png` | enveloppe, côté sceau de cire : elle virevolte puis se retourne |
+| `animations/enveloppe.png`  | enveloppe, côté destinataire : le pseudo est écrit dessus |
 
 Tant qu’une image manque, l’application garde son dessin. La position, la taille, la couleur et l’écriture du pseudo sur l’enveloppe se règlent dans **Réglages → Personnalisation → Animations des cadeaux**. Détails dans `images/LISEZMOI.md`.
 

@@ -181,11 +181,22 @@
   padding-bottom: 4px;
 }
 
-/* Enveloppe illustrée (images/animations/enveloppe) : pas de retournement,
-   le pseudo s'écrit à la place du destinataire quand elle se pose. */
+/* Enveloppe illustrée : elle virevolte côté sceau, se retourne, et le pseudo s'écrit
+   à la place du destinataire. */
 .env-fly.custom { width: min(70vmin, 600px); aspect-ratio: auto; }
-.env-art { position: relative; }
+.env-fly.custom .env-card { height: auto; }
+/* Le côté destinataire illustré donne sa taille à l'enveloppe ; le côté sceau s'y adapte. */
+.env-front.env-art {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
 .env-art img { display: block; width: 100%; height: auto; filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .55)); }
+.env-back img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .55)); }
 .env-name-on {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -201,13 +212,11 @@
 }
 .env-name-on.script { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700; }
 .env-name-on.cinzel { font-family: 'Cinzel', serif; font-weight: 700; }
-.cel-donut.landed .env-name-on { animation: env-write 1.1s .35s ease-out forwards; }
+.cel-donut.landed .env-name-on { animation: env-write 1.1s .9s ease-out forwards; }
 @keyframes env-write { to { opacity: 1; clip-path: inset(0 0 0 0); } }
 .env-caption { opacity: 0; margin: 0 0 14px; }
 .cel.in .env-caption { animation: none; }
 .cel-donut.landed .env-caption { opacity: 1; animation: cel-rise .7s .2s cubic-bezier(.2, .9, .3, 1) both; }
-.cel-donut.landed .env-fly.custom .env-art { animation: env-settle 1.6s ease-in-out infinite alternate; }
-@keyframes env-settle { from { transform: translateY(0) rotate(-1deg); } to { transform: translateY(-6px) rotate(1deg); } }
 
 /* Illustrations fournies : Chat et Galaxie */
 .cel-icon.custom { width: min(48vmin, 440px); }

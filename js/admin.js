@@ -310,7 +310,8 @@ const MEDIA_SLOTS = {
   'media-anims': [
     ['img:animChat', 'Chat porte-bonheur', 'grande animation', 1400],
     ['img:animGalaxie', 'Galaxie', 'grande animation', 1400],
-    ['img:animEnveloppe', 'Enveloppe', 'virevolte, le pseudo est écrit dessus', 1400],
+    ['img:animEnveloppeDos', 'Enveloppe : côté sceau', 'virevolte, puis se retourne', 1400],
+    ['img:animEnveloppe', 'Enveloppe : côté destinataire', 'le pseudo est écrit dessus', 1400],
   ],
   'media-sounds': [
     ['snd:chat', 'Chat porte-bonheur', 'miaulement'],

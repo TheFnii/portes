@@ -152,11 +152,13 @@ export class Celebrate {
     await this.finish(el, -1800);
   }
 
-  // L'enveloppe virevolte parmi les étoiles et les comètes, s'arrête, se retourne côté
-  // destinataire (avec le pseudo), puis file vers la case « Message de l'univers ».
+  // L'enveloppe virevolte côté sceau parmi les étoiles et les comètes, s'arrête, se retourne
+  // côté destinataire où le pseudo s'écrit, puis file vers la case « Message de l'univers ».
   async donut({ name, text, target }) {
     const s = this.getSettings();
+    // Illustrations fournies : côté sceau (virevolte) et côté destinataire (pseudo écrit dessus).
     const url = image('animEnveloppe');
+    const back = image('animEnveloppeDos');
     let comets = '';
     for (let i = 0; i < 6; i++) {
       comets += `<b class="comet" style="top:${(8 + Math.random() * 70).toFixed(0)}%;animation-delay:${(i * 0.35).toFixed(2)}s"></b>`;
@@ -164,18 +166,16 @@ export class Celebrate {
     const el = this.stage('cel-donut', `
       ${comets}
       ${url && text ? `<p class="cel-text env-caption">${esc(text)}</p>` : ''}
-      <div class="env-fly${url ? ' custom' : ''}">${url ? `
-        <div class="env-art">
-          <img src="${esc(url)}" alt="">
-          <span class="env-name-on ${s.envNameFont === 'cinzel' ? 'cinzel' : 'script'}" style="left:${s.envNameX}%;top:${s.envNameY}%;color:${esc(s.envNameColor)};--env-size:${(s.envNameSize / 100).toFixed(2)}">${esc(name)}</span>
-        </div>` : `
+      <div class="env-fly${url ? ' custom' : ''}">
         <div class="env-card">
-          <div class="env-face env-back">${ENVELOPE_BACK}</div>
-          <div class="env-face env-front">
+          <div class="env-face env-back">${back ? `<img src="${esc(back)}" alt="">` : ENVELOPE_BACK}</div>
+          <div class="env-face env-front${url ? ' env-art' : ''}">${url ? `
+            <img src="${esc(url)}" alt="">
+            <span class="env-name-on ${s.envNameFont === 'cinzel' ? 'cinzel' : 'script'}" style="left:${s.envNameX}%;top:${s.envNameY}%;color:${esc(s.envNameColor)};--env-size:${(s.envNameSize / 100).toFixed(2)}">${esc(name)}</span>` : `
             <span class="env-to">${esc(text)}</span>
-            <span class="env-name">${esc(name)}</span>
+            <span class="env-name">${esc(name)}</span>`}
           </div>
-        </div>`}
+        </div>
       </div>`);
     this.sound.envelope(2.2);
     const c = this.center();

@@ -14,13 +14,14 @@ Tant qu'une image manque, l'application garde son dessin ou son emoji.
 | `logos/enveloppe.png`           | case « Message de l'univers » (titre et liste des Donuts)   |
 | `animations/chat.png`           | grande animation du Chat porte-bonheur                      |
 | `animations/galaxie.png`        | grande animation de la Galaxie                              |
-| `animations/enveloppe.png`      | enveloppe qui virevolte quand un Donut arrive               |
+| `animations/enveloppe-dos.png`  | enveloppe, côté sceau de cire : elle virevolte puis se retourne |
+| `animations/enveloppe.png`      | enveloppe, côté destinataire : le pseudo est écrit dessus   |
 
 Conseils :
 
 - logos : image carrée, environ 256 × 256 px ;
 - animations : environ 1000 px de large, fond transparent ;
-- enveloppe : le pseudo est écrit par-dessus l'image. Sa position, sa taille, sa couleur et son
+- enveloppe : les deux côtés doivent avoir la même taille. Le pseudo est écrit par-dessus le côté destinataire. Sa position, sa taille, sa couleur et son
   écriture se règlent dans **Réglages → Personnalisation → Animations des cadeaux**.
 
 Sur GitHub : ouvrez le dossier `images/logos` (ou `images/animations`) → **Add file** →

@@ -31,7 +31,8 @@ export const IMAGES = {
   logoEnveloppe: 'images/logos/enveloppe',     // case « Message de l'univers »
   animChat: 'images/animations/chat',          // animation du Chat porte-bonheur
   animGalaxie: 'images/animations/galaxie',    // animation de la Galaxie
-  animEnveloppe: 'images/animations/enveloppe', // animation de l'enveloppe (Donut)
+  animEnveloppe: 'images/animations/enveloppe', // enveloppe (Donut) : côté destinataire, le pseudo est écrit dessus
+  animEnveloppeDos: 'images/animations/enveloppe-dos', // enveloppe (Donut) : côté du sceau de cire
 };
 export const IMAGE_EXTENSIONS = ['png', 'webp', 'jpg', 'jpeg', 'gif', 'svg'];
 
