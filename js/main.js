@@ -1,6 +1,6 @@
 // Tableau de bord du live + Jeu des Portes.
 
-import { STORAGE, IMAGES } from './config.js';
+import { STORAGE, IMAGES, SOUND_FILES, SOUND_CAST_MAX } from './config.js';
 import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { randomInt } from './random.js';
 import { flowerDefs } from './doors-art.js';
@@ -122,6 +122,7 @@ function setupCast() {
   const on = loadFlag(STORAGE.cast, false);
   if (on && !cast) {
     cast = new Broadcaster({ onStatus: renderCastStatus });
+    castSent = {};
     castMedia();
     castState();
   } else if (!on && cast) {
@@ -182,13 +183,30 @@ function castState() {
   if (cast) cast.state(snapshot());
 }
 
-// Les images déposées dans les Réglages sont envoyées aux viewers (en version légère).
+// Les images (en version légère) et les sons déposés dans les Réglages sont envoyés aux viewers.
+// Seul ce qui a changé depuis le dernier envoi repart.
+let castSent = {};
 async function castMedia() {
   if (!cast) return;
+  const c = cast;
   for (const key of Object.keys(IMAGES)) {
     const blob = await getMedia(`img:${key}`);
+    const sig = blob ? `${blob.size}:${blob.type}:${blob.lastModified || ''}` : '';
+    if (castSent[`img:${key}`] === sig) continue;
     const url = blob ? await smallDataUrl(blob, key.startsWith('logo') ? 160 : 720) : null;
-    if (cast) cast.setMedia(key, url);
+    if (cast !== c) return;
+    await c.setMedia(key, url);
+    castSent[`img:${key}`] = sig;
+  }
+  for (const name of Object.keys(SOUND_FILES)) {
+    const blob = await getMedia(`snd:${name}`);
+    const ok = blob && blob.size <= SOUND_CAST_MAX;
+    const sig = ok ? `${blob.size}:${blob.type}:${blob.lastModified || ''}` : '';
+    if (castSent[`snd:${name}`] === sig) continue;
+    const buf = ok ? await blob.arrayBuffer() : null;
+    if (cast !== c) return;
+    await c.setSound(name, buf);
+    castSent[`snd:${name}`] = sig;
   }
 }
 

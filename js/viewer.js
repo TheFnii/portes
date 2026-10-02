@@ -394,6 +394,7 @@ if (!pub || !window.crypto || !crypto.subtle) {
     onState,
     onEvent,
     onMedia,
+    onSound: (name, buf) => sound.setReceived(name, buf),
     onStatus: (up) => { connected = up; renderStatus(); },
   }).ready.catch(() => {
     $('v-wait-title').textContent = 'Lien incomplet';

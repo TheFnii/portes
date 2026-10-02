@@ -8,6 +8,7 @@ import { LIVE_BROKERS, LIVE_TOPIC, STORAGE } from './config.js';
 import { MqttClient } from './mqtt.js';
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
+const SOUND_CHUNK = 48000; // caractères par morceau de son
 const SIGN = { name: 'ECDSA', hash: 'SHA-256' };
 const enc = new TextEncoder();
 
@@ -81,7 +82,7 @@ export class Broadcaster {
     this.clients = [];
     this.ready = this.start();
     this.lastState = null;
-    this.media = {};
+    this.retained = {}; // sujet → message gardé par le relais (images, sons)
   }
 
   async start() {
@@ -116,7 +117,7 @@ export class Broadcaster {
   // Après une (re)connexion : l'état et les images sont republiés.
   resend() {
     if (this.lastState) this.send(this.t.state, this.lastState, true);
-    Object.entries(this.media).forEach(([k, v]) => this.send(this.t.media + k, { media: k, url: v }, true));
+    Object.entries(this.retained).forEach(([topic, obj]) => this.send(topic, obj, true));
   }
 
   // État complet du tableau de bord (gardé par le relais pour les viewers qui arrivent).
@@ -135,11 +136,34 @@ export class Broadcaster {
     this.send(this.t.event, { kind, data }, false);
   }
 
+  async retain(topic, obj) {
+    await this.ready;
+    this.retained[topic] = obj;
+    return this.send(topic, obj, true);
+  }
+
   // Image déposée dans les Réglages (data URL), ou null pour l'effacer.
   setMedia(key, url) {
-    if (url) this.media[key] = url;
-    else delete this.media[key];
-    this.send(this.t.media + key, { media: key, url: url || '' }, true);
+    return this.ready.then(() => this.retain(this.t.media + key, { media: key, url: url || '' }));
+  }
+
+  // Son déposé dans les Réglages (ArrayBuffer), ou null pour revenir au son d'origine.
+  // Le relais limite la taille des messages : le fichier part en morceaux.
+  async setSound(name, buffer) {
+    await this.ready;
+    const base = `${this.t.media}snd-${name}`;
+    const v = Math.random().toString(36).slice(2, 10);
+    if (!buffer) {
+      await this.retain(base, { sound: name, v, parts: 0 });
+      return;
+    }
+    const data = b64url(buffer);
+    const size = SOUND_CHUNK;
+    const parts = Math.ceil(data.length / size);
+    for (let i = 0; i < parts; i++) {
+      await this.retain(`${base}/${i}`, { sound: name, v, part: i, data: data.slice(i * size, (i + 1) * size) });
+    }
+    await this.retain(base, { sound: name, v, parts });
   }
 
   close() {
@@ -149,10 +173,44 @@ export class Broadcaster {
 
 // ---------- Côté viewers : réception ----------
 
+// Les morceaux d'un son peuvent arriver dans n'importe quel ordre.
+function soundAssembler(onSound) {
+  const heads = {}; // nom → { v, parts }
+  const chunks = {}; // nom:v → { i: data }
+  const done = {}; // nom → version déjà décodée
+  const check = (name) => {
+    const h = heads[name];
+    if (!h) return;
+    if (!h.parts) {
+      if (done[name] !== h.v) { done[name] = h.v; onSound(name, null); }
+      return;
+    }
+    const c = chunks[`${name}:${h.v}`] || {};
+    if (Object.keys(c).length < h.parts || done[name] === h.v) return;
+    let data = '';
+    for (let i = 0; i < h.parts; i++) {
+      if (c[i] === undefined) return;
+      data += c[i];
+    }
+    done[name] = h.v;
+    onSound(name, unb64url(data).buffer);
+  };
+  return (msg) => {
+    const name = String(msg.sound);
+    if (msg.parts !== undefined) heads[name] = { v: msg.v, parts: msg.parts };
+    else {
+      const k = `${name}:${msg.v}`;
+      (chunks[k] = chunks[k] || {})[msg.part] = msg.data;
+    }
+    check(name);
+  };
+}
+
 export class Receiver {
   // pub : clé publique (dans le lien) ; handlers : onState(state), onEvent(kind, data), onMedia(key, url), onStatus(up)
   constructor(pub, handlers) {
     this.h = handlers;
+    this.receiveSound = soundAssembler((name, buf) => this.h.onSound && this.h.onSound(name, buf));
     this.seen = new Set();
     this.stateT = 0;
     this.ready = this.start(pub);
@@ -220,7 +278,8 @@ export class Receiver {
       if (this.stateT && msg.t < this.stateT - 60000) return;
       this.h.onEvent(msg.kind, msg.data || {});
     } else if (topic.startsWith(this.t.media)) {
-      this.h.onMedia(msg.media, msg.url);
+      if (msg.sound) this.receiveSound(msg);
+      else this.h.onMedia(msg.media, msg.url);
     }
   }
 }

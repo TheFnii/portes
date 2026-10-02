@@ -1,6 +1,6 @@
 // Page des réglages : connexion TikTok, messages défilants, affichage et son.
 
-import { STORAGE } from './config.js';
+import { STORAGE, SOUND_CAST_MAX } from './config.js';
 import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { loadMessages, loadFileMessages, saveLocalMessages, clearLocalMessages } from './messages.js';
 import { Ticker } from './ticker.js';
@@ -384,7 +384,9 @@ document.querySelectorAll('.media-slot').forEach((slot) => {
       await putMedia(key, blob);
       await showMedia(slot);
       mediaChanged();
-      status.textContent = 'Enregistré ✓';
+      status.textContent = isSound && blob.size > SOUND_CAST_MAX
+        ? 'Enregistré ✓ — trop lourd pour les viewers (1,5 Mo maximum) : ils entendront le son d’origine.'
+        : 'Enregistré ✓';
     } catch (err) {
       status.textContent = 'Impossible d’enregistrer ce fichier sur cet appareil.';
     }

@@ -47,16 +47,26 @@ export class Sound {
 
   // Charge les sons personnalisés : ceux déposés dans les Réglages, sinon ceux du dossier
   // sounds/ (les fichiers absents sont ignorés).
+  // Sur la page des viewers, les sons reçus de la tablette passent avant tout.
   loadFiles() {
     if (!this.ctx) return;
     this.files = {};
     Object.entries(SOUND_FILES).forEach(([name, url]) => {
-      getMedia(`snd:${name}`)
-        .then((blob) => (blob ? blob.arrayBuffer() : fetch(url, { cache: 'no-cache' }).then((r) => (r.ok ? r.arrayBuffer() : null))))
+      const sent = this.received && this.received[name];
+      (sent ? Promise.resolve(sent.slice(0)) : getMedia(`snd:${name}`)
+        .then((blob) => (blob ? blob.arrayBuffer() : fetch(url, { cache: 'no-cache' }).then((r) => (r.ok ? r.arrayBuffer() : null)))))
         .then((buf) => (buf ? new Promise((ok, ko) => this.ctx.decodeAudioData(buf, ok, ko)) : null))
         .then((audio) => { if (audio) this.files[name] = audio; })
         .catch(() => {});
     });
+  }
+
+  // Son reçu de la tablette (page des viewers) ; null : retour au son d'origine.
+  setReceived(name, buffer) {
+    this.received = this.received || {};
+    if (buffer) this.received[name] = buffer;
+    else delete this.received[name];
+    this.loadFiles();
   }
 
   // Joue le fichier personnalisé s'il existe. Renvoie true si c'est le cas.

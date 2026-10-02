@@ -43,6 +43,8 @@ export const LIVE_BROKERS = [
   'wss://broker.hivemq.com:8884/mqtt',
 ];
 export const LIVE_TOPIC = 'portes-du-destin/v1';
+// Taille maximale d'un son envoyé aux viewers (au-delà, ils entendent le son d'origine).
+export const SOUND_CAST_MAX = 1.5 * 1024 * 1024;
 
 // Euler Stream (lecture du chat TikTok LIVE).
 export const EULER_WS_URL = 'wss://ws.eulerstream.com';
