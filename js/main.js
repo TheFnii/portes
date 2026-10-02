@@ -1,6 +1,6 @@
 // Tableau de bord du live + Jeu des Portes.
 
-import { STORAGE, IMAGES, SOUND_FILES, SOUND_CAST_MAX } from './config.js';
+import { STORAGE } from './config.js';
 import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { randomInt } from './random.js';
 import { flowerDefs } from './doors-art.js';
@@ -19,8 +19,7 @@ import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
-import { getMedia, smallDataUrl } from './media.js';
-import { Broadcaster } from './broadcast.js';
+import { Broadcaster, castMedia } from './broadcast.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
 import { normalizeHandle } from './game.js';
@@ -122,8 +121,7 @@ function setupCast() {
   const on = loadFlag(STORAGE.cast, false);
   if (on && !cast) {
     cast = new Broadcaster({ onStatus: renderCastStatus });
-    castSent = {};
-    castMedia();
+    sendMedia();
     castState();
   } else if (!on && cast) {
     // Les viewers voient « Hors ligne ».
@@ -183,31 +181,10 @@ function castState() {
   if (cast) cast.state(snapshot());
 }
 
-// Les images (en version légère) et les sons déposés dans les Réglages sont envoyés aux viewers.
-// Seul ce qui a changé depuis le dernier envoi repart.
-let castSent = {};
-async function castMedia() {
-  if (!cast) return;
-  const c = cast;
-  for (const key of Object.keys(IMAGES)) {
-    const blob = await getMedia(`img:${key}`);
-    const sig = blob ? `${blob.size}:${blob.type}:${blob.lastModified || ''}` : '';
-    if (castSent[`img:${key}`] === sig) continue;
-    const url = blob ? await smallDataUrl(blob, key.startsWith('logo') ? 160 : 720) : null;
-    if (cast !== c) return;
-    await c.setMedia(key, url);
-    castSent[`img:${key}`] = sig;
-  }
-  for (const name of Object.keys(SOUND_FILES)) {
-    const blob = await getMedia(`snd:${name}`);
-    const ok = blob && blob.size <= SOUND_CAST_MAX;
-    const sig = ok ? `${blob.size}:${blob.type}:${blob.lastModified || ''}` : '';
-    if (castSent[`snd:${name}`] === sig) continue;
-    const buf = ok ? await blob.arrayBuffer() : null;
-    if (cast !== c) return;
-    await c.setSound(name, buf);
-    castSent[`snd:${name}`] = sig;
-  }
+// Les images et les sons déposés dans les Réglages sont envoyés aux viewers
+// (seulement ce qui a changé, dès que le relais répond).
+function sendMedia() {
+  if (cast) castMedia(cast).catch(() => {});
 }
 
 // Battement régulier : les viewers savent que le live est toujours en cours.
@@ -944,7 +921,7 @@ window.addEventListener('storage', (e) => {
     // Image ou son déposé dans les Réglages : on le prend tout de suite.
     refreshImages().then(() => changed());
     sound.loadFiles();
-    castMedia();
+    sendMedia();
   }
   else if (e.key === STORAGE.cast) setupCast();
   else if (e.key === STORAGE.castKey && cast) {

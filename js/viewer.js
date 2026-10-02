@@ -363,8 +363,18 @@ function onEvent(kind, data) {
   }
 }
 
-function onMedia(key, url) {
-  setImageOverride(key, url);
+// Images et sons reçus de la tablette (les mêmes que ceux déposés dans ses Réglages).
+const fileUrls = {};
+function onFile(id, buffer, type) {
+  const [kind, name] = id.split('-');
+  if (kind === 'snd') {
+    sound.setReceived(name, buffer);
+    return;
+  }
+  if (kind !== 'img') return;
+  if (fileUrls[name]) URL.revokeObjectURL(fileUrls[name]);
+  fileUrls[name] = buffer ? URL.createObjectURL(new Blob([buffer], { type: type || 'image/png' })) : null;
+  setImageOverride(name, fileUrls[name]);
   if (last) renderQueue(last);
 }
 
@@ -393,8 +403,7 @@ if (!pub || !window.crypto || !crypto.subtle) {
   new Receiver(pub, {
     onState,
     onEvent,
-    onMedia,
-    onSound: (name, buf) => sound.setReceived(name, buf),
+    onFile,
     onStatus: (up) => { connected = up; renderStatus(); },
   }).ready.catch(() => {
     $('v-wait-title').textContent = 'Lien incomplet';

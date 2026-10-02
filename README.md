@@ -88,7 +88,7 @@ Les viewers peuvent ajouter la page à leur écran d’accueil (iPhone : Partage
 
 Comment ça marche : la tablette envoie tout à un relais public gratuit (EMQX, et HiveMQ en secours). Chaque message est **signé** par la tablette et le lien contient de quoi vérifier cette signature : personne d’autre ne peut afficher de faux pseudos. **Changer de lien** crée une nouvelle signature (l’ancien lien cesse de fonctionner). Ces relais sont gratuits et sans garantie : si l’un d’eux tombe, l’autre prend le relais.
 
-Les images et les sons déposés dans les Réglages sont aussi envoyés aux viewers : images en version légère, sons jusqu’à 1,5 Mo chacun (au-delà, ils entendent le son d’origine).
+Les images et les sons déposés dans les Réglages sont aussi envoyés aux viewers, tels quels, à chaque changement (même si le tableau de bord n’est pas ouvert) : images jusqu’à 3 Mo (au-delà, envoyées réduites), sons jusqu’à 1,5 Mo (au-delà, les viewers entendent le son d’origine).
 
 ---
 

@@ -4,11 +4,12 @@
 // sur un relais MQTT public. Chaque message est signé avec une clé gardée sur la tablette ;
 // le lien des viewers contient la clé publique, donc personne d'autre ne peut publier à sa place.
 
-import { LIVE_BROKERS, LIVE_TOPIC, STORAGE } from './config.js';
+import { LIVE_BROKERS, LIVE_TOPIC, STORAGE, IMAGES, SOUND_FILES, CAST_MAX } from './config.js';
 import { MqttClient } from './mqtt.js';
+import { getMedia, smallDataUrl } from './media.js';
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
-const SOUND_CHUNK = 48000; // caractères par morceau de son
+const CHUNK = 48000; // caractères par morceau de fichier
 const SIGN = { name: 'ECDSA', hash: 'SHA-256' };
 const enc = new TextEncoder();
 
@@ -80,9 +81,9 @@ export class Broadcaster {
   constructor({ onStatus } = {}) {
     this.onStatus = onStatus || (() => {});
     this.clients = [];
-    this.ready = this.start();
+    this.waiters = [];
     this.lastState = null;
-    this.retained = {}; // sujet → message gardé par le relais (images, sons)
+    this.ready = this.start();
   }
 
   async start() {
@@ -91,7 +92,11 @@ export class Broadcaster {
     // Publie sur chaque relais : les viewers se connectent au premier qui répond.
     this.clients = brokers().map((url) => new MqttClient(url, {
       onStatus: (up) => {
-        if (up) this.resend();
+        if (up) {
+          // Après une (re)connexion, l'état est republié (images et sons restent gardés par le relais).
+          if (this.lastState) this.send(this.t.state, this.lastState, true);
+          this.waiters.splice(0).forEach((w) => w());
+        }
         this.onStatus(this.connected);
       },
     }));
@@ -101,23 +106,33 @@ export class Broadcaster {
     return this.clients.some((c) => c.connected);
   }
 
+  // Attend qu'au moins un relais réponde (ou abandonne après `ms`).
+  async whenConnected(ms = 20000) {
+    await this.ready;
+    if (this.connected) return true;
+    return new Promise((ok) => {
+      const done = () => { clearTimeout(timer); ok(true); };
+      const timer = setTimeout(() => {
+        this.waiters = this.waiters.filter((w) => w !== done);
+        ok(false);
+      }, ms);
+      this.waiters.push(done);
+    });
+  }
+
   async sign(obj) {
     const p = JSON.stringify({ ...obj, t: Date.now(), id: Math.random().toString(36).slice(2, 10) });
     const sig = await crypto.subtle.sign(SIGN, this.key.priv, enc.encode(p));
     return JSON.stringify({ p, s: b64url(sig) });
   }
 
+  // Renvoie true si au moins un relais a reçu le message.
   async send(topic, obj, retain) {
     await this.ready;
     const text = await this.sign(obj);
-    this.clients.forEach((c) => c.publish(topic, text, retain));
-    return text;
-  }
-
-  // Après une (re)connexion : l'état et les images sont republiés.
-  resend() {
-    if (this.lastState) this.send(this.t.state, this.lastState, true);
-    Object.entries(this.retained).forEach(([topic, obj]) => this.send(topic, obj, true));
+    let sent = false;
+    this.clients.forEach((c) => { if (c.publish(topic, text, retain)) sent = true; });
+    return sent;
   }
 
   // État complet du tableau de bord (gardé par le relais pour les viewers qui arrivent).
@@ -136,34 +151,20 @@ export class Broadcaster {
     this.send(this.t.event, { kind, data }, false);
   }
 
-  async retain(topic, obj) {
+  // Fichier (image ou son) gardé par le relais pour tous les viewers. Le relais limite la
+  // taille des messages : le fichier part en morceaux signés. buffer null : on l'efface.
+  async setFile(id, buffer, type = '') {
     await this.ready;
-    this.retained[topic] = obj;
-    return this.send(topic, obj, true);
-  }
-
-  // Image déposée dans les Réglages (data URL), ou null pour l'effacer.
-  setMedia(key, url) {
-    return this.ready.then(() => this.retain(this.t.media + key, { media: key, url: url || '' }));
-  }
-
-  // Son déposé dans les Réglages (ArrayBuffer), ou null pour revenir au son d'origine.
-  // Le relais limite la taille des messages : le fichier part en morceaux.
-  async setSound(name, buffer) {
-    await this.ready;
-    const base = `${this.t.media}snd-${name}`;
+    const base = `${this.t.media}${id}`;
     const v = Math.random().toString(36).slice(2, 10);
-    if (!buffer) {
-      await this.retain(base, { sound: name, v, parts: 0 });
-      return;
-    }
+    if (!buffer) return this.send(base, { file: id, v, parts: 0 }, true);
     const data = b64url(buffer);
-    const size = SOUND_CHUNK;
-    const parts = Math.ceil(data.length / size);
+    const parts = Math.ceil(data.length / CHUNK);
     for (let i = 0; i < parts; i++) {
-      await this.retain(`${base}/${i}`, { sound: name, v, part: i, data: data.slice(i * size, (i + 1) * size) });
+      const ok = await this.send(`${base}/${i}`, { file: id, v, part: i, data: data.slice(i * CHUNK, (i + 1) * CHUNK) }, true);
+      if (!ok) return false;
     }
-    await this.retain(base, { sound: name, v, parts });
+    return this.send(base, { file: id, v, parts, type }, true);
   }
 
   close() {
@@ -171,46 +172,107 @@ export class Broadcaster {
   }
 }
 
+// ---------- Images et sons déposés dans les Réglages → viewers ----------
+
+const SENT_KEY = 'portes.cast.sent';
+const REFRESH = 12 * 3600 * 1000; // renvoyé au moins toutes les 12 h (le relais peut oublier)
+
+async function fingerprint(blob) {
+  if (!blob) return '';
+  const hash = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+  return b64url(hash).slice(0, 16);
+}
+
+function dataUrlBytes(url) {
+  const [head, data] = url.split(',');
+  const bin = atob(data);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return { buffer: out.buffer, type: (head.match(/data:([^;]+)/) || [])[1] || '' };
+}
+
+// Envoie aux viewers les images et les sons déposés (seulement ce qui a changé).
+// only : 'img:animChat', 'snd:chat'… pour n'envoyer qu'un fichier.
+export async function castMedia(b, { only } = {}) {
+  if (!(await b.whenConnected())) return false;
+  let sent = {};
+  try { sent = JSON.parse(localStorage.getItem(SENT_KEY) || '{}') || {}; } catch (e) { /* ignore */ }
+  if (sent.channel !== b.key.channel) sent = { channel: b.key.channel, items: {} };
+  const list = [
+    ...Object.keys(IMAGES).map((k) => `img:${k}`),
+    ...Object.keys(SOUND_FILES).map((k) => `snd:${k}`),
+  ];
+  for (const key of list) {
+    if (only && only !== key) continue;
+    const blob = await getMedia(key);
+    const sig = await fingerprint(blob);
+    const prev = sent.items[key];
+    if (prev && prev.sig === sig && Date.now() - prev.at < REFRESH) continue;
+    let buffer = null;
+    let type = '';
+    if (blob && key.startsWith('img:')) {
+      if (blob.size <= CAST_MAX.image) {
+        buffer = await blob.arrayBuffer();
+        type = blob.type;
+      } else {
+        // Très grande image : envoyée réduite plutôt que pas du tout.
+        const url = await smallDataUrl(blob, 1400, CAST_MAX.image * 1.3);
+        if (url) ({ buffer, type } = dataUrlBytes(url));
+      }
+    } else if (blob && blob.size <= CAST_MAX.sound) {
+      buffer = await blob.arrayBuffer();
+      type = blob.type;
+    }
+    const ok = await b.setFile(key.replace(':', '-'), buffer, type);
+    if (!ok) return false;
+    sent.items[key] = { sig, at: Date.now() };
+    try { localStorage.setItem(SENT_KEY, JSON.stringify(sent)); } catch (e) { /* ignore */ }
+  }
+  return true;
+}
+
 // ---------- Côté viewers : réception ----------
 
-// Les morceaux d'un son peuvent arriver dans n'importe quel ordre.
-function soundAssembler(onSound) {
-  const heads = {}; // nom → { v, parts }
-  const chunks = {}; // nom:v → { i: data }
-  const done = {}; // nom → version déjà décodée
-  const check = (name) => {
-    const h = heads[name];
-    if (!h) return;
+// Les morceaux d'un fichier peuvent arriver dans n'importe quel ordre.
+function fileAssembler(onFile) {
+  const heads = {}; // id → { v, parts, type }
+  const chunks = {}; // id:v → { i: data }
+  const done = {}; // id → version déjà reconstituée
+  const check = (id) => {
+    const h = heads[id];
+    if (!h || done[id] === h.v) return;
     if (!h.parts) {
-      if (done[name] !== h.v) { done[name] = h.v; onSound(name, null); }
+      done[id] = h.v;
+      onFile(id, null, '');
       return;
     }
-    const c = chunks[`${name}:${h.v}`] || {};
-    if (Object.keys(c).length < h.parts || done[name] === h.v) return;
+    const c = chunks[`${id}:${h.v}`] || {};
     let data = '';
     for (let i = 0; i < h.parts; i++) {
       if (c[i] === undefined) return;
       data += c[i];
     }
-    done[name] = h.v;
-    onSound(name, unb64url(data).buffer);
+    done[id] = h.v;
+    delete chunks[`${id}:${h.v}`];
+    onFile(id, unb64url(data).buffer, h.type || '');
   };
   return (msg) => {
-    const name = String(msg.sound);
-    if (msg.parts !== undefined) heads[name] = { v: msg.v, parts: msg.parts };
+    const id = String(msg.file);
+    if (msg.parts !== undefined) heads[id] = { v: msg.v, parts: msg.parts, type: msg.type };
     else {
-      const k = `${name}:${msg.v}`;
+      const k = `${id}:${msg.v}`;
       (chunks[k] = chunks[k] || {})[msg.part] = msg.data;
     }
-    check(name);
+    check(id);
   };
 }
 
 export class Receiver {
-  // pub : clé publique (dans le lien) ; handlers : onState(state), onEvent(kind, data), onMedia(key, url), onStatus(up)
+  // pub : clé publique (dans le lien) ; handlers : onState(state), onEvent(kind, data),
+  // onFile(id, buffer, type) pour les images et sons, onStatus(up)
   constructor(pub, handlers) {
     this.h = handlers;
-    this.receiveSound = soundAssembler((name, buf) => this.h.onSound && this.h.onSound(name, buf));
+    this.receiveFile = fileAssembler((id, buf, type) => this.h.onFile && this.h.onFile(id, buf, type));
     this.seen = new Set();
     this.stateT = 0;
     this.ready = this.start(pub);
@@ -278,8 +340,7 @@ export class Receiver {
       if (this.stateT && msg.t < this.stateT - 60000) return;
       this.h.onEvent(msg.kind, msg.data || {});
     } else if (topic.startsWith(this.t.media)) {
-      if (msg.sound) this.receiveSound(msg);
-      else this.h.onMedia(msg.media, msg.url);
+      if (msg.file) this.receiveFile(msg);
     }
   }
 }

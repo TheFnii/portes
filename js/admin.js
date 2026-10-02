@@ -1,6 +1,6 @@
 // Page des réglages : connexion TikTok, messages défilants, affichage et son.
 
-import { STORAGE, SOUND_CAST_MAX } from './config.js';
+import { STORAGE, CAST_MAX } from './config.js';
 import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { loadMessages, loadFileMessages, saveLocalMessages, clearLocalMessages } from './messages.js';
 import { Ticker } from './ticker.js';
@@ -9,7 +9,7 @@ import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
 import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
 import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
-import { hostKey, viewerLink, Broadcaster } from './broadcast.js';
+import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -355,9 +355,21 @@ async function showMedia(slot) {
   slot.querySelector('.media-remove').hidden = !blob;
 }
 
-function mediaChanged() {
+// Diffusion active : le fichier part aussitôt chez les viewers (même si le tableau de bord
+// n'est pas ouvert). Sinon il partira à la prochaine ouverture du tableau de bord.
+let adminCast = null;
+async function mediaChanged(key, status, text) {
   try { localStorage.setItem(STORAGE.media, String(Date.now())); } catch (e) { /* ignore */ }
+  status.textContent = text;
+  if (!loadFlag(STORAGE.cast, false)) return;
+  status.textContent = `${text} · envoi aux viewers…`;
+  adminCast = adminCast || new Broadcaster();
+  const ok = await castMedia(adminCast, { only: key }).catch(() => false);
+  status.textContent = ok
+    ? `${text} · envoyé aux viewers ✓`
+    : `${text} · pas encore envoyé aux viewers (relais injoignable) : il partira à l’ouverture du tableau de bord.`;
 }
+window.addEventListener('pagehide', () => { if (adminCast) adminCast.close(); adminCast = null; });
 
 Object.entries(MEDIA_SLOTS).forEach(([id, slots]) => {
   const box = $(id);
@@ -383,10 +395,9 @@ document.querySelectorAll('.media-slot').forEach((slot) => {
       const blob = isSound ? file : await shrinkImage(file, max || 1400);
       await putMedia(key, blob);
       await showMedia(slot);
-      mediaChanged();
-      status.textContent = isSound && blob.size > SOUND_CAST_MAX
-        ? 'Enregistré ✓ — trop lourd pour les viewers (1,5 Mo maximum) : ils entendront le son d’origine.'
-        : 'Enregistré ✓';
+      await mediaChanged(key, status, isSound && blob.size > CAST_MAX.sound
+        ? 'Enregistré ✓ — trop lourd pour les viewers (1,5 Mo maximum) : ils entendront le son d’origine'
+        : 'Enregistré ✓');
     } catch (err) {
       status.textContent = 'Impossible d’enregistrer ce fichier sur cet appareil.';
     }
@@ -394,8 +405,7 @@ document.querySelectorAll('.media-slot').forEach((slot) => {
   slot.querySelector('.media-remove').addEventListener('click', async () => {
     await deleteMedia(key).catch(() => {});
     await showMedia(slot);
-    mediaChanged();
-    status.textContent = 'Retiré : retour au dessin ou au son d’origine.';
+    await mediaChanged(key, status, 'Retiré : retour au dessin ou au son d’origine');
   });
   const play = slot.querySelector('.media-play');
   if (play) play.addEventListener('click', () => { if (mediaUrls[key]) new Audio(mediaUrls[key]).play().catch(() => {}); });
