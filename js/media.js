@@ -66,3 +66,35 @@ export async function shrinkImage(file, maxSide) {
     URL.revokeObjectURL(url);
   }
 }
+
+// Version légère d'une image pour la diffuser aux viewers (le relais limite la taille des messages).
+// Renvoie une data URL (PNG pour garder la transparence) d'au plus maxBytes caractères, ou null.
+export async function smallDataUrl(blob, maxSide, maxBytes = 180000) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((ok, ko) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = () => ko(new Error('Image illisible'));
+      i.src = url;
+    });
+    let side = maxSide;
+    while (side >= 96) {
+      const scale = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      // WebP quand le navigateur sait l'écrire (plus léger), sinon PNG.
+      let data = c.toDataURL('image/webp', 0.86);
+      if (!data.startsWith('data:image/webp')) data = c.toDataURL('image/png');
+      if (data.length <= maxBytes) return data;
+      side = Math.round(side * 0.8);
+    }
+    return null;
+  } catch (e) {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

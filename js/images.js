@@ -46,9 +46,16 @@ export async function refreshImages() {
 // Promesse tenue quand toutes les images ont été cherchées.
 export const imagesReady = refreshImages();
 
+// Images reçues de la tablette (page des viewers) : elles passent avant tout le reste.
+const overrides = {};
+export function setImageOverride(key, url) {
+  if (url) overrides[key] = url;
+  else delete overrides[key];
+}
+
 // Adresse de l'image si elle existe, sinon null.
 export function image(key) {
-  return found[key] || null;
+  return overrides[key] || found[key] || null;
 }
 
 // Logo de la liste selon le rôle du cadeau.

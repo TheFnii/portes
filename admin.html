@@ -67,6 +67,27 @@
       <p class="form-status" id="gifts-status" role="status"></p>
     </section>
 
+    <!-- Page des viewers -->
+    <section class="card" id="viewers">
+      <h2>Page des viewers (téléphones)</h2>
+      <p class="hint">Vos viewers suivent le live en direct sur leur téléphone : liste à traiter, tops, case des messages, message épinglé, Jeu des Portes et animations. Tout est en lecture seule : ils ne peuvent rien toucher.</p>
+      <div class="settings-toggles">
+        <button class="btn btn-menu btn-toggle" id="cast-toggle" type="button" aria-pressed="false">
+          <span><strong>Diffuser le live aux viewers</strong><small class="state">Coupé</small></span><span class="switch" aria-hidden="true"></span>
+        </button>
+      </div>
+      <label class="field"><span>Lien à partager (bio TikTok, message épinglé…)</span>
+        <input id="cast-link" type="text" readonly value="Préparation du lien…"></label>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="cast-copy" type="button">Copier le lien</button>
+        <a class="btn" id="cast-open" href="live.html" target="_blank" rel="noopener">Voir la page des viewers</a>
+        <button class="btn btn-ghost" id="cast-renew" type="button">Changer de lien</button>
+      </div>
+      <p class="form-status" id="cast-status-text" role="status"></p>
+      <p class="hint">Le lien reste le même d’un live à l’autre. Activez la diffusion sur <strong>la tablette du live</strong> : c’est elle qui envoie tout en direct (le petit voyant 📡 Viewers apparaît en bas du tableau de bord). Les viewers peuvent ajouter la page à leur écran d’accueil.</p>
+      <p class="hint">Les images déposées ci-dessous sont envoyées aux viewers en version légère. Les sons déposés ici restent sur la tablette (les viewers entendent les sons d’origine, ou ceux du dossier <code>sounds/</code>).</p>
+    </section>
+
     <!-- Images et sons -->
     <section class="card" id="images">
       <h2>Images et sons des cadeaux</h2>

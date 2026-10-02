@@ -36,6 +36,14 @@ export const IMAGES = {
 };
 export const IMAGE_EXTENSIONS = ['png', 'webp', 'jpg', 'jpeg', 'gif', 'svg'];
 
+// Page des viewers (live.html) : relais publics gratuits utilisés pour la diffusion.
+// La tablette publie sur tous ; chaque téléphone se connecte au premier qui répond.
+export const LIVE_BROKERS = [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+];
+export const LIVE_TOPIC = 'portes-du-destin/v1';
+
 // Euler Stream (lecture du chat TikTok LIVE).
 export const EULER_WS_URL = 'wss://ws.eulerstream.com';
 
@@ -59,6 +67,9 @@ export const STORAGE = {
   milestone: 'portes.milestone',
   radioVolume: 'portes.radio.volume',
   media: 'portes.media',          // change quand une image ou un son est déposé dans les Réglages
+  cast: 'portes.cast',            // diffusion vers la page des viewers (on/off)
+  castKey: 'portes.cast.key',     // clé de signature de la diffusion (reste sur la tablette)
+  viewerSound: 'portes.viewer.sound', // son coupé ou non sur la page des viewers
 };
 
 // Messages de la case centrale (règles du live), modifiables comme ceux du ruban.

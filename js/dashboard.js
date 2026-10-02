@@ -22,6 +22,25 @@ function logo(role, fallbackUrl, emoji) {
   return url ? `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer" loading="lazy" data-emoji="${emoji}">` : emoji;
 }
 
+// Icône d'une entrée de la liste (logo fourni, image du cadeau ou emoji).
+export function entryIcon(e) {
+  if (e.type === 'winner') return '<span class="gift-icon" title="Gagnant du jeu">🏆</span>';
+  if (e.type === 'milestone') return '<span class="gift-icon" title="Palier de likes">🏅</span>';
+  const role = ROLES[e.gift];
+  const emoji = role ? role.emoji : '🎁';
+  const img = logo(e.gift, e.giftImage, emoji);
+  return `<span class="gift-icon" title="${esc(role ? role.label : '')}">${img}</span>`;
+}
+
+// Ligne de détail d'une entrée de la liste.
+export function entryDetail(e) {
+  if (e.type === 'winner') return `Gagnant · porte ${e.door ?? ''}`.trim();
+  if (e.type === 'milestone') return e.label || 'Palier de likes';
+  return `${e.count} question${e.count > 1 ? 's' : ''} en priorité`;
+}
+
+export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
+
 export class Dashboard {
   constructor({ onRemove, onRemoveDonut }) {
     this.seen = new Set();
@@ -99,20 +118,9 @@ export class Dashboard {
     return fill(this.s.listTitle, { n });
   }
 
-  icon(e) {
-    if (e.type === 'winner') return '<span class="gift-icon" title="Gagnant du jeu">🏆</span>';
-    if (e.type === 'milestone') return '<span class="gift-icon" title="Palier de likes">🏅</span>';
-    const role = ROLES[e.gift];
-    const emoji = role ? role.emoji : '🎁';
-    const img = logo(e.gift, e.giftImage, emoji);
-    return `<span class="gift-icon" title="${esc(role ? role.label : '')}">${img}</span>`;
-  }
+  icon(e) { return entryIcon(e); }
 
-  detail(e) {
-    if (e.type === 'winner') return `Gagnant · porte ${e.door ?? ''}`.trim();
-    if (e.type === 'milestone') return e.label || 'Palier de likes';
-    return `${e.count} question${e.count > 1 ? 's' : ''} en priorité`;
-  }
+  detail(e) { return entryDetail(e); }
 
   renderQueue(queue) {
     $('queue-title').textContent = this.title(queue);
@@ -133,7 +141,6 @@ export class Dashboard {
     }
     this.lastCurrent = cur ? cur.id : null;
 
-    const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
     let html = '';
     let section = cur ? cur.type : null;
     list.slice(1).forEach((e, i) => {

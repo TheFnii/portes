@@ -1,6 +1,6 @@
 // Tableau de bord du live + Jeu des Portes.
 
-import { STORAGE } from './config.js';
+import { STORAGE, IMAGES } from './config.js';
 import { load, save, loadFlag, saveFlag } from './prefs.js';
 import { randomInt } from './random.js';
 import { flowerDefs } from './doors-art.js';
@@ -19,6 +19,8 @@ import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
+import { getMedia, smallDataUrl } from './media.js';
+import { Broadcaster } from './broadcast.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
 import { normalizeHandle } from './game.js';
@@ -58,6 +60,12 @@ milestones.reached = Number(load(STORAGE.milestone, 0)) || 0;
 let milestoneAnnounced = 0; // palier déjà annoncé (« bientôt »)
 
 const celebrate = new Celebrate({ root: $('celebrate'), fx, sound, getSettings: () => settings });
+
+// Grande animation, ici et sur les téléphones des viewers.
+function play(kind, data) {
+  castEvent('cel', { kind, data: { name: data.name, text: data.text, title: data.title, giftImage: data.giftImage } });
+  return celebrate.play(kind, data);
+}
 
 const dash = new Dashboard({
   onRemove: (id) => { queue.remove(id); changed(); },
@@ -100,8 +108,92 @@ function changed() {
     dash.renderDonuts(queue);
     dash.renderLikes(likes);
     dash.renderGifters(gifters);
+    castState();
   });
 }
+
+// ---------- Diffusion vers la page des viewers (live.html) ----------
+
+let cast = null;
+let boardData = { messages: [], speed: 30 };
+let gameCounts = null;
+
+function setupCast() {
+  const on = loadFlag(STORAGE.cast, false);
+  if (on && !cast) {
+    cast = new Broadcaster({ onStatus: renderCastStatus });
+    castMedia();
+    castState();
+  } else if (!on && cast) {
+    // Les viewers voient « Hors ligne ».
+    const c = cast;
+    cast = null;
+    c.send(c.t.state, { ...snapshot(), offline: true }, true).finally(() => setTimeout(() => c.close(), 1500));
+  }
+  renderCastStatus();
+}
+
+function renderCastStatus() {
+  const el = $('cast-status');
+  el.hidden = !cast;
+  el.classList.toggle('on', !!(cast && cast.connected));
+  el.title = cast && cast.connected ? 'Diffusé aux viewers' : 'Connexion au relais des viewers…';
+}
+
+function castEvent(kind, data) {
+  if (cast) cast.event(kind, data);
+}
+
+const pickTop = (r) => ({
+  total: Math.round(r.total),
+  top: r.top(settings.topCount || 6).map((u) => ({ name: u.name || u.handle, value: Math.round(u.value) })),
+});
+
+// Tout ce que les viewers voient (rien de privé : ni clé, ni réglages de connexion).
+function snapshot() {
+  const chip = $('milestone-chip');
+  return {
+    settings,
+    features: {
+      pinned: features.pinned, likes: features.likes, gifters: features.gifters,
+      board: features.board, list: features.list, game: features.game,
+    },
+    pinned: features.pinned && pinned ? pinned.text : '',
+    title: dash.title(queue),
+    chip: chip.hidden ? '' : chip.textContent,
+    list: queue.list().map((e) => ({
+      id: e.id, type: e.type, name: e.name, gift: e.gift, count: e.count, label: e.label, door: e.door, giftImage: e.giftImage,
+    })),
+    likes: pickTop(likes),
+    gifters: pickTop(gifters),
+    board: boardData,
+    game: state.screen === 'game' ? {
+      phase: state.phase,
+      heading: $('stage-heading').textContent,
+      tagline: $('stage-tagline').textContent,
+      info: state.phase === 'start' ? '' : $('session-info').textContent,
+      counts: gameCounts,
+      opened: round.opened,
+    } : null,
+  };
+}
+
+function castState() {
+  if (cast) cast.state(snapshot());
+}
+
+// Les images déposées dans les Réglages sont envoyées aux viewers (en version légère).
+async function castMedia() {
+  if (!cast) return;
+  for (const key of Object.keys(IMAGES)) {
+    const blob = await getMedia(`img:${key}`);
+    const url = blob ? await smallDataUrl(blob, key.startsWith('logo') ? 160 : 720) : null;
+    if (cast) cast.setMedia(key, url);
+  }
+}
+
+// Battement régulier : les viewers savent que le live est toujours en cours.
+setInterval(castState, 60000);
 
 // ---------- Mise à l'échelle ----------
 
@@ -173,13 +265,13 @@ function onGift(g) {
     queue.addPriority(user, role, q);
     const text = role === 'cat' ? fill(q === 1 ? settings.catText : settings.catTextPlural, { q }) : fill(settings.galaxyText, { q });
     const anim = role === 'cat' ? settings.animCat : settings.animGalaxy;
-    if (anim) celebrate.play(role, { name: user.name, text, giftImage: g.giftImage });
+    if (anim) play(role, { name: user.name, text, giftImage: g.giftImage });
     else sound.diceResult();
   } else if (role === 'donut') {
     // Le pseudo rejoint la case « Message de l'univers » une fois l'enveloppe arrivée.
     const add = () => { queue.addDonut(user, n); changed(); };
     if (settings.animDonut && features.donuts) {
-      celebrate.play('donut', { name: user.name, text: settings.donutText, target: $('donut-box') }).then(add);
+      play('donut', { name: user.name, text: settings.donutText, target: $('donut-box') }).then(add);
     } else {
       sound.join();
       add();
@@ -217,7 +309,7 @@ function checkMilestone() {
     dash.milestoneChip(`🏅 ${palier} bientôt`);
     if (milestoneAnnounced !== milestones.next()) {
       milestoneAnnounced = milestones.next();
-      celebrate.play('banner', { text: fill(settings.milestoneAlertText, { palier }) });
+      play('banner', { text: fill(settings.milestoneAlertText, { palier }) });
     }
   } else {
     dash.milestoneChip(`🏅 ${palier} atteint !`);
@@ -233,7 +325,7 @@ function claimMilestone(msg) {
   const palier = Milestones.label(won);
   const user = { key: handle || String(msg.userId || msg.name), handle, name: msg.name || handle, avatar: msg.avatar || '' };
   queue.addMilestone(user, fill(settings.milestoneLabel, { palier }));
-  celebrate.play('milestone', { name: user.name, title: fill(settings.milestoneTitle, { palier }) });
+  play('milestone', { name: user.name, title: fill(settings.milestoneTitle, { palier }) });
   changed();
   checkMilestone();
 }
@@ -242,12 +334,14 @@ function onPin(p) {
   if (p.pinned) {
     pinned = { text: p.text, name: p.user ? p.user.name : '', pinId: p.pinId };
     dash.flashPinned();
+    castEvent('pin');
     sound.tink();
   } else if (!p.pinId || !pinned || !pinned.pinId || pinned.pinId === p.pinId) {
     pinned = null;
   }
   dash.renderPinned(pinned);
   persist();
+  castState();
 }
 
 live.addEventListener('chat', (e) => { claimMilestone(e.detail); onChat(e.detail); });
@@ -329,6 +423,7 @@ async function countdown() {
   const box = $('countdown');
   const num = $('countdown-num');
   box.hidden = false;
+  castEvent('countdown', { go: settings.countdownGo });
   for (const step of ['3', '2', '1', settings.countdownGo || '✦']) {
     if (state.screen !== 'game') break;
     num.textContent = step;
@@ -357,6 +452,7 @@ async function closeGame() {
   doors.highlight(0);
   if (doors.focused) await doors.close();
   const winners = state.mode === 'live' ? round.sessionWinners() : [];
+  castEvent('close');
   const added = queue.closeGame(winners);
   round.reset();
   markOpened();
@@ -405,10 +501,12 @@ function updateUI() {
   btn.textContent = round.opened.length ? 'Relancer le dé' : 'Lancer le dé';
   diceHit.disabled = btn.disabled || btn.hidden;
   $('btn-again').disabled = !left;
-  doors.setCounts(inGame && isLive && p !== 'start' && p !== 'countdown' ? round.counts() : null);
+  gameCounts = inGame && isLive && p !== 'start' && p !== 'countdown' ? round.counts() : null;
+  doors.setCounts(gameCounts);
   body.classList.toggle('rolling', p === 'rolling');
 
   renderSessionInfo();
+  castState();
 }
 
 function renderSessionInfo() {
@@ -448,6 +546,7 @@ async function roll() {
 
   // Tirage au hasard parmi les portes encore fermées.
   const n = choices[randomInt(0, choices.length - 1)];
+  castEvent('roll', { n });
   sound.diceThrow();
   let frame = 0;
   await dice.roll(n, {
@@ -528,11 +627,13 @@ function showResult(n, winners) {
     });
   });
   $('result').hidden = false;
+  castEvent('result', { html });
   const r = $('result').getBoundingClientRect();
   fx.burst(r.left + r.width / 2, r.top + 110, { count: 22, speed: 170, life: 1.3, stars: 0.25, size: 0.8, glow: 'violet' });
 }
 
 async function backToDoors() {
+  castEvent('back');
   $('result').hidden = true;
   await doors.close();
   state.phase = 'between';
@@ -598,9 +699,11 @@ function onChat(msg) {
   if (r.type === 'join') sound.join();
   else if (r.type === 'out') sound.eliminated();
   else return;
-  doors.setCounts(round.counts());
+  gameCounts = round.counts();
+  doors.setCounts(gameCounts);
   renderSessionInfo();
   renderFeedsSoon();
+  castState();
 }
 
 function needCreds() {
@@ -767,7 +870,11 @@ document.addEventListener('keydown', (e) => {
 
 // Case centrale : messages qui défilent (Réglages ou regles.json).
 function loadBoard() {
-  return loadMessages('board').then((d) => dash.renderBoard(d.messages, d.speed));
+  return loadMessages('board').then((d) => {
+    boardData = { messages: d.messages, speed: d.speed };
+    dash.renderBoard(d.messages, d.speed);
+    castState();
+  });
 }
 
 function loadTicker() {
@@ -802,6 +909,7 @@ function reloadSettings() {
   }
   ensureLive();
   renderStatus();
+  castState();
 }
 
 window.addEventListener('pageshow', (e) => {
@@ -818,6 +926,14 @@ window.addEventListener('storage', (e) => {
     // Image ou son déposé dans les Réglages : on le prend tout de suite.
     refreshImages().then(() => changed());
     sound.loadFiles();
+    castMedia();
+  }
+  else if (e.key === STORAGE.cast) setupCast();
+  else if (e.key === STORAGE.castKey && cast) {
+    // Nouveau lien : on repart avec la nouvelle clé.
+    cast.close();
+    cast = null;
+    setupCast();
   }
   else if ([STORAGE.features, STORAGE.gifts, STORAGE.settings, STORAGE.ticker, STORAGE.sound, STORAGE.queue, STORAGE.tiktokUser, STORAGE.tiktokKey].includes(e.key)) reloadSettings();
 });
@@ -843,6 +959,7 @@ fx.setAmbient(22);
 dice.setActive(false);
 ensureLive();
 renderStatus();
+setupCast();
 
 // Liens depuis les Réglages : répéter sans être en live.
 const sim = new URLSearchParams(location.search).get('simulation');

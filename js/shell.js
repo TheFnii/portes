@@ -38,9 +38,11 @@ export function closeNotice() {
   $('notice').hidden = true;
 }
 
-$('notice').addEventListener('click', (e) => {
-  if (e.target === $('notice') || e.target.closest('[data-close]')) closeNotice();
-});
+if ($('notice')) {
+  $('notice').addEventListener('click', (e) => {
+    if (e.target === $('notice') || e.target.closest('[data-close]')) closeNotice();
+  });
+}
 
 // ---------- Plein écran ----------
 // iPad : Safari ne permet pas toujours le plein écran d'une page. La solution fiable est

@@ -9,6 +9,7 @@ import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
 import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
 import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
+import { hostKey, viewerLink, Broadcaster } from './broadcast.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -397,3 +398,60 @@ document.querySelectorAll('.media-slot').forEach((slot) => {
   const play = slot.querySelector('.media-play');
   if (play) play.addEventListener('click', () => { if (mediaUrls[key]) new Audio(mediaUrls[key]).play().catch(() => {}); });
 });
+
+// ---------- Page des viewers ----------
+
+function syncCast() {
+  const on = loadFlag(STORAGE.cast, false);
+  const b = $('cast-toggle');
+  b.setAttribute('aria-pressed', String(on));
+  b.querySelector('.state').textContent = on ? 'Activée sur cet appareil' : 'Coupée';
+}
+
+async function showCastLink(renew = false) {
+  try {
+    const key = await hostKey({ renew });
+    const link = viewerLink(key.pub);
+    $('cast-link').value = link;
+    $('cast-open').href = link;
+  } catch (e) {
+    $('cast-link').value = 'Ce navigateur ne permet pas de créer le lien (page à ouvrir en https).';
+  }
+}
+
+$('cast-toggle').addEventListener('click', () => {
+  const on = !loadFlag(STORAGE.cast, false);
+  saveFlag(STORAGE.cast, on);
+  syncCast();
+  if (!on) {
+    // Prévient les viewers tout de suite (le tableau de bord n'est peut-être pas ouvert).
+    // L'état « hors ligne » est envoyé dès que le relais répond.
+    const b = new Broadcaster();
+    b.lastState = { offline: true };
+    setTimeout(() => b.close(), 8000);
+  }
+  status($('cast-status-text'), loadFlag(STORAGE.cast, false)
+    ? 'Diffusion activée : le tableau de bord envoie tout aux viewers.'
+    : 'Diffusion coupée : les viewers voient « Hors ligne ».', 'live');
+});
+
+$('cast-copy').addEventListener('click', async () => {
+  const link = $('cast-link').value;
+  try {
+    await navigator.clipboard.writeText(link);
+  } catch (e) {
+    $('cast-link').select();
+    document.execCommand('copy');
+  }
+  status($('cast-status-text'), 'Lien copié ✓', 'live');
+});
+
+$('cast-renew').addEventListener('click', async () => {
+  if (!window.confirm('Créer un nouveau lien ? L’ancien lien ne fonctionnera plus : il faudra partager le nouveau.')) return;
+  await showCastLink(true);
+  status($('cast-status-text'), 'Nouveau lien créé. Pensez à le partager.', 'live');
+});
+
+syncCast();
+showCastLink();
+window.addEventListener('storage', (e) => { if (e.key === STORAGE.castKey) showCastLink(); });

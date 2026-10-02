@@ -76,6 +76,22 @@ Le tirage est vraiment aléatoire : il utilise le générateur cryptographique d
 
 ---
 
+## La page des viewers (téléphones)
+
+Vos viewers suivent le live en direct sur leur téléphone (ou tablette), en **lecture seule** : message épinglé, liste « X tirages avant le prochain jeu », case des messages qui défilent, Top Likes, Top Gifters, Jeu des Portes (seulement quand vous le lancez) et toutes les animations (Chat porte-bonheur, Galaxie, enveloppe, paliers de likes). Pas de réglages, pas de boutons, pas de radio.
+
+1. Sur **la tablette du live** : **Réglages → Page des viewers** → activez **Diffuser le live aux viewers**.
+2. Copiez le lien et partagez-le (bio TikTok, message épinglé…). Il reste le même d’un live à l’autre.
+3. Le petit voyant **📡 Viewers** en bas du tableau de bord devient vert quand la diffusion fonctionne.
+
+Les viewers peuvent ajouter la page à leur écran d’accueil (iPhone : Partager → Sur l’écran d’accueil). Le son y est coupé par défaut (le live a déjà le sien) ; un bouton permet de l’activer.
+
+Comment ça marche : la tablette envoie tout à un relais public gratuit (EMQX, et HiveMQ en secours). Chaque message est **signé** par la tablette et le lien contient de quoi vérifier cette signature : personne d’autre ne peut afficher de faux pseudos. **Changer de lien** crée une nouvelle signature (l’ancien lien cesse de fonctionner). Ces relais sont gratuits et sans garantie : si l’un d’eux tombe, l’autre prend le relais.
+
+Les images déposées dans les Réglages sont envoyées aux viewers en version légère ; les sons déposés restent sur la tablette (les viewers entendent les sons d’origine ou ceux du dossier `sounds/`).
+
+---
+
 ## La page Réglages
 Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙). Ces réglages restent enregistrés sur l’appareil utilisé.
 
@@ -222,6 +238,7 @@ Dans les Top Gifters, la pièce dorée indique le nombre de pièces TikTok offer
 ```
 index.html            la page unique
 admin.html            la page des réglages
+live.html             la page des viewers (lecture seule, synchronisée en direct)
 messages.json         les messages du ruban (modifiables sur GitHub)
 regles.json           les messages de la case centrale (modifiables sur GitHub)
 manifest.webmanifest  installation sur la tablette
@@ -235,6 +252,9 @@ js/
   celebrate.js        grandes animations (Chat, Galaxie, enveloppe, palier)
   images.js           recherche des logos et illustrations fournis (Réglages ou images/)
   media.js            images et sons déposés dans les Réglages (gardés dans l’appareil)
+  viewer.js           page des viewers
+  broadcast.js        diffusion signée tablette → viewers
+  mqtt.js             petit client du relais (MQTT sur WebSocket)
   gifts.js            rôles des cadeaux et comptage des combos
   features.js         modules activables, réglages des cadeaux
   radio.js            radio (playlist du Grimoire)

@@ -4,21 +4,24 @@
 import { SOUND_FILES, STORAGE } from './config.js';
 import { getMedia } from './media.js';
 
-const KEY = STORAGE.sound;
-
-function readPref() {
-  try { return localStorage.getItem(KEY) !== 'off'; } catch (e) { return true; }
+function readPref(key, defaultOn) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? defaultOn : v !== 'off';
+  } catch (e) { return defaultOn; }
 }
 
 export class Sound {
-  constructor() {
-    this.enabled = readPref();
+  // key : préférence enregistrée (la page des viewers a la sienne, coupée par défaut).
+  constructor({ key = STORAGE.sound, defaultOn = true } = {}) {
+    this.key = key;
+    this.enabled = readPref(key, defaultOn);
     this.ctx = null;
   }
 
   setEnabled(on) {
     this.enabled = on;
-    try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(this.key, on ? 'on' : 'off'); } catch (e) { /* ignore */ }
   }
 
   // Doit être appelé pendant un geste de l'utilisateur (clic / toucher).

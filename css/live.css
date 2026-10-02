@@ -1,0 +1,191 @@
+/* ---------- Page des viewers (téléphone d'abord, tablette ensuite) ---------- */
+
+body.viewer { background: #120a1e; }
+
+/* Le tableau de bord défile dans sa propre zone (plus fluide sur iPhone). */
+.v-main {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  transition: opacity .6s ease, visibility .6s;
+  zoom: var(--ts, 1);
+}
+.v-main > * { flex: none; }
+body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.v-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -2px 0 0;
+}
+.v-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 99px;
+  background: rgba(18, 10, 28, .85);
+  border: 1px solid rgba(232, 199, 122, .4);
+  font: 600 14px/1 'Cinzel', serif;
+  letter-spacing: .08em;
+  color: var(--gold-light);
+}
+.v-status .dot { width: 10px; height: 10px; border-radius: 50%; background: #8a8a8a; }
+.v-status.live .dot { background: #ff4d6d; box-shadow: 0 0 10px #ff4d6d; animation: blink 1.4s ease-in-out infinite; }
+.v-status.wait .dot { background: #e8c77a; }
+.v-sound { width: 44px; height: 44px; font-size: 20px; }
+
+/* Panneaux à la taille d'un téléphone */
+.v-main .panel { padding: 12px 14px; border-radius: 20px; }
+.v-main .panel-head h2 { font-size: 19px; }
+.v-main .panel-head h3 { font-size: 18px; }
+.v-main .panel .count { font-size: 15px; min-width: 34px; }
+
+.v-pinned { min-height: 64px; padding: 12px 16px; }
+.v-pinned p { font-size: clamp(20px, 5.6vw, 30px); max-height: none; }
+.v-pinned .pinned-icon { font-size: 22px; margin-top: 2px; }
+
+.v-queue { display: flex; flex-direction: column; }
+.v-queue .queue-current { padding: 10px 12px; gap: 12px; border-radius: 16px; }
+.v-queue .queue-current .who strong { font-size: clamp(20px, 6vw, 28px); }
+.v-queue .queue-current .who small { font-size: 15px; }
+.v-queue .queue-current .gift-icon { width: 44px; height: 44px; font-size: 32px; }
+.v-queue .queue-current.empty { min-height: 56px; font-size: 17px; }
+.v-queue .queue-list { overflow: visible; flex: none; }
+.v-queue .queue-list li { font-size: 18px; padding: 6px 0; }
+.v-queue .queue-list .who small { font-size: 14px; }
+.v-queue .queue-list .gift-icon { width: 30px; height: 30px; font-size: 22px; }
+.v-queue .queue-list li.sep { padding-left: 34px; font-size: 11px; }
+
+.v-board { height: 230px; display: flex; flex-direction: column; }
+.v-board .board-item { font-size: clamp(19px, 5.4vw, 26px); padding: 12px 4px; }
+
+.v-tops { display: grid; gap: 12px; }
+.v-tops .panel { display: flex; flex-direction: column; }
+.v-tops .side-list { overflow: visible; }
+.v-tops .side-list li { font-size: 17px; padding: 5px 0; }
+.v-tops .side-list .value { font-size: 15px; }
+
+.v-foot {
+  margin: 4px 0 0;
+  text-align: center;
+  font: 500 13px/1 'Cinzel', serif;
+  letter-spacing: .25em;
+  color: rgba(232, 199, 122, .55);
+}
+
+/* En attente (pas de lien, ou live pas commencé) */
+.v-wait {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(40, 16, 60, .9), rgba(8, 4, 14, .96));
+  transition: opacity .6s ease, visibility .6s;
+}
+.v-wait.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+.v-wait-card { max-width: 440px; text-align: center; }
+.v-wait-card .home-kicker { font-size: 13px; }
+.v-wait-card h1 { margin: 14px 0 0; font: 700 clamp(26px, 7vw, 36px)/1.15 'Cinzel', serif; color: var(--gold-light); }
+.v-wait-card p { margin: 8px 0 0; font: italic 500 20px/1.35 'Cormorant Garamond', serif; color: #f7ead0; }
+
+/* ---------- Jeu des Portes sur téléphone ---------- */
+
+body.viewer.at-home .stage-wrap,
+body.viewer.at-home .v-game-info { visibility: hidden; }
+body.viewer .stage-veil { z-index: 2; }
+body.viewer.at-home .stage-veil { opacity: 1; background: #120a1e; }
+
+.v-game-info {
+  position: fixed;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 0 16px;
+  text-align: center;
+  font: 600 13px/1.35 'Cinzel', serif;
+  color: var(--gold-light);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+  transition: opacity .4s ease;
+}
+.v-game-info:empty { display: none; }
+body.viewer.focusing .v-game-info { opacity: 0; }
+
+/* Téléphone en portrait : la scène occupe le haut de l'écran, le résultat s'affiche dessous. */
+@media (orientation: portrait) {
+  .v-game-info::after {
+    content: 'Tournez votre téléphone pour agrandir les portes';
+    display: block;
+    margin-top: 6px;
+    font: italic 500 14px/1.2 'Cormorant Garamond', serif;
+    color: rgba(243, 233, 210, .6);
+  }
+  body.viewer .focus { align-items: flex-start; padding-top: max(16px, env(safe-area-inset-top)); }
+  body.viewer .focus-door.split { transform: translateY(-6vh) scale(.62); }
+  body.viewer .result {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: auto;
+    max-height: 56vh;
+    padding: 18px 16px;
+    border-radius: 22px;
+    transform: none;
+    animation: v-result-in .8s cubic-bezier(.2, .9, .3, 1) both;
+  }
+}
+@keyframes v-result-in { from { opacity: 0; transform: translateY(40px); } }
+
+body.viewer .result-number { font-size: clamp(60px, 16vmin, 110px); }
+body.viewer .result-title { font-size: clamp(22px, 5.5vmin, 36px); }
+body.viewer .result-text { font-size: clamp(18px, 4.6vmin, 26px); }
+body.viewer .result-stats { font-size: 15px; }
+body.viewer .winners li { font-size: 18px; }
+body.viewer .winners img,
+body.viewer .winners .avatar { width: 34px; height: 34px; }
+
+/* Animations des cadeaux un peu plus compactes sur petit écran */
+@media (max-width: 520px) {
+  .cel-name { font-size: clamp(34px, 11vw, 60px); }
+  .cel-text { font-size: clamp(20px, 5.6vw, 30px); }
+  .env-fly, .env-fly.custom { width: 86vw; }
+}
+
+/* ---------- Tablette : deux colonnes ---------- */
+
+@media (min-width: 760px) {
+  .v-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    align-content: start;
+    gap: 14px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+  .v-head, .v-pinned, .v-foot { grid-column: 1 / -1; }
+  .v-queue { grid-row: span 2; }
+  .v-board { height: 300px; }
+  .v-tops { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1100px) {
+  .v-main { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .v-tops { grid-template-columns: 1fr; }
+}

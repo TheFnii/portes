@@ -1,0 +1,18 @@
+{
+  "id": "live.html",
+  "name": "Les Portes du Destin · Live",
+  "short_name": "Portes Live",
+  "description": "Suivez le live en direct : liste des tirages, tops, Jeu des Portes et animations.",
+  "lang": "fr",
+  "start_url": "live.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#120a1e",
+  "theme_color": "#120a1e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

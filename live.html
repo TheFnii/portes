@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Les Portes du Destin · Live</title>
+  <meta name="description" content="Suivez le live en direct : liste des tirages, tops, Jeu des Portes et animations.">
+  <meta name="theme-color" content="#120a1e">
+  <link rel="manifest" href="live.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Portes Live">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preload" href="fonts/cinzel-0.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/scene.css">
+  <link rel="stylesheet" href="css/doors.css">
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/dash.css">
+  <link rel="stylesheet" href="css/celebrate.css">
+  <link rel="stylesheet" href="css/live.css">
+</head>
+<body class="viewer at-home">
+  <svg class="defs" aria-hidden="true" width="0" height="0"><defs id="flower-defs"></defs></svg>
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- Jeu des Portes (affiché seulement quand il est lancé) -->
+  <div class="stage-veil" aria-hidden="true"></div>
+  <div class="stage-wrap" id="stage-wrap">
+    <div class="stage" id="stage">
+      <svg class="plaza" id="plaza" viewBox="0 0 1500 1000"></svg>
+      <div class="doors" id="doors"></div>
+      <div class="stage-title">
+        <h2 id="stage-heading"></h2>
+        <div class="flourish" aria-hidden="true"></div>
+        <p id="stage-tagline"></p>
+      </div>
+      <canvas class="dice-canvas" id="dice"></canvas>
+      <div class="dice-number" id="dice-number" aria-live="polite"></div>
+    </div>
+  </div>
+  <p class="v-game-info" id="v-game-info"></p>
+
+  <div class="focus" id="focus" hidden>
+    <div class="focus-veil"></div>
+    <div class="focus-door" id="focus-door"></div>
+    <section class="result" id="result" hidden>
+      <div class="result-inner" id="result-inner"></div>
+    </section>
+  </div>
+  <div class="countdown" id="countdown" hidden><span id="countdown-num"></span></div>
+
+  <canvas class="fx" id="fx" aria-hidden="true"></canvas>
+
+  <!-- Tableau de bord, en lecture seule -->
+  <main class="v-main" id="v-main">
+    <header class="v-head">
+      <span class="v-status" id="v-status"><span class="dot"></span><span class="label">Connexion…</span></span>
+      <button class="icon-btn v-sound" id="v-sound" type="button" aria-label="Activer le son">🔇</button>
+    </header>
+
+    <section class="panel pinned v-pinned" id="v-pinned" data-feature="pinned" hidden>
+      <span class="pinned-icon" aria-hidden="true">📌</span>
+      <p id="v-pinned-text"></p>
+    </section>
+
+    <section class="panel queue v-queue" data-feature="list">
+      <header class="panel-head">
+        <h2 id="v-queue-title"></h2>
+        <span class="milestone-chip" id="v-chip" hidden></span>
+      </header>
+      <div class="queue-current empty" id="v-current"></div>
+      <ol class="queue-list" id="v-list"></ol>
+    </section>
+
+    <section class="panel board v-board" data-feature="board">
+      <h2 class="board-title" id="v-board-title"></h2>
+      <div class="board-window"><div class="board-track" id="v-board"></div></div>
+    </section>
+
+    <div class="v-tops">
+      <section class="panel likers" data-feature="likes">
+        <header class="panel-head"><h3>❤ <span id="v-likes-title">Top Likes</span></h3><span class="count" id="v-likes-total">0</span></header>
+        <ol class="side-list" id="v-likes"></ol>
+      </section>
+      <section class="panel gifters" data-feature="gifters">
+        <header class="panel-head"><h3>🎁 <span id="v-gifters-title">Top Gifters</span></h3><span class="count" id="v-gifters-total">0</span></header>
+        <ol class="side-list" id="v-gifters"></ol>
+      </section>
+    </div>
+
+    <p class="v-foot" id="v-foot">✦ Les Portes du Destin ✦</p>
+  </main>
+
+  <!-- En attente : lien incomplet, ou live pas encore commencé -->
+  <div class="v-wait" id="v-wait">
+    <div class="v-wait-card">
+      <p class="home-kicker">✦ Les Portes du Destin ✦</p>
+      <h1 id="v-wait-title">Connexion au live…</h1>
+      <div class="flourish" aria-hidden="true"></div>
+      <p id="v-wait-text">Un instant, les portes s’ouvrent.</p>
+    </div>
+  </div>
+
+  <div class="celebrate" id="celebrate" hidden></div>
+
+  <noscript>Cette page a besoin de JavaScript.</noscript>
+  <script type="module" src="js/viewer.js"></script>
+</body>
+</html>
