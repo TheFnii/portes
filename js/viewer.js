@@ -193,6 +193,26 @@ function renderDash(st) {
   renderBoard(st.board);
 }
 
+// Fichiers attendus (manifeste de la tablette) : ceux qui manquent sont redemandés,
+// ceux qu'elle a retirés sont oubliés.
+let receiver = null;
+let needTimer = null;
+let lastNeed = 0;
+function checkFiles(manifest) {
+  if (!manifest || !receiver) return;
+  Object.keys(fileUrls).forEach((name) => { if (fileUrls[name] && !manifest[`img-${name}`]) onFile(`img-${name}`, null, ''); });
+  Object.keys(sound.received || {}).forEach((name) => { if (!manifest[`snd-${name}`]) sound.setReceived(name, null); });
+  clearTimeout(needTimer);
+  if (!receiver.missing(manifest).length) return;
+  // On laisse le temps aux fichiers gardés par le relais d'arriver, puis on redemande.
+  needTimer = setTimeout(() => {
+    const ids = receiver.missing(last && last.files);
+    if (!ids.length || Date.now() - lastNeed < 20000) return;
+    lastNeed = Date.now();
+    receiver.need(ids);
+  }, 8000);
+}
+
 function onState(st) {
   // Diffusion coupée depuis les Réglages : on garde l'affichage, marqué « Hors ligne ».
   if (st.offline && !st.list) {
@@ -202,6 +222,7 @@ function onState(st) {
     return;
   }
   last = st;
+  checkFiles(st.files);
   if (st.settings) settings = { ...DEFAULTS, ...st.settings };
   renderDash(st);
   renderGame(st.game);
@@ -400,12 +421,13 @@ if (!pub || !window.crypto || !crypto.subtle) {
 } else {
   renderStatus();
   imagesReady.then(() => { if (last) renderQueue(last); });
-  new Receiver(pub, {
+  receiver = new Receiver(pub, {
     onState,
     onEvent,
     onFile,
     onStatus: (up) => { connected = up; renderStatus(); },
-  }).ready.catch(() => {
+  });
+  receiver.ready.catch(() => {
     $('v-wait-title').textContent = 'Lien incomplet';
     $('v-wait-text').textContent = 'Ce lien ne correspond à aucun live. Demandez le bon lien pendant le live.';
   });

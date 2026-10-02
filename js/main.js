@@ -19,7 +19,7 @@ import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
-import { Broadcaster, castMedia } from './broadcast.js';
+import { Broadcaster, castMedia, castManifest } from './broadcast.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
 import { normalizeHandle } from './game.js';
@@ -120,7 +120,7 @@ let gameCounts = null;
 function setupCast() {
   const on = loadFlag(STORAGE.cast, false);
   if (on && !cast) {
-    cast = new Broadcaster({ onStatus: renderCastStatus });
+    cast = new Broadcaster({ onStatus: renderCastStatus, onNeed: resendMedia });
     sendMedia();
     castState();
   } else if (!on && cast) {
@@ -166,6 +166,7 @@ function snapshot() {
     likes: pickTop(likes),
     gifters: pickTop(gifters),
     board: boardData,
+    files: castManifest(cast),
     game: state.screen === 'game' ? {
       phase: state.phase,
       heading: $('stage-heading').textContent,
@@ -184,7 +185,17 @@ function castState() {
 // Les images et les sons déposés dans les Réglages sont envoyés aux viewers
 // (seulement ce qui a changé, dès que le relais répond).
 function sendMedia() {
-  if (cast) castMedia(cast).catch(() => {});
+  if (cast) castMedia(cast).then(castState).catch(() => {});
+}
+
+// Des viewers n'ont pas reçu certains fichiers : on les renvoie (au plus une fois par 30 s).
+const resentAt = {};
+function resendMedia(ids) {
+  const now = Date.now();
+  const due = ids.filter((id) => !resentAt[id] || now - resentAt[id] > 30000);
+  if (!due.length || !cast) return;
+  due.forEach((id) => { resentAt[id] = now; });
+  castMedia(cast, { force: due }).catch(() => {});
 }
 
 // Battement régulier : les viewers savent que le live est toujours en cours.

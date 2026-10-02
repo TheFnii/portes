@@ -10,6 +10,8 @@ import { getMedia, smallDataUrl } from './media.js';
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
 const CHUNK = 48000; // caractères par morceau de fichier
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const newVersion = () => Math.random().toString(36).slice(2, 10);
 const SIGN = { name: 'ECDSA', hash: 'SHA-256' };
 const enc = new TextEncoder();
 
@@ -34,7 +36,7 @@ async function channelOf(rawPublicKey) {
 
 export function topics(channel) {
   const base = `${LIVE_TOPIC}/${channel}`;
-  return { state: `${base}/state`, event: `${base}/event`, media: `${base}/media/` };
+  return { state: `${base}/state`, event: `${base}/event`, media: `${base}/media/`, need: `${base}/need` };
 }
 
 // Relais utilisés. Pour essayer un autre relais (tests, relais privé), on peut enregistrer
@@ -78,8 +80,10 @@ export function viewerLink(pub) {
 // ---------- Côté tablette : publication ----------
 
 export class Broadcaster {
-  constructor({ onStatus } = {}) {
+  // onNeed(ids) : des viewers signalent des fichiers manquants (le relais les a perdus…).
+  constructor({ onStatus, onNeed } = {}) {
     this.onStatus = onStatus || (() => {});
+    this.onNeed = onNeed || null;
     this.clients = [];
     this.waiters = [];
     this.lastState = null;
@@ -91,6 +95,13 @@ export class Broadcaster {
     this.t = topics(this.key.channel);
     // Publie sur chaque relais : les viewers se connectent au premier qui répond.
     this.clients = brokers().map((url) => new MqttClient(url, {
+      onMessage: (topic, text) => {
+        if (topic !== this.t.need || !this.onNeed) return;
+        try {
+          const ids = (JSON.parse(text).ids || []).filter((id) => typeof id === 'string' && /^(img|snd)-\w+$/.test(id));
+          if (ids.length) this.onNeed(ids.slice(0, 20));
+        } catch (e) { /* demande illisible */ }
+      },
       onStatus: (up) => {
         if (up) {
           // Après une (re)connexion, l'état est republié (images et sons restent gardés par le relais).
@@ -100,6 +111,7 @@ export class Broadcaster {
         this.onStatus(this.connected);
       },
     }));
+    if (this.onNeed) this.clients.forEach((c) => c.subscribe(this.t.need));
   }
 
   get connected() {
@@ -153,16 +165,16 @@ export class Broadcaster {
 
   // Fichier (image ou son) gardé par le relais pour tous les viewers. Le relais limite la
   // taille des messages : le fichier part en morceaux signés. buffer null : on l'efface.
-  async setFile(id, buffer, type = '') {
+  async setFile(id, buffer, type = '', v = newVersion()) {
     await this.ready;
     const base = `${this.t.media}${id}`;
-    const v = Math.random().toString(36).slice(2, 10);
     if (!buffer) return this.send(base, { file: id, v, parts: 0 }, true);
     const data = b64url(buffer);
     const parts = Math.ceil(data.length / CHUNK);
     for (let i = 0; i < parts; i++) {
       const ok = await this.send(`${base}/${i}`, { file: id, v, part: i, data: data.slice(i * CHUNK, (i + 1) * CHUNK) }, true);
       if (!ok) return false;
+      await wait(30); // sans précipitation : les relais gratuits limitent le débit
     }
     return this.send(base, { file: id, v, parts, type }, true);
   }
@@ -191,23 +203,42 @@ function dataUrlBytes(url) {
   return { buffer: out.buffer, type: (head.match(/data:([^;]+)/) || [])[1] || '' };
 }
 
-// Envoie aux viewers les images et les sons déposés (seulement ce qui a changé).
-// only : 'img:animChat', 'snd:chat'… pour n'envoyer qu'un fichier.
-export async function castMedia(b, { only } = {}) {
-  if (!(await b.whenConnected())) return false;
+function readSent(channel) {
   let sent = {};
   try { sent = JSON.parse(localStorage.getItem(SENT_KEY) || '{}') || {}; } catch (e) { /* ignore */ }
-  if (sent.channel !== b.key.channel) sent = { channel: b.key.channel, items: {} };
+  return sent.channel === channel ? sent : { channel, items: {} };
+}
+
+// Liste des fichiers que les viewers doivent avoir (id → version), jointe à l'état du live :
+// un téléphone qui en manque un le redemande.
+export function castManifest(b) {
+  if (!b || !b.key) return null;
+  const out = {};
+  Object.entries(readSent(b.key.channel).items).forEach(([key, it]) => {
+    if (it.sig && it.v) out[key.replace(':', '-')] = it.v;
+  });
+  return out;
+}
+
+// Envoie aux viewers les images et les sons déposés (seulement ce qui a changé).
+// only : 'img:animChat', 'snd:chat'… pour n'envoyer qu'un fichier ;
+// force : ids ('img-animChat'…) à renvoyer même s'ils sont déjà partis.
+export async function castMedia(b, { only, force = [] } = {}) {
+  if (!(await b.whenConnected())) return false;
   const list = [
     ...Object.keys(IMAGES).map((k) => `img:${k}`),
     ...Object.keys(SOUND_FILES).map((k) => `snd:${k}`),
   ];
   for (const key of list) {
     if (only && only !== key) continue;
+    const id = key.replace(':', '-');
     const blob = await getMedia(key);
     const sig = await fingerprint(blob);
+    const sent = readSent(b.key.channel);
     const prev = sent.items[key];
-    if (prev && prev.sig === sig && Date.now() - prev.at < REFRESH) continue;
+    const same = prev && prev.sig === sig && prev.v;
+    if (same && !force.includes(id) && Date.now() - prev.at < REFRESH) continue;
+    if (force.length && !force.includes(id)) continue;
     let buffer = null;
     let type = '';
     if (blob && key.startsWith('img:')) {
@@ -223,10 +254,12 @@ export async function castMedia(b, { only } = {}) {
       buffer = await blob.arrayBuffer();
       type = blob.type;
     }
-    const ok = await b.setFile(key.replace(':', '-'), buffer, type);
+    const v = same ? prev.v : newVersion();
+    const ok = await b.setFile(id, buffer, type, v);
     if (!ok) return false;
-    sent.items[key] = { sig, at: Date.now() };
-    try { localStorage.setItem(SENT_KEY, JSON.stringify(sent)); } catch (e) { /* ignore */ }
+    const now = readSent(b.key.channel);
+    now.items[key] = { sig: buffer ? sig : '', v, at: Date.now() };
+    try { localStorage.setItem(SENT_KEY, JSON.stringify(now)); } catch (e) { /* ignore */ }
   }
   return true;
 }
@@ -243,7 +276,7 @@ function fileAssembler(onFile) {
     if (!h || done[id] === h.v) return;
     if (!h.parts) {
       done[id] = h.v;
-      onFile(id, null, '');
+      onFile(id, null, '', h.v);
       return;
     }
     const c = chunks[`${id}:${h.v}`] || {};
@@ -254,7 +287,7 @@ function fileAssembler(onFile) {
     }
     done[id] = h.v;
     delete chunks[`${id}:${h.v}`];
-    onFile(id, unb64url(data).buffer, h.type || '');
+    onFile(id, unb64url(data).buffer, h.type || '', h.v);
   };
   return (msg) => {
     const id = String(msg.file);
@@ -272,7 +305,11 @@ export class Receiver {
   // onFile(id, buffer, type) pour les images et sons, onStatus(up)
   constructor(pub, handlers) {
     this.h = handlers;
-    this.receiveFile = fileAssembler((id, buf, type) => this.h.onFile && this.h.onFile(id, buf, type));
+    this.files = {}; // id → version reçue
+    this.receiveFile = fileAssembler((id, buf, type, v) => {
+      this.files[id] = v;
+      if (this.h.onFile) this.h.onFile(id, buf, type);
+    });
     this.seen = new Set();
     this.stateT = 0;
     this.ready = this.start(pub);
@@ -305,6 +342,16 @@ export class Receiver {
     this.client.subscribe(`${this.t.media}#`);
     clearTimeout(this.giveUp);
     this.giveUp = setTimeout(() => { if (!up) this.failover(); }, 8000);
+  }
+
+  // Fichiers attendus (manifeste de la tablette) : renvoie ceux qui manquent encore.
+  missing(manifest) {
+    return Object.entries(manifest || {}).filter(([id, v]) => this.files[id] !== v).map(([id]) => id);
+  }
+
+  // Demande à la tablette de renvoyer des fichiers (message non signé : au pire, elle renvoie).
+  need(ids) {
+    if (this.client && ids.length) this.client.publish(this.t.need, JSON.stringify({ ids }), false);
   }
 
   failover() {
