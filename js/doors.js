@@ -216,17 +216,24 @@ export class DoorStage {
     this.focusDoorEl.classList.add('split');
   }
 
-  async close() {
-    if (!this.focused) return;
-    this.focusEl.classList.add('closing');
-    document.body.classList.remove('focusing');
-    await wait(550);
-    this.focusEl.hidden = true;
-    this.focusEl.classList.remove('closing');
-    this.focusDoorEl.textContent = '';
-    this.el(this.focused).style.visibility = '';
-    this.highlight(0);
-    this.big = null;
-    this.focused = 0;
+  // Deux fermetures en même temps n'en font qu'une (sinon la porte restait cachée dans l'arc).
+  close() {
+    if (!this.focused) return Promise.resolve();
+    if (!this.closing) {
+      const n = this.focused;
+      this.closing = (async () => {
+        this.focusEl.classList.add('closing');
+        document.body.classList.remove('focusing');
+        await wait(550);
+        this.focusEl.hidden = true;
+        this.focusEl.classList.remove('closing');
+        this.focusDoorEl.textContent = '';
+        this.els.forEach((el) => { el.style.visibility = ''; });
+        this.highlight(0);
+        this.big = null;
+        if (this.focused === n) this.focused = 0;
+      })().finally(() => { this.closing = null; });
+    }
+    return this.closing;
   }
 }

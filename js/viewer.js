@@ -35,7 +35,6 @@ const celebrate = new Celebrate({ root: $('celebrate'), fx, sound, getSettings: 
 let last = null; // dernier état reçu de la tablette
 let connected = false;
 let gameOpen = false;
-let rolling = null; // promesse du lancer en cours (le résultat attend sa fin)
 let rollId = 0;
 
 // ---------- Mise à l'échelle de la scène du jeu ----------
@@ -233,7 +232,7 @@ function onState(st) {
 
 function renderGame(g) {
   if (g && !gameOpen) openGame();
-  else if (!g && gameOpen) closeGame();
+  else if (!g && gameOpen) queue(closeGame);
   if (!g) return;
   setText('stage-heading', g.heading || '');
   setText('stage-tagline', g.tagline || '');
@@ -241,6 +240,7 @@ function renderGame(g) {
   doors.setCounts(g.counts || null);
   doors.els.forEach((el, i) => el.classList.toggle('opened', (g.opened || []).includes(i + 1)));
   body.classList.toggle('rolling', g.phase === 'rolling');
+  healGame(g);
 }
 
 function openGame() {
@@ -334,12 +334,25 @@ async function roll(n) {
   await wait(1500);
 }
 
-async function showResult(html) {
-  if (rolling) await rolling;
-  if (!gameOpen || !doors.focused) return;
-  doors.split();
+// La porte n est en grand et son résultat affiché. Si le lancer a été manqué
+// (téléphone en veille, arrivée en cours de jeu), la porte s'ouvre directement.
+async function showResult(html, n) {
+  if (!gameOpen) return;
+  if (n && doors.focused !== n) {
+    $('result').hidden = true;
+    if (doors.focused) await doors.close();
+    doors.highlight(n);
+    await doors.focus(n);
+    if (!gameOpen) return;
+    doors.open();
+    await wait(450);
+  }
+  if (!doors.focused) return;
   const inner = $('result-inner');
+  const again = !$('result').hidden && inner.dataset.n === String(n);
+  doors.split();
   inner.innerHTML = html;
+  inner.dataset.n = String(n || '');
   inner.querySelectorAll('img').forEach((img) => {
     img.addEventListener('error', () => {
       const span = document.createElement('span');
@@ -348,6 +361,7 @@ async function showResult(html) {
       img.replaceWith(span);
     });
   });
+  if (again) return;
   $('result').hidden = false;
   sound.reveal();
   const r = $('result').getBoundingClientRect();
@@ -357,7 +371,39 @@ async function showResult(html) {
 async function back() {
   rollId++;
   $('result').hidden = true;
-  if (doors.focused) await doors.close();
+  $('result-inner').dataset.n = '';
+  $('dice-number').classList.remove('show');
+  await doors.close();
+  doors.highlight(0);
+}
+
+// Les étapes du jeu passent l'une après l'autre, dans l'ordre reçu (jamais deux à la fois).
+// Quand le téléphone sort de veille, ce qui s'est accumulé est oublié : l'état du live
+// remet ensuite l'écran d'aplomb.
+let chain = Promise.resolve();
+let busy = 0;
+let epoch = 0;
+function queue(fn) {
+  const my = epoch;
+  busy++;
+  chain = chain
+    .then(() => (my === epoch && !document.hidden ? fn() : null))
+    .catch((e) => console.error(e))
+    .finally(() => { busy--; });
+  return chain;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) epoch++;
+});
+
+// Remet l'écran du jeu d'accord avec l'état de la tablette (étape manquée).
+function healGame(g) {
+  if (busy || !g || !gameOpen) return;
+  if (g.phase === 'result' && g.result) {
+    if ($('result').hidden || doors.focused !== g.result.n) queue(() => showResult(g.result.html, g.result.n));
+  } else if (g.phase !== 'rolling' && (doors.focused || !$('result').hidden)) {
+    queue(back);
+  }
 }
 
 // ---------- Événements reçus ----------
@@ -366,16 +412,18 @@ function onEvent(kind, data) {
   if (kind === 'cel') {
     if (data.kind) celebrate.play(data.kind, data.data || {});
   } else if (kind === 'countdown') {
-    if (gameOpen) countdown(data.go);
+    queue(() => (gameOpen ? countdown(data.go) : null));
   } else if (kind === 'roll') {
-    if (!gameOpen) openGame();
-    rolling = roll(Number(data.n)).finally(() => { rolling = null; });
+    queue(() => {
+      if (!gameOpen) openGame();
+      return roll(Number(data.n));
+    });
   } else if (kind === 'result') {
-    showResult(String(data.html || ''));
+    queue(() => showResult(String(data.html || ''), Number(data.n) || 0));
   } else if (kind === 'back') {
-    back();
+    queue(back);
   } else if (kind === 'close') {
-    closeGame();
+    queue(closeGame);
   } else if (kind === 'pin') {
     const el = $('v-pinned');
     el.classList.remove('flash');

@@ -114,6 +114,7 @@ function changed() {
 // ---------- Diffusion vers la page des viewers (live.html) ----------
 
 let cast = null;
+let lastResult = null; // résultat affiché (les viewers qui l'ont manqué le retrouvent dans l'état)
 let boardData = { messages: [], speed: 30 };
 let gameCounts = null;
 
@@ -174,6 +175,7 @@ function snapshot() {
       info: state.phase === 'start' ? '' : $('session-info').textContent,
       counts: gameCounts,
       opened: round.opened,
+      result: state.phase === 'result' ? lastResult : null,
     } : null,
   };
 }
@@ -633,7 +635,8 @@ function showResult(n, winners) {
     });
   });
   $('result').hidden = false;
-  castEvent('result', { html });
+  lastResult = { n, html };
+  castEvent('result', { n, html });
   const r = $('result').getBoundingClientRect();
   fx.burst(r.left + r.width / 2, r.top + 110, { count: 22, speed: 170, life: 1.3, stars: 0.25, size: 0.8, glow: 'violet' });
 }
