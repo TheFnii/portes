@@ -21,6 +21,8 @@ export const SOUND_FILES = {
   galaxie: 'sounds/galaxie.mp3',  // Galaxie
   enveloppe: 'sounds/enveloppe.mp3', // Donut : l'enveloppe arrive
   palier: 'sounds/palier.mp3',    // palier de likes
+  sceau: 'sounds/sceau.mp3',      // le cachet de cire se brise
+  lettre: 'sounds/lettre.mp3',    // la lettre de l'univers apparaît
 };
 
 // Images fournies (voir images/LISEZMOI.md). Sans fichier, l'application garde ses dessins.
@@ -73,6 +75,12 @@ export const STORAGE = {
   cast: 'portes.cast',            // diffusion vers la page des viewers (on/off)
   castKey: 'portes.cast.key',     // clé de signature de la diffusion (reste sur la tablette)
   viewerSound: 'portes.viewer.sound', // son coupé ou non sur la page des viewers
+  univDeck: 'portes.univ.deck',    // messages de l'univers supprimés / ajoutés
+  univGrimoire: 'portes.univ.grimoire', // copie des messages du Grimoire
+  likeTiers: 'portes.liketiers',   // paliers de likes par personne
+  likeTiersReached: 'portes.liketiers.reached',
+  radioMine: 'portes.radio.mine',  // musiques ajoutées à la radio
+  radioGrimoire: 'portes.radio.grimoire', // garder la playlist du Grimoire
 };
 
 // Messages de la case centrale (règles du live), modifiables comme ceux du ruban.

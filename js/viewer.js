@@ -12,7 +12,7 @@ import { Celebrate } from './celebrate.js';
 import { Receiver } from './broadcast.js';
 import { entryIcon, entryDetail, SECTIONS, COIN } from './dashboard.js';
 import { DEFAULTS } from './settings.js';
-import { imagesReady, setImageOverride } from './images.js';
+import { imagesReady, setImageOverride, image } from './images.js';
 import { keepAwake, esc } from './shell.js';
 
 const $ = (id) => document.getElementById(id);
@@ -176,8 +176,39 @@ function renderBoard(board) {
   });
 }
 
+// ---------- Messages de l'univers : bouton enveloppe → pseudos → lettre ----------
+
+let letters = [];
+function renderLetters(list) {
+  letters = list || [];
+  const btn = $('v-letters');
+  btn.hidden = !letters.length;
+  $('v-letters-count').textContent = letters.length;
+  const logoUrl = image('logoEnveloppe');
+  const icon = logoUrl ? `<img src="${esc(logoUrl)}" alt="">` : '✉️';
+  if ($('v-letters-icon').dataset.src !== (logoUrl || '')) {
+    $('v-letters-icon').dataset.src = logoUrl || '';
+    $('v-letters-icon').innerHTML = icon;
+  }
+  $('v-letters-list').innerHTML = letters.map((l) => `<li><button type="button" data-letter="${esc(l.id)}">
+      <span class="env-mini gift-icon" aria-hidden="true">${icon}</span><span class="name">${esc(l.name)}</span>
+      ${l.count > 1 ? `<span class="mult">×${l.count}</span>` : ''}<span class="reread" aria-hidden="true">Lire</span></button></li>`).join('');
+}
+$('v-letters').addEventListener('click', () => { $('v-letters-panel').hidden = false; });
+$('v-letters-close').addEventListener('click', () => { $('v-letters-panel').hidden = true; });
+$('v-letters-panel').addEventListener('click', (e) => {
+  if (e.target === $('v-letters-panel')) { $('v-letters-panel').hidden = true; return; }
+  const b = e.target.closest('[data-letter]');
+  if (!b) return;
+  const l = letters.find((x) => x.id === b.dataset.letter);
+  if (!l) return;
+  $('v-letters-panel').hidden = true;
+  celebrate.play('letter', { name: l.name, message: l.message });
+});
+
 function renderDash(st) {
   const f = st.features || {};
+  renderLetters(f.donuts === false ? [] : st.letters);
   document.querySelectorAll('[data-feature]').forEach((el) => el.classList.toggle('feature-off', f[el.dataset.feature] === false));
   document.documentElement.style.setProperty('--ts', ((settings.textScale || 100) / 100).toFixed(2));
   const pin = $('v-pinned');

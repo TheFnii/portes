@@ -34,6 +34,25 @@ const ENVELOPE_BACK = `<svg viewBox="0 0 320 210" aria-hidden="true">
   <path d="M160 102 l5 11 12 1 -9 8 3 12 -11 -6 -11 6 3 -12 -9 -8 12 -1z" fill="#e8c77a"/>
 </svg>`;
 
+// Le dos dessiné (si aucune image n'est fournie), utilisable comme une image.
+const BACK_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ENVELOPE_BACK.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '))}`;
+
+const clampPct = (v, def) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : def;
+};
+
+// Proportions de l'image (largeur / hauteur).
+function imageRatio(url, fallback) {
+  return new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => ok(img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : fallback);
+    img.onerror = () => ok(fallback);
+    img.src = url;
+    setTimeout(() => ok(fallback), 3000);
+  });
+}
+
 export class Celebrate {
   constructor({ root, fx, sound, getSettings }) {
     this.root = root;
@@ -152,29 +171,39 @@ export class Celebrate {
     await this.finish(el, -1800);
   }
 
-  // L'enveloppe virevolte côté sceau parmi les étoiles et les comètes, s'arrête, se retourne
-  // côté destinataire où le pseudo s'écrit, puis file vers la case « Message de l'univers ».
-  async donut({ name, text, target }) {
+  // Message de l'univers (Donut) : l'enveloppe virevolte parmi les étoiles et les comètes
+  // (on voit passer le côté du pseudo et celui du sceau), s'arrête côté sceau, le cachet de
+  // cire se brise, le rabat s'ouvre et la lettre apparaît. L'ouverture est construite à
+  // partir des deux images fournies (face et dos).
+  async donut({ name, text, message, target }) {
     const s = this.getSettings();
-    // Illustrations fournies : côté sceau (virevolte) et côté destinataire (pseudo écrit dessus).
-    const url = image('animEnveloppe');
-    const back = image('animEnveloppeDos');
+    const front = image('animEnveloppe');
+    const back = image('animEnveloppeDos') || BACK_URL;
+    const ratio = await imageRatio(back, 320 / 210);
     let comets = '';
     for (let i = 0; i < 6; i++) {
       comets += `<b class="comet" style="top:${(8 + Math.random() * 70).toFixed(0)}%;animation-delay:${(i * 0.35).toFixed(2)}s"></b>`;
     }
+    const D = clampPct(s.flapDepth, 57);
     const el = this.stage('cel-donut', `
       ${comets}
-      ${url && text ? `<p class="cel-text env-caption">${esc(text)}</p>` : ''}
-      <div class="env-fly${url ? ' custom' : ''}">
+      <div class="env-fly" style="aspect-ratio:${ratio.toFixed(4)}">
         <div class="env-card">
-          <div class="env-face env-back">${back ? `<img src="${esc(back)}" alt="">` : ENVELOPE_BACK}</div>
-          <div class="env-face env-front${url ? ' env-art' : ''}">${url ? `
-            <img src="${esc(url)}" alt="">
+          <div class="env-face env-back"><img src="${esc(back)}" alt=""></div>
+          <div class="env-face env-front${front ? ' env-art' : ''}">${front ? `
+            <img src="${esc(front)}" alt="">
             <span class="env-name-on ${s.envNameFont === 'cinzel' ? 'cinzel' : 'script'}" style="left:${s.envNameX}%;top:${s.envNameY}%;color:${esc(s.envNameColor)};--env-size:${(s.envNameSize / 100).toFixed(2)}">${esc(name)}</span>` : `
             <span class="env-to">${esc(text)}</span>
             <span class="env-name">${esc(name)}</span>`}
           </div>
+        </div>
+        <div class="env-open" style="--d:${D}%">
+          <div class="eo-backing"></div>
+          <div class="eo-inside"></div>
+          <div class="eo-letter"><span></span><span></span><span></span></div>
+          <img class="eo-pocket" src="${esc(back)}" alt="">
+          <div class="eo-flap"><img class="eo-flap-front" src="${esc(back)}" alt=""><div class="eo-flap-back"></div></div>
+          <div class="eo-seal"><i class="l"></i><i class="r"></i></div>
         </div>
       </div>`);
     this.sound.envelope(2.2);
@@ -184,25 +213,95 @@ export class Celebrate {
     }, 220);
     await wait(2300);
     clearInterval(sparkle);
+
+    // Elle s'arrête, côté sceau.
     el.classList.add('landed');
-    this.fx.burst(c.x, c.y, { count: 60, speed: 260, life: 1.6, stars: 0.5 });
-    await wait(Math.max(1200, this.seconds * 1000 - 1500));
-    // Vole vers la case des messages de l'univers.
     const fly = el.querySelector('.env-fly');
+    const r = fly.getBoundingClientRect();
+    const sx = (clampPct(s.sealX, 50) / 100) * r.width;
+    const sy = (clampPct(s.sealY, 56) / 100) * r.height;
+    const sr = (clampPct(s.sealSize, 17) / 200) * r.width;
+    const open = el.querySelector('.env-open');
+    open.style.setProperty('--sx', `${sx}px`);
+    open.style.setProperty('--sy', `${sy}px`);
+    open.style.setProperty('--sr', `${sr}px`);
+    el.querySelectorAll('.eo-seal i').forEach((half) => {
+      half.style.backgroundImage = `url("${back}")`;
+      half.style.backgroundSize = `${r.width}px ${r.height}px`;
+      half.style.backgroundPosition = `${-(sx - sr)}px ${-(sy - sr)}px`;
+    });
+    this.fx.burst(c.x, c.y, { count: 40, speed: 220, life: 1.4, stars: 0.5 });
+    await wait(700);
+
+    // Le cachet de cire se brise.
+    el.classList.add('unsealed');
+    this.sound.unseal();
+    this.fx.burst(r.left + sx, r.top + sy, { count: 46, speed: 200, life: 1.2, stars: 0.6, size: 0.9 });
+    await wait(800);
+
+    // Le rabat s'ouvre, la lettre sort.
+    el.classList.add('opened');
+    await wait(900);
+    el.classList.add('rising');
+    await wait(1000);
+
+    // La lettre se déplie au centre de l'écran.
+    el.classList.add('reading');
+    const card = this.letterCard(name, message);
+    el.appendChild(card);
+    void card.offsetWidth;
+    card.classList.add('in');
+    this.sound.letter();
+    this.fx.burst(c.x, c.y, { count: 50, speed: 240, life: 1.6, stars: 0.6, glow: 'violet' });
+    await this.readLetter(card);
+
+    // Puis elle rejoint la case « Message de l'univers ».
     const box = target && target.getBoundingClientRect();
     if (box && box.width) {
-      const r = fly.getBoundingClientRect();
-      const dx = box.left + box.width / 2 - (r.left + r.width / 2);
-      const dy = box.top + 40 - (r.top + r.height / 2);
-      fly.style.transition = 'transform .9s cubic-bezier(.5, 0, .2, 1), opacity .9s ease';
-      fly.style.transform = `translate(${dx}px, ${dy}px) scale(.12)`;
-      fly.style.opacity = '0.2';
+      const cr = card.getBoundingClientRect();
+      card.style.transition = 'transform .9s cubic-bezier(.5, 0, .2, 1), opacity .9s ease';
+      card.style.transform = `translate(${box.left + box.width / 2 - (cr.left + cr.width / 2)}px, ${box.top + 40 - (cr.top + cr.height / 2)}px) scale(.08)`;
+      card.style.opacity = '0.2';
+      await wait(900);
     }
-    await wait(900);
     el.classList.add('out');
     await wait(500);
     el.remove();
     if (!this.root.querySelector('.cel')) this.root.hidden = true;
+  }
+
+  // Une lettre relue (touchée dans la liste des Messages de l'univers).
+  async letter({ name, message }) {
+    const el = this.stage('cel-letter-only', '');
+    const card = this.letterCard(name, message);
+    el.appendChild(card);
+    void card.offsetWidth;
+    card.classList.add('in');
+    this.sound.letter();
+    await this.readLetter(card);
+    el.classList.add('out');
+    await wait(500);
+    el.remove();
+    if (!this.root.querySelector('.cel')) this.root.hidden = true;
+  }
+
+  // [Pseudo], — le message — ✦ (une étoile scintillante en guise de signature).
+  letterCard(name, message) {
+    const card = document.createElement('div');
+    card.className = 'letter-card';
+    const long = String(message || '').length;
+    card.style.setProperty('--lfs', long > 420 ? '0.82' : long > 280 ? '0.9' : '1');
+    card.innerHTML = `<p class="l-name">${esc(name)},</p><p class="l-msg">${esc(message || '')}</p><span class="l-sign" aria-hidden="true">✦</span>`;
+    return card;
+  }
+
+  // Le temps de lire (réglable) ; toucher la lettre la referme plus tôt.
+  readLetter(card) {
+    const ms = Math.max(4, Number(this.getSettings().letterSeconds) || 14) * 1000;
+    return new Promise((done) => {
+      const t = setTimeout(done, ms);
+      card.addEventListener('pointerdown', () => { clearTimeout(t); done(); }, { once: true });
+    }).then(() => { card.classList.add('folding'); return wait(350); });
   }
 
   async milestone({ name, title }) {

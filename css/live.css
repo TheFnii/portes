@@ -189,3 +189,74 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   .v-main { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); }
   .v-tops { grid-template-columns: 1fr; }
 }
+
+/* Messages de l'univers : bouton enveloppe et liste des pseudos */
+.v-head-tools { display: inline-flex; gap: 10px; align-items: center; }
+.v-letters { position: relative; width: 48px; height: 48px; font-size: 22px; }
+.v-letters .v-env { display: grid; place-items: center; width: 28px; height: 28px; }
+.v-letters .v-env img { width: 100%; height: 100%; object-fit: contain; }
+.v-letters .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #ffd98a, #d9a94a);
+  color: #2a1606;
+  font: 700 13px/22px 'Cinzel', serif;
+  box-shadow: 0 0 10px rgba(255, 210, 120, .7);
+}
+.v-letters-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: end center;
+  padding: 12px;
+  background: rgba(6, 3, 12, .6);
+  animation: fade-in .3s ease;
+}
+.vlp-card {
+  width: min(560px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  border-radius: 24px;
+  background: linear-gradient(165deg, rgba(44, 20, 66, .97), rgba(14, 8, 24, .98));
+  border: 1px solid rgba(232, 199, 122, .55);
+  box-shadow: 0 -10px 60px rgba(0, 0, 0, .6), 0 0 40px rgba(255, 200, 120, .15);
+  animation: v-result-in .45s cubic-bezier(.2, .9, .3, 1) both;
+}
+.vlp-card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.vlp-card h2 { margin: 0; font: 700 20px/1.2 'Cinzel', serif; color: var(--gold-light); }
+.vlp-hint { margin: 4px 0 10px; font-style: italic; color: rgba(243, 233, 210, .65); }
+.vlp-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.vlp-list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(232, 199, 122, .15);
+  background: none;
+  color: var(--ink);
+  font: 500 19px/1.2 'Cormorant Garamond', serif;
+  text-align: left;
+  cursor: pointer;
+}
+.vlp-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vlp-list .gift-icon { width: 30px; height: 30px; font-size: 22px; }
+.vlp-list .mult { color: var(--gold); font: 700 14px/1 'Cinzel', serif; }
+.vlp-list .reread {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid rgba(232, 199, 122, .45);
+  font: 600 12px/1.2 'Cinzel', serif;
+  color: var(--gold-light);
+}
+.celebrate .letter-card { z-index: 2; }

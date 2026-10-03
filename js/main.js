@@ -12,7 +12,7 @@ import { Sound } from './sound.js';
 import { Ticker } from './ticker.js';
 import { Round } from './game.js';
 import { TikTokLive } from './tiktok.js';
-import { LiveQueue, Ranking, Milestones } from './queue.js';
+import { LiveQueue, Ranking, Milestones, crossedTiers } from './queue.js';
 import { roleOf, GiftCounter } from './gifts.js';
 import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard } from './dashboard.js';
@@ -22,6 +22,7 @@ import { imagesReady, refreshImages } from './images.js';
 import { Broadcaster, castMedia, castManifest } from './broadcast.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
+import { grimoireMessages, loadEdits, buildDeck, pickMessage } from './universe.js';
 import { normalizeHandle } from './game.js';
 import { toast, notice, closeNotice, enterFullscreen, toggleFullscreen, keepAwake, esc } from './shell.js';
 
@@ -62,14 +63,55 @@ const celebrate = new Celebrate({ root: $('celebrate'), fx, sound, getSettings: 
 
 // Grande animation, ici et sur les téléphones des viewers.
 function play(kind, data) {
-  castEvent('cel', { kind, data: { name: data.name, text: data.text, title: data.title, giftImage: data.giftImage } });
+  castEvent('cel', { kind, data: { name: data.name, text: data.text, title: data.title, giftImage: data.giftImage, message: data.message } });
   return celebrate.play(kind, data);
 }
 
 const dash = new Dashboard({
   onRemove: (id) => { queue.remove(id); changed(); },
-  onRemoveDonut: (id) => { queue.removeDonut(id); changed(); },
+  onOpenLetter: (id) => {
+    const e = queue.letter(id);
+    if (e) play('letter', { name: e.name, message: e.message || '' });
+  },
+  onBoardFull: () => openBoardFull(),
 });
+
+// ---------- Case centrale en plein écran (on en sort en touchant l'écran) ----------
+
+function openBoardFull() {
+  const box = $('board-full');
+  box.hidden = false;
+  requestAnimationFrame(() => dash.renderBoard(boardData.messages, boardData.speed * 1.8, 'board-full-track'));
+}
+$('board-full').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  $('board-full').hidden = true;
+  $('board-full-track').textContent = '';
+});
+
+// ---------- Messages de l'univers : le deck du Grimoire (+ ajouts / suppressions) ----------
+
+let deck = [];
+const pendingMessages = []; // messages déjà tirés, enveloppe encore en route
+function loadDeck() {
+  return grimoireMessages().then((g) => { deck = buildDeck(g, loadEdits()); });
+}
+function drawMessage() {
+  const used = [...queue.donuts.map((e) => e.message), ...pendingMessages];
+  const m = pickMessage(deck, used);
+  pendingMessages.push(m);
+  return m;
+}
+
+// ---------- Paliers de likes par personne ----------
+
+const DEFAULT_TIERS = [{ likes: 10000, anim: true, list: true }];
+function loadTiers() {
+  const t = readJSON(STORAGE.likeTiers, null);
+  return Array.isArray(t) ? t : DEFAULT_TIERS;
+}
+let tiers = loadTiers();
+let tiersReached = readJSON(STORAGE.likeTiersReached, {}) || {};
 
 const diceHit = document.createElement('button');
 diceHit.className = 'dice-hit';
@@ -156,7 +198,7 @@ function snapshot() {
     settings,
     features: {
       pinned: features.pinned, likes: features.likes, gifters: features.gifters,
-      board: features.board, list: features.list, game: features.game,
+      board: features.board, list: features.list, game: features.game, donuts: features.donuts,
     },
     pinned: features.pinned && pinned ? pinned.text : '',
     title: dash.title(queue),
@@ -164,6 +206,7 @@ function snapshot() {
     list: queue.list().map((e) => ({
       id: e.id, type: e.type, name: e.name, gift: e.gift, count: e.count, label: e.label, door: e.door, giftImage: e.giftImage,
     })),
+    letters: features.donuts ? queue.donuts.map((e) => ({ id: e.id, name: e.name, message: e.message || '', count: e.count })) : [],
     likes: pickTop(likes),
     gifters: pickTop(gifters),
     board: boardData,
@@ -276,10 +319,16 @@ function onGift(g) {
     if (anim) play(role, { name: user.name, text, giftImage: g.giftImage });
     else sound.diceResult();
   } else if (role === 'donut') {
-    // Le pseudo rejoint la case « Message de l'univers » une fois l'enveloppe arrivée.
-    const add = () => { queue.addDonut(user, n); changed(); };
+    // Une lettre de l'univers : un message du deck. Le pseudo rejoint la case
+    // « Message de l'univers » une fois la lettre lue.
+    const message = drawMessage();
+    const add = () => {
+      pendingMessages.splice(pendingMessages.indexOf(message), 1);
+      queue.addDonut(user, n, message);
+      changed();
+    };
     if (settings.animDonut && features.donuts) {
-      play('donut', { name: user.name, text: settings.donutText, target: $('donut-box') }).then(add);
+      play('donut', { name: user.name, text: settings.donutText, message, target: $('donut-box') }).then(add);
     } else {
       sound.join();
       add();
@@ -290,12 +339,31 @@ function onGift(g) {
 
 let likesDirty = false;
 function onLike({ user, likeCount, totalLikeCount }) {
+  const before = (likes.users[user.key] && likes.users[user.key].value) || 0;
   likes.add(user, likeCount, totalLikeCount);
+  const after = (likes.users[user.key] && likes.users[user.key].value) || 0;
+  checkTiers(user, before, after);
   persist();
   checkMilestone();
   if (likesDirty) return;
   likesDirty = true;
   setTimeout(() => { likesDirty = false; dash.renderLikes(likes); }, 500);
+}
+
+// Une personne atteint un palier de likes (10 000…) : animation et/ou ajout à la liste.
+function checkTiers(user, before, after) {
+  if (!settings.personalTiers || !user.key) return;
+  const reached = tiersReached[user.key] || [];
+  const won = crossedTiers(tiers, before, after, reached);
+  if (!won.length) return;
+  tiersReached[user.key] = [...reached, ...won.map((t) => t.likes)];
+  save(STORAGE.likeTiersReached, JSON.stringify(tiersReached));
+  won.forEach((t) => {
+    const n = t.likes.toLocaleString('fr-FR');
+    if (t.anim) play('milestone', { name: user.name, title: fill(settings.tierTitle, { n, pseudo: user.name }) });
+    if (t.list && features.list) queue.addMilestone(user, fill(settings.tierLabel, { n, pseudo: user.name }));
+  });
+  changed();
 }
 
 // ---------- Paliers de likes ----------
@@ -903,15 +971,20 @@ function reloadSettings() {
   ticker.setEnabled(loadFlag(STORAGE.ticker, true));
   sound.setEnabled(loadFlag(STORAGE.sound, true));
   syncToggles();
+  tiers = loadTiers();
+  loadDeck();
+  radio.rebuild();
   // La liste a été vidée depuis les Réglages (« Nouveau live »).
   if (!load(STORAGE.queue)) {
     queue.clear();
+    pendingMessages.length = 0;
     likes.total = 0;
     likes.users = {};
     gifters.total = 0;
     gifters.users = {};
     milestones.reached = 0;
     milestoneAnnounced = 0;
+    tiersReached = {};
     pinned = null;
     dash.renderPinned(pinned);
     changed();
@@ -931,6 +1004,9 @@ window.addEventListener('storage', (e) => {
   if (!e.key || !e.key.startsWith('portes.')) return;
   if (e.key === STORAGE.messages) loadTicker();
   else if (e.key === STORAGE.board) loadBoard();
+  else if (e.key === STORAGE.univDeck) loadDeck();
+  else if (e.key === STORAGE.likeTiers) tiers = loadTiers();
+  else if (e.key === STORAGE.radioMine || e.key === STORAGE.radioGrimoire) radio.rebuild();
   else if (e.key === STORAGE.media) {
     // Image ou son déposé dans les Réglages : on le prend tout de suite.
     refreshImages().then(() => changed());
@@ -958,6 +1034,7 @@ dash.renderDonuts(queue);
 dash.renderLikes(likes);
 dash.renderGifters(gifters);
 loadBoard();
+loadDeck();
 checkMilestone();
 // Les logos fournis (images/logos) remplacent les emojis dès qu'ils sont trouvés.
 imagesReady.then(() => changed());

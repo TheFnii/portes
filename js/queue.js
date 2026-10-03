@@ -57,16 +57,18 @@ export class LiveQueue {
     return e;
   }
 
-  // Donut : une même personne n'apparaît qu'une fois, son compteur augmente.
-  addDonut(user, n = 1) {
-    const found = this.donuts.find((e) => e.key === user.key);
-    if (found) {
-      found.count += n;
-      return found;
-    }
+  // Donut : une lettre de l'univers (pseudo + message du deck), la plus récente en haut.
+  // La liste reste jusqu'à la fin du live.
+  addDonut(user, n = 1, message = '') {
     const e = this.entry(user, 'donut', 'donut', n);
-    this.donuts.push(e);
+    e.message = message;
+    e.at = Date.now();
+    this.donuts.unshift(e);
     return e;
+  }
+
+  letter(id) {
+    return this.donuts.find((e) => e.id === id) || null;
   }
 
   // Palier de likes : tout en bas de la liste.
@@ -243,4 +245,12 @@ export class Milestones {
     this.reached = won;
     return won;
   }
+}
+
+// Paliers de likes par personne (10 000 likes…) : renvoie les paliers que cette personne
+// vient de franchir. reached : paliers déjà fêtés pour elle.
+export function crossedTiers(tiers, before, after, reached = []) {
+  return (tiers || [])
+    .filter((t) => t && t.likes > 0 && before < t.likes && after >= t.likes && !reached.includes(t.likes))
+    .sort((a, b) => a.likes - b.likes);
 }

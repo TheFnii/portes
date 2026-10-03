@@ -76,6 +76,32 @@ Le tirage est vraiment aléatoire : il utilise le générateur cryptographique d
 
 ---
 
+## Messages de l’univers (Donut)
+
+Chaque Donut ouvre une **lettre de l’univers** : l’enveloppe virevolte parmi les étoiles et les comètes (on voit passer le côté du pseudo et celui du sceau), s’arrête, le cachet de cire se brise, le rabat s’ouvre et la lettre apparaît :
+
+> **Pseudo,**
+> le message de l’univers
+> ✦
+
+Les messages viennent du **Grimoire** (cartes « Messages de l’univers » de `book.json`), tirés au hasard sans répétition pendant le live. Dans **Réglages → Messages de l’univers** : parcourir tous les messages, en supprimer (avec confirmation), en ajouter. La position du cachet de cire et la pointe du rabat (pour vos images) ainsi que le temps de lecture se règlent dans **Personnalisation → Animations des cadeaux**. Toucher la lettre la referme.
+
+La case « Message de l’univers » garde tous les pseudos jusqu’à la fin du live (le plus récent en haut) : toucher un pseudo rouvre sa lettre. Sur la page des viewers, le bouton ✉️ ouvre la même liste.
+
+## Paliers de likes par personne
+
+Quand une personne atteint un palier avec ses propres likes (10 000 par défaut), son pseudo s’affiche en grand avec l’animation de victoire et elle rejoint la liste à traiter. Dans **Réglages → Paliers de likes par personne** : ajouter d’autres paliers et choisir pour chacun « Animation de victoire » et/ou « Ajout à la liste ». Elle reste dans le Top Likes avec son nombre de likes.
+
+## Radio : ma playlist
+
+**Réglages → Radio : ma playlist** : ajoutez vos musiques (fichiers audio gardés sur l’appareil, ou liens Suno / MP3), renommez-les, changez l’ordre. Elles passent avant la playlist du Grimoire, que vous pouvez garder ou non.
+
+## Case centrale en plein écran
+
+Le petit bouton ⛶ en bas à gauche de la case centrale affiche ses messages en plein écran ; touchez l’écran pour revenir.
+
+---
+
 ## La page des viewers (téléphones)
 
 Vos viewers suivent le live en direct sur leur téléphone (ou tablette), en **lecture seule** : message épinglé, liste « X tirages avant le prochain jeu », case des messages qui défilent, Top Likes, Top Gifters, Jeu des Portes (seulement quand vous le lancez) et toutes les animations (Chat porte-bonheur, Galaxie, enveloppe, paliers de likes). Pas de réglages, pas de boutons, pas de radio.
@@ -95,8 +121,11 @@ Les images et les sons déposés dans les Réglages sont aussi envoyés aux view
 ## La page Réglages
 Tout ce qui concerne l’administration est sur une page à part (`admin.html`, bouton ⚙). Ces réglages restent enregistrés sur l’appareil utilisé.
 
+Chaque rubrique se replie (petite flèche) pour garder le menu court ; **Tout replier** les referme toutes.
+
 - **Connexion TikTok** : pseudo, clé API, test de connexion.
 - **Cadeaux** : quels cadeaux déclenchent le Chat porte-bonheur, la Galaxie et le Donut (remplaçables).
+- **Messages de l’univers**, **Paliers de likes par personne**, **Radio : ma playlist** : voir plus haut.
 - **Ruban défilant** et **Case centrale** : vos messages, un par ligne, et leur vitesse.
 - **Personnalisation** : presque tout est modifiable.
   - *Disposition* : côté de la liste (droite ou gauche), largeurs des colonnes, hauteur du message épinglé, taille des textes, nombre de personnes dans les tops.
@@ -206,6 +235,8 @@ Par défaut, l’application synthétise ses propres sons. Pour utiliser les vô
 | `galaxie.mp3`  | Galaxie (harpe)                                   |
 | `enveloppe.mp3`| Donut : l’enveloppe virevolte (papier froissé)    |
 | `palier.mp3`   | palier de likes atteint                           |
+| `sceau.mp3`    | le cachet de cire de l’enveloppe se brise         |
+| `lettre.mp3`   | la lettre de l’univers apparaît                   |
 
 Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez le fichier pour revenir au son d’origine.
 
@@ -253,6 +284,8 @@ js/
   images.js           recherche des logos et illustrations fournis (Réglages ou images/)
   media.js            images et sons déposés dans les Réglages (gardés dans l’appareil)
   viewer.js           page des viewers
+  universe.js         deck des messages de l’univers (Grimoire + ajouts)
+  playlist.js         musiques ajoutées à la radio
   broadcast.js        diffusion signée tablette → viewers
   mqtt.js             petit client du relais (MQTT sur WebSocket)
   gifts.js            rôles des cadeaux et comptage des combos

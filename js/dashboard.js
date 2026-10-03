@@ -42,7 +42,7 @@ export function entryDetail(e) {
 export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
 
 export class Dashboard {
-  constructor({ onRemove, onRemoveDonut }) {
+  constructor({ onRemove, onOpenLetter, onBoardFull }) {
     this.seen = new Set();
     this.lastCurrent = null;
     this.s = {};
@@ -50,10 +50,12 @@ export class Dashboard {
       const b = e.target.closest('[data-remove]');
       if (b) onRemove(b.dataset.remove);
     });
+    // Toucher un pseudo rouvre sa lettre de l'univers.
     $('donut-list').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-remove]');
-      if (b) onRemoveDonut(b.dataset.remove);
+      const b = e.target.closest('[data-letter]');
+      if (b) onOpenLetter(b.dataset.letter);
     });
+    $('board-full-btn').addEventListener('click', () => onBoardFull());
     // Image de cadeau introuvable : l'emoji du rôle prend le relais.
     document.addEventListener('error', (e) => {
       const img = e.target;
@@ -176,9 +178,11 @@ export class Dashboard {
     }
     $('donut-count').textContent = d.length;
     $('donut-list').innerHTML = d.length
-      ? d.map((e) => `<li><span class="env-mini gift-icon" aria-hidden="true">${logo('donut', '', '✉️')}</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}
-          <button class="x-btn" data-remove="${esc(e.id)}" type="button" aria-label="Message lu pour ${esc(e.name)}">✓</button></li>`).join('')
+      ? d.map((e) => `<li${this.seenLetters && !this.seenLetters.has(e.id) ? ' class="new"' : ''}><button class="letter-btn" data-letter="${esc(e.id)}" type="button" aria-label="Relire la lettre de ${esc(e.name)}">
+          <span class="env-mini gift-icon" aria-hidden="true">${logo('donut', '', '✉️')}</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}
+          <span class="reread" aria-hidden="true">Relire</span></button></li>`).join('')
       : `<li class="empty">${esc(this.s.univEmpty || '')}</li>`;
+    this.seenLetters = new Set(d.map((e) => e.id));
   }
 
   // ---------- Tops ----------
@@ -239,9 +243,10 @@ export class Dashboard {
 
   // ---------- Case centrale : messages qui défilent ----------
 
-  renderBoard(messages, speed) {
-    const track = $('board-track');
+  renderBoard(messages, speed, trackId = 'board-track') {
+    const track = $(trackId);
     track.textContent = '';
+    track.className = 'board-track';
     if (!messages.length) return;
     const copy = () => messages.map((m) => `<p class="board-item">${esc(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
     track.innerHTML = `<div>${copy()}</div><div aria-hidden="true">${copy()}</div>`;
@@ -249,6 +254,7 @@ export class Dashboard {
       const h = track.firstElementChild.getBoundingClientRect().height;
       const win = track.parentElement.clientHeight;
       // Peu de messages qui tiennent dans la case : on ne fait pas défiler.
+      if (!track.firstElementChild) return;
       track.classList.toggle('still', h < win * 0.8);
       if (h < win * 0.8) track.lastElementChild.hidden = true;
       track.style.setProperty('--board-dur', `${(h / Math.max(5, speed)).toFixed(1)}s`);

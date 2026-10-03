@@ -22,11 +22,12 @@
   </header>
 
   <main class="admin-main">
+    <div class="fold-tools"><button class="btn btn-ghost small-btn" id="fold-all" type="button">Tout replier</button></div>
     <p class="admin-note">Tout ce qui est réglé ici reste enregistré <strong>sur cet appareil uniquement</strong> (tablette ou ordinateur). Rien n’est envoyé sur GitHub.</p>
 
     <!-- Connexion TikTok -->
-    <section class="card" id="tiktok">
-      <h2>Connexion TikTok LIVE</h2>
+    <details class="card fold" id="tiktok">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🔗</span>Connexion TikTok LIVE</h2></summary>
       <p class="hint">Le chat est lu grâce à <strong>Euler Stream</strong>. Ne montrez jamais cette page pendant le live : la clé est un mot de passe.</p>
       <form id="tiktok-form" autocomplete="off">
         <label class="field">
@@ -47,11 +48,11 @@
         </div>
         <p class="form-status" id="tt-status" role="status"></p>
       </form>
-    </section>
+    </details>
 
     <!-- Cadeaux -->
-    <section class="card" id="cadeaux">
-      <h2>Cadeaux</h2>
+    <details class="card fold" id="cadeaux">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🎁</span>Cadeaux</h2></summary>
       <p class="hint">Chaque rôle est déclenché par les cadeaux listés (noms séparés par des virgules ; majuscules et accents ne comptent pas). TikTok envoie souvent les noms en anglais.</p>
       <div class="gift-roles" id="gift-roles"></div>
       <h3>Cadeaux reçus récemment</h3>
@@ -65,11 +66,42 @@
         <button class="btn btn-ghost" id="gifts-reset" type="button">Noms par défaut</button>
       </div>
       <p class="form-status" id="gifts-status" role="status"></p>
-    </section>
+    </details>
+
+    <!-- Messages de l'univers -->
+    <details class="card fold" id="univers">
+      <summary><h2><span class="fold-icon" aria-hidden="true">✉️</span>Messages de l’univers (Donut)</h2></summary>
+      <p class="hint">Chaque Donut ouvre une lettre avec un message tiré au hasard dans ce deck (sans répétition pendant le live). Le deck vient du <strong>Grimoire</strong> (cartes « Messages de l’univers ») ; vous pouvez en supprimer et en ajouter ici (sur cet appareil).</p>
+      <div class="univ-tools">
+        <span class="count-pill" id="univ-count">…</span>
+        <input id="univ-search" type="search" placeholder="Rechercher un message…" aria-label="Rechercher un message">
+      </div>
+      <ol class="univ-list" id="univ-list"></ol>
+      <h3>Ajouter un message</h3>
+      <label class="field"><span>Nouveau message</span>
+        <textarea id="univ-new" rows="4" placeholder="Écrivez le message de l’univers…"></textarea></label>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="univ-add" type="button">Ajouter au deck</button>
+        <button class="btn btn-ghost" id="univ-restore" type="button">Rétablir les messages supprimés</button>
+      </div>
+      <p class="form-status" id="univ-status" role="status"></p>
+    </details>
+
+    <!-- Paliers de likes par personne -->
+    <details class="card fold" id="paliers">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🏅</span>Paliers de likes par personne</h2></summary>
+      <p class="hint">Quand une personne atteint un palier (ses propres likes), son pseudo peut s’afficher en grand avec une animation de victoire et/ou rejoindre la liste à traiter. Elle reste dans le Top Likes avec son nombre de likes.</p>
+      <div class="tier-rows" id="tier-rows"></div>
+      <div class="form-actions">
+        <button class="btn" id="tier-add" type="button">＋ Ajouter un palier</button>
+        <button class="btn btn-primary" id="tier-save" type="button">Enregistrer les paliers</button>
+      </div>
+      <p class="form-status" id="tier-status" role="status"></p>
+    </details>
 
     <!-- Page des viewers -->
-    <section class="card" id="viewers">
-      <h2>Page des viewers (téléphones)</h2>
+    <details class="card fold" id="viewers">
+      <summary><h2><span class="fold-icon" aria-hidden="true">📡</span>Page des viewers (téléphones)</h2></summary>
       <p class="hint">Vos viewers suivent le live en direct sur leur téléphone : liste à traiter, tops, case des messages, message épinglé, Jeu des Portes et animations. Tout est en lecture seule : ils ne peuvent rien toucher.</p>
       <div class="settings-toggles">
         <button class="btn btn-menu btn-toggle" id="cast-toggle" type="button" aria-pressed="false">
@@ -86,11 +118,11 @@
       <p class="form-status" id="cast-status-text" role="status"></p>
       <p class="hint">Le lien reste le même d’un live à l’autre. Activez la diffusion sur <strong>la tablette du live</strong> : c’est elle qui envoie tout en direct (le petit voyant 📡 Viewers apparaît en bas du tableau de bord). Les viewers peuvent ajouter la page à leur écran d’accueil.</p>
       <p class="hint">Les images et les sons déposés ci-dessous sont aussi envoyés aux viewers, tels quels, à chaque changement (images jusqu’à 3 Mo, sons jusqu’à 1,5 Mo) : ils voient et entendent exactement les mêmes que vous. Sur leur téléphone, le son démarre coupé ; un bouton 🔇 permet de l’activer.</p>
-    </section>
+    </details>
 
     <!-- Images et sons -->
-    <section class="card" id="images">
-      <h2>Images et sons des cadeaux</h2>
+    <details class="card fold" id="images">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🖼️</span>Images et sons des cadeaux</h2></summary>
       <p class="hint">Touchez <strong>Choisir</strong> pour déposer une image (PNG à fond transparent conseillé) ou un son (MP3). Ils sont gardés <strong>dans cet appareil</strong> : déposez-les sur la tablette du live. Sans fichier, l’application garde ses dessins et ses sons. Pour voir le résultat : <a href="index.html?simulation=cadeaux">simuler les cadeaux</a>.</p>
       <h3>Logos de la liste</h3>
       <div class="media-grid" id="media-logos"></div>
@@ -99,11 +131,29 @@
       <p class="hint">Le pseudo écrit sur l’enveloppe se règle dans <strong>Personnalisation → Animations des cadeaux</strong> (position, taille, couleur).</p>
       <h3>Sons</h3>
       <div class="media-grid" id="media-sounds"></div>
-    </section>
+    </details>
+
+    <!-- Radio -->
+    <details class="card fold" id="radio">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🎵</span>Radio : ma playlist</h2></summary>
+      <p class="hint">Ajoutez vos propres musiques : un fichier audio (MP3, M4A… gardé sur cet appareil) ou un lien (lien Suno ou adresse d’un MP3). Elles passent avant la playlist du Grimoire.</p>
+      <ol class="music-list" id="music-list"></ol>
+      <div class="form-actions">
+        <label class="btn btn-primary media-pick">＋ Fichier audio<input id="music-file" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" multiple hidden></label>
+      </div>
+      <label class="field"><span>Ou un lien (Suno ou MP3)</span>
+        <span class="field-row"><input id="music-url" type="url" placeholder="https://suno.com/song/…"><button class="btn" id="music-add-url" type="button">Ajouter</button></span></label>
+      <div class="settings-toggles">
+        <button class="btn btn-menu btn-toggle" id="music-grimoire" type="button" aria-pressed="true">
+          <span><strong>Garder la playlist du Grimoire</strong><small class="state">Oui</small></span><span class="switch" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="form-status" id="music-status" role="status"></p>
+    </details>
 
     <!-- Messages défilants -->
-    <section class="card" id="messages">
-      <h2>Ruban défilant (bas de l’écran)</h2>
+    <details class="card fold" id="messages">
+      <summary><h2><span class="fold-icon" aria-hidden="true">📜</span>Ruban défilant (bas de l’écran)</h2></summary>
       <p class="hint">Un message par ligne. Les emojis sont les bienvenus ✨🔮🌙</p>
       <textarea id="msg-text" rows="8" spellcheck="true" placeholder="Bienvenue dans mon live ✨"></textarea>
       <label class="field">
@@ -119,11 +169,11 @@
         <button class="btn btn-ghost" id="msg-reset" type="button">Revenir aux messages du fichier</button>
       </div>
       <p class="form-status" id="msg-status" role="status"></p>
-    </section>
+    </details>
 
     <!-- Case centrale -->
-    <section class="card" id="case-centrale">
-      <h2>Case centrale (règles, messages)</h2>
+    <details class="card fold" id="case-centrale">
+      <summary><h2><span class="fold-icon" aria-hidden="true">✦</span>Case centrale (règles, messages)</h2></summary>
       <p class="hint">Les messages défilent lentement de bas en haut dans la grande case du milieu. Un message par ligne.</p>
       <textarea id="board-text" rows="8" spellcheck="true" placeholder="🐱 Chat porte-bonheur : 1 question en priorité"></textarea>
       <label class="field">
@@ -135,11 +185,11 @@
         <button class="btn btn-ghost" id="board-reset" type="button">Revenir aux messages du fichier</button>
       </div>
       <p class="form-status" id="board-status" role="status"></p>
-    </section>
+    </details>
 
     <!-- Personnalisation -->
-    <section class="card" id="personnalisation">
-      <h2>Personnalisation</h2>
+    <details class="card fold" id="personnalisation">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🎨</span>Personnalisation</h2></summary>
       <p class="hint">Textes, disposition, paliers de likes, animations et Jeu des Portes. Les mots entre accolades sont remplacés automatiquement : <strong>{n}</strong> nombre, <strong>{q}</strong> questions, <strong>{palier}</strong> palier (100k…).</p>
       <div id="custom-groups"></div>
       <div class="form-actions">
@@ -147,11 +197,11 @@
         <button class="btn btn-ghost" id="custom-reset" type="button">Tout remettre par défaut</button>
       </div>
       <p class="form-status" id="custom-status" role="status"></p>
-    </section>
+    </details>
 
     <!-- Affichage et son -->
-    <section class="card" id="affichage">
-      <h2>Affichage et son</h2>
+    <details class="card fold" id="affichage">
+      <summary><h2><span class="fold-icon" aria-hidden="true">⚙︎</span>Affichage et son</h2></summary>
       <p class="hint">Activez ou masquez chaque partie du tableau de bord.</p>
       <div class="settings-toggles" id="feature-toggles"></div>
       <div class="settings-toggles">
@@ -169,25 +219,25 @@
         <li>Ouvrez <strong>Portes</strong> depuis sa nouvelle icône : l’appli s’affiche sans aucune barre.</li>
       </ol>
       <p class="hint">Sur Android (Chrome) : menu ⋮ → <strong>Ajouter à l’écran d’accueil</strong>.</p>
-    </section>
+    </details>
 
     <!-- Nouveau live -->
-    <section class="card">
-      <h2>Nouveau live</h2>
+    <details class="card fold">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🌙</span>Nouveau live</h2></summary>
       <p class="hint">La liste à traiter, les enveloppes, les tops, les paliers et le message épinglé restent enregistrés même si la page se recharge. Videz-les au début d’un nouveau live.</p>
       <button class="btn" id="live-reset" type="button">Tout vider pour un nouveau live</button>
       <p class="form-status" id="reset-status" role="status"></p>
-    </section>
+    </details>
 
     <!-- Répétition -->
-    <section class="card">
-      <h2>Répéter sans être en live</h2>
+    <details class="card fold">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🎭</span>Répéter sans être en live</h2></summary>
       <p class="hint">De faux spectateurs participent : pratique pour s’entraîner ou vérifier l’affichage.</p>
       <div class="form-actions">
         <a class="btn" href="index.html?simulation=cadeaux">Simuler cadeaux, likes et palier</a>
         <a class="btn" href="index.html?simulation">Simuler le Jeu des Portes</a>
       </div>
-    </section>
+    </details>
   </main>
 
   <script type="module" src="js/admin.js"></script>

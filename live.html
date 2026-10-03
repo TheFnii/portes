@@ -59,7 +59,10 @@
   <main class="v-main" id="v-main">
     <header class="v-head">
       <span class="v-status" id="v-status"><span class="dot"></span><span class="label">Connexion…</span></span>
-      <button class="icon-btn v-sound" id="v-sound" type="button" aria-label="Activer le son">🔇</button>
+      <span class="v-head-tools">
+        <button class="icon-btn v-letters" id="v-letters" type="button" aria-label="Messages de l’univers" hidden><span class="v-env" id="v-letters-icon" aria-hidden="true">✉️</span><span class="badge" id="v-letters-count">0</span></button>
+        <button class="icon-btn v-sound" id="v-sound" type="button" aria-label="Activer le son">🔇</button>
+      </span>
     </header>
 
     <section class="panel pinned v-pinned" id="v-pinned" data-feature="pinned" hidden>
@@ -102,6 +105,18 @@
       <h1 id="v-wait-title">Connexion au live…</h1>
       <div class="flourish" aria-hidden="true"></div>
       <p id="v-wait-text">Un instant, les portes s’ouvrent.</p>
+    </div>
+  </div>
+
+  <!-- Messages de l'univers : toucher un pseudo pour relire sa lettre -->
+  <div class="v-letters-panel" id="v-letters-panel" hidden>
+    <div class="vlp-card" role="dialog" aria-modal="true" aria-labelledby="vlp-title">
+      <header>
+        <h2 id="vlp-title">Messages de l’univers</h2>
+        <button class="icon-btn" id="v-letters-close" type="button" aria-label="Fermer">✕</button>
+      </header>
+      <p class="vlp-hint">Touchez un pseudo pour relire son message.</p>
+      <ol class="vlp-list" id="v-letters-list"></ol>
     </div>
   </div>
 

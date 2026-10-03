@@ -1,7 +1,8 @@
 // Tests de la liste à traiter, des cadeaux, des classements et des paliers : node --test tests/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LiveQueue, Ranking, Milestones } from '../js/queue.js';
+import { LiveQueue, Ranking, Milestones, crossedTiers } from '../js/queue.js';
+import { buildDeck, pickMessage, messageId } from '../js/universe.js';
 import { roleOf, GiftCounter } from '../js/gifts.js';
 import { Round } from '../js/game.js';
 
@@ -35,14 +36,35 @@ test('ordre strict : un cadeau renvoyé après quelqu’un d’autre repasse en 
   assert.deepEqual(names(q), ['ANA:priority:2', 'BOB:priority:1', 'ANA:priority:1']);
 });
 
-test('donuts dans une liste à part, retirables', () => {
+test('lettres de l’univers : une par Donut, la plus récente en haut, retrouvables', () => {
   const q = new LiveQueue();
-  const d = q.addDonut(u('dina'), 2);
-  q.addDonut(u('dina'), 1);
+  const a = q.addDonut(u('dina'), 1, 'Message A');
+  const b = q.addDonut(u('eva'), 1, 'Message B');
   assert.equal(q.list().length, 0);
-  assert.equal(q.donuts[0].count, 3);
-  q.removeDonut(d.id);
-  assert.equal(q.donuts.length, 0);
+  assert.deepEqual(q.donuts.map((e) => e.name), ['EVA', 'DINA']);
+  assert.equal(q.letter(a.id).message, 'Message A');
+  assert.equal(q.letter(b.id).name, 'EVA');
+  const back = new LiveQueue(JSON.parse(JSON.stringify(q)));
+  assert.equal(back.donuts[1].message, 'Message A');
+});
+
+test('paliers de likes par personne', () => {
+  const tiers = [{ likes: 10000 }, { likes: 5000 }, { likes: 20000 }];
+  assert.deepEqual(crossedTiers(tiers, 4000, 12000).map((t) => t.likes), [5000, 10000]);
+  assert.deepEqual(crossedTiers(tiers, 4000, 12000, [5000]).map((t) => t.likes), [10000]);
+  assert.deepEqual(crossedTiers(tiers, 10000, 10500), []);
+  assert.deepEqual(crossedTiers(tiers, 9999, 10000).map((t) => t.likes), [10000]);
+});
+
+test('deck des messages de l’univers : suppressions, ajouts, sans répétition', () => {
+  const g = ['Un', 'Deux', 'Trois', 'Deux'];
+  const deck = buildDeck(g, { removed: [messageId('Trois')], added: ['Mon message'] });
+  assert.deepEqual(deck.map((m) => m.text), ['Mon message', 'Un', 'Deux']);
+  assert.equal(deck[0].source, 'added');
+  const used = ['Mon message', 'Un'];
+  for (let i = 0; i < 20; i++) assert.equal(pickMessage(deck, used), 'Deux');
+  // Tout a déjà été donné : on recommence.
+  assert.ok(deck.map((m) => m.text).includes(pickMessage(deck, ['Mon message', 'Un', 'Deux'])));
 });
 
 test('personne suivante et retour en arrière', () => {

@@ -10,6 +10,8 @@ import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, l
 import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
+import { grimoireMessages, loadEdits, saveEdits, buildDeck, messageId } from './universe.js';
+import { loadMyTracks, addFileTrack, addUrlTrack, removeTrack, moveTrack, renameTrack } from './playlist.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -296,7 +298,7 @@ renderGifts();
 
 $('live-reset').addEventListener('click', () => {
   if (!window.confirm('Vider la liste, les enveloppes, les tops, les paliers et le message épinglé ?')) return;
-  [STORAGE.queue, STORAGE.likes, STORAGE.gifters, STORAGE.milestone, STORAGE.pinned].forEach((k) => save(k, null));
+  [STORAGE.queue, STORAGE.likes, STORAGE.gifters, STORAGE.milestone, STORAGE.pinned, STORAGE.likeTiersReached].forEach((k) => save(k, null));
   status($('reset-status'), '✓ Tout est vidé. Bon live !', 'live');
 });
 
@@ -318,6 +320,8 @@ const MEDIA_SLOTS = {
     ['snd:chat', 'Chat porte-bonheur', 'miaulement'],
     ['snd:galaxie', 'Galaxie', 'harpe'],
     ['snd:enveloppe', 'Enveloppe', 'papier froissé'],
+    ['snd:sceau', 'Cachet de cire', 'il se brise'],
+    ['snd:lettre', 'Lettre de l’univers', 'elle apparaît'],
     ['snd:palier', 'Palier de likes', 'fanfare'],
     ['snd:de', 'Dé', 'le dé qui roule'],
     ['snd:porte', 'Porte', 'la porte s’ouvre'],
@@ -467,3 +471,193 @@ $('cast-renew').addEventListener('click', async () => {
 syncCast();
 showCastLink();
 window.addEventListener('storage', (e) => { if (e.key === STORAGE.castKey) showCastLink(); });
+
+// ---------- Rubriques repliables ----------
+
+const FOLD_KEY = 'portes.admin.open';
+const folds = [...document.querySelectorAll('details.fold')];
+let openFolds = [];
+try { openFolds = JSON.parse(sessionStorage.getItem(FOLD_KEY) || '[]'); } catch (e) { /* ignore */ }
+folds.forEach((d, i) => {
+  const id = d.id || `fold-${i}`;
+  if (openFolds.includes(id)) d.open = true;
+  d.addEventListener('toggle', () => {
+    openFolds = folds.filter((f) => f.open).map((f, k) => f.id || `fold-${folds.indexOf(f)}`);
+    try { sessionStorage.setItem(FOLD_KEY, JSON.stringify(openFolds)); } catch (e) { /* ignore */ }
+  });
+});
+// Lien direct vers une rubrique (admin.html#tiktok…) : elle s'ouvre.
+function openFromHash() {
+  const target = location.hash && document.getElementById(location.hash.slice(1));
+  const fold = target && target.closest('details.fold');
+  if (fold) {
+    fold.open = true;
+    setTimeout(() => fold.scrollIntoView({ block: 'start' }), 50);
+  }
+}
+openFromHash();
+window.addEventListener('hashchange', openFromHash);
+$('fold-all').addEventListener('click', () => folds.forEach((d) => { d.open = false; }));
+
+// ---------- Messages de l'univers ----------
+
+let univGrimoire = [];
+async function renderUniv() {
+  if (!univGrimoire.length) univGrimoire = await grimoireMessages();
+  const edits = loadEdits();
+  const deck = buildDeck(univGrimoire, edits);
+  const q = $('univ-search').value.trim().toLowerCase();
+  const shown = q ? deck.filter((m) => m.text.toLowerCase().includes(q)) : deck;
+  $('univ-count').textContent = `${deck.length} message${deck.length > 1 ? 's' : ''}`;
+  $('univ-list').innerHTML = shown.length
+    ? shown.map((m) => `<li><p>${esc(m.text)}</p><div class="row"><span class="src">${m.source === 'added' ? 'Ajouté' : 'Grimoire'}</span>
+        <button class="btn btn-ghost" data-univ-del="${m.id}" type="button">Supprimer</button></div></li>`).join('')
+    : '<li class="empty">Aucun message.</li>';
+}
+$('univ-search').addEventListener('input', renderUniv);
+$('univ-list').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-univ-del]');
+  if (!b) return;
+  if (!window.confirm('Supprimer définitivement ce message du deck ?')) return;
+  const edits = loadEdits();
+  const id = b.dataset.univDel;
+  const added = edits.added.filter((t) => messageId(t.trim()) !== id);
+  if (added.length === edits.added.length) edits.removed.push(id);
+  edits.added = added;
+  saveEdits(edits);
+  renderUniv();
+  status($('univ-status'), 'Message supprimé.', 'live');
+});
+$('univ-add').addEventListener('click', () => {
+  const text = $('univ-new').value.trim();
+  if (!text) { status($('univ-status'), 'Écrivez d’abord le message.'); return; }
+  const edits = loadEdits();
+  edits.removed = edits.removed.filter((id) => id !== messageId(text));
+  edits.added.unshift(text);
+  saveEdits(edits);
+  $('univ-new').value = '';
+  $('univ-search').value = '';
+  renderUniv();
+  status($('univ-status'), '✓ Message ajouté au deck.', 'live');
+});
+$('univ-restore').addEventListener('click', () => {
+  const edits = loadEdits();
+  if (!edits.removed.length) { status($('univ-status'), 'Aucun message supprimé.'); return; }
+  if (!window.confirm(`Rétablir ${edits.removed.length} message(s) supprimé(s) ?`)) return;
+  edits.removed = [];
+  saveEdits(edits);
+  renderUniv();
+  status($('univ-status'), '✓ Messages rétablis.', 'live');
+});
+renderUniv();
+
+// ---------- Paliers de likes par personne ----------
+
+function readTiers() {
+  try {
+    const t = JSON.parse(localStorage.getItem(STORAGE.likeTiers) || 'null');
+    if (Array.isArray(t)) return t;
+  } catch (e) { /* ignore */ }
+  return [{ likes: 10000, anim: true, list: true }];
+}
+function tierRow(t) {
+  return `<div class="tier-row">
+    <label class="check">Palier <input type="number" min="1" step="1" inputmode="numeric" value="${Number(t.likes) || ''}" data-tier="likes"> likes</label>
+    <label class="check"><input type="checkbox" data-tier="anim"${t.anim ? ' checked' : ''}> Animation de victoire</label>
+    <label class="check"><input type="checkbox" data-tier="list"${t.list ? ' checked' : ''}> Ajout à la liste</label>
+    <button class="x-btn" data-tier-del type="button" aria-label="Retirer ce palier">✕</button>
+  </div>`;
+}
+function renderTiers(list = readTiers()) {
+  $('tier-rows').innerHTML = list.length ? list.map(tierRow).join('') : '<p class="hint">Aucun palier.</p>';
+}
+function collectTiers() {
+  return [...$('tier-rows').querySelectorAll('.tier-row')].map((row) => ({
+    likes: Math.round(Number(row.querySelector('[data-tier="likes"]').value) || 0),
+    anim: row.querySelector('[data-tier="anim"]').checked,
+    list: row.querySelector('[data-tier="list"]').checked,
+  }));
+}
+$('tier-rows').addEventListener('click', (e) => {
+  if (!e.target.closest('[data-tier-del]')) return;
+  e.target.closest('.tier-row').remove();
+});
+$('tier-add').addEventListener('click', () => {
+  const list = collectTiers();
+  const last = list.length ? Math.max(...list.map((t) => t.likes)) : 0;
+  list.push({ likes: last ? last * 2 : 10000, anim: true, list: false });
+  renderTiers(list);
+});
+$('tier-save').addEventListener('click', () => {
+  const list = collectTiers().filter((t) => t.likes > 0).sort((a, b) => a.likes - b.likes);
+  localStorage.setItem(STORAGE.likeTiers, JSON.stringify(list));
+  renderTiers(list);
+  status($('tier-status'), '✓ Paliers enregistrés.', 'live');
+});
+renderTiers();
+
+// ---------- Radio : ma playlist ----------
+
+function syncMusicToggle() {
+  const on = loadFlag(STORAGE.radioGrimoire, true);
+  $('music-grimoire').setAttribute('aria-pressed', String(on));
+  $('music-grimoire').querySelector('.state').textContent = on ? 'Oui' : 'Non';
+}
+function renderMusic() {
+  const list = loadMyTracks();
+  $('music-list').innerHTML = list.length
+    ? list.map((t, i) => `<li data-music="${esc(t.id)}"><span class="kind" aria-hidden="true">${t.kind === 'file' ? '🎵' : '🔗'}</span>
+        <input type="text" value="${esc(t.title)}" aria-label="Titre" data-music-title>
+        <button class="x-btn" data-music-up type="button" aria-label="Monter"${i ? '' : ' disabled'}>↑</button>
+        <button class="x-btn" data-music-del type="button" aria-label="Retirer">✕</button></li>`).join('')
+    : '<li class="empty">Aucune musique ajoutée.</li>';
+}
+function musicChanged(text) {
+  renderMusic();
+  status($('music-status'), text, 'live');
+}
+$('music-file').addEventListener('change', async (e) => {
+  const files = [...(e.target.files || [])];
+  e.target.value = '';
+  for (const f of files) {
+    status($('music-status'), `Enregistrement de « ${f.name} »…`);
+    try {
+      await addFileTrack(f);
+    } catch (err) {
+      status($('music-status'), 'Impossible d’enregistrer ce fichier sur cet appareil (mémoire pleine ?).');
+      return;
+    }
+  }
+  if (files.length) musicChanged(`✓ ${files.length} musique${files.length > 1 ? 's' : ''} ajoutée${files.length > 1 ? 's' : ''}.`);
+});
+$('music-add-url').addEventListener('click', () => {
+  const t = addUrlTrack($('music-url').value);
+  if (!t) { status($('music-status'), 'Lien non reconnu : collez un lien Suno (suno.com/song/…) ou l’adresse d’un fichier MP3.'); return; }
+  $('music-url').value = '';
+  musicChanged('✓ Lien ajouté.');
+});
+$('music-list').addEventListener('click', async (e) => {
+  const li = e.target.closest('[data-music]');
+  if (!li) return;
+  const id = li.dataset.music;
+  if (e.target.closest('[data-music-del]')) {
+    if (!window.confirm('Retirer cette musique de la playlist ?')) return;
+    await removeTrack(id);
+    musicChanged('Musique retirée.');
+  } else if (e.target.closest('[data-music-up]')) {
+    moveTrack(id, -1);
+    musicChanged('Ordre modifié.');
+  }
+});
+$('music-list').addEventListener('change', (e) => {
+  const input = e.target.closest('[data-music-title]');
+  if (!input) return;
+  renameTrack(input.closest('[data-music]').dataset.music, input.value);
+  status($('music-status'), '✓ Titre enregistré.', 'live');
+});
+$('music-grimoire').addEventListener('click', () => {
+  saveFlag(STORAGE.radioGrimoire, !loadFlag(STORAGE.radioGrimoire, true));
+  syncMusicToggle();
+});
+syncMusicToggle();
+renderMusic();

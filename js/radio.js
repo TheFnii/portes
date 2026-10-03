@@ -2,12 +2,14 @@
 // Toucher le lecteur ouvre un mini-menu : volume et playlist (toucher un titre le joue).
 
 import { RADIO_PLAYLIST_URL, RADIO_AUDIO, RADIO_FALLBACK, STORAGE } from './config.js';
-import { load, save } from './prefs.js';
+import { load, save, loadFlag } from './prefs.js';
+import { loadMyTracks, trackSource, sourceNow, prepareTracks } from './playlist.js';
 import { esc } from './shell.js';
 
 export class Radio {
   constructor(el) {
     this.el = el;
+    this.grimoire = RADIO_FALLBACK;
     this.tracks = RADIO_FALLBACK;
     this.index = Number(load(STORAGE.radio, 0)) || 0;
     this.baseVolume = Math.min(1, Math.max(0, Number(load(STORAGE.radioVolume, 0.7))));
@@ -80,9 +82,20 @@ export class Radio {
       if (!res.ok) throw new Error(res.status);
       const data = await res.json();
       const tracks = (data.radio && data.radio.tracks || []).filter((t) => t && t.id);
-      if (tracks.length) this.tracks = tracks;
+      if (tracks.length) this.grimoire = tracks;
     } catch (e) { /* playlist de secours */ }
-    this.index %= this.tracks.length;
+    this.rebuild();
+  }
+
+  // Mes musiques (Réglages) d'abord, puis la playlist du Grimoire si elle est gardée.
+  rebuild() {
+    const current = this.track;
+    const mine = loadMyTracks();
+    const withGrimoire = loadFlag(STORAGE.radioGrimoire, true) || !mine.length;
+    this.tracks = [...mine, ...(withGrimoire ? this.grimoire : [])];
+    prepareTracks(mine);
+    const i = current ? this.tracks.findIndex((t) => t.id === current.id) : -1;
+    this.index = i >= 0 ? i : this.index % Math.max(1, this.tracks.length);
     this.render();
   }
 
@@ -93,7 +106,16 @@ export class Radio {
   play() {
     const t = this.track;
     if (!t) return;
-    const src = RADIO_AUDIO(t.id);
+    const now = sourceNow(t);
+    if (now) this.start(now);
+    else trackSource(t).then((src) => this.start(src)).catch(() => this.start(null));
+  }
+
+  start(src) {
+    if (!src) {
+      if (this.playing) setTimeout(() => this.next(), 800);
+      return;
+    }
     if (this.audio.src !== src) this.audio.src = src;
     this.playing = true;
     this.audio.play().catch(() => { this.playing = false; this.render(); });

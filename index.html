@@ -99,6 +99,7 @@
       <section class="panel board" id="board-box" data-feature="board">
         <h2 class="board-title" data-text="boardTitle"></h2>
         <div class="board-window"><div class="board-track" id="board-track"></div></div>
+        <button class="icon-btn board-full-btn" id="board-full-btn" type="button" title="Messages en plein écran" aria-label="Messages en plein écran">⛶</button>
       </section>
 
       <section class="queue-col" id="queue-col" data-feature="list">
@@ -201,6 +202,12 @@
     <div class="ss-band">
       <div class="ticker-track" id="ss-track"></div>
     </div>
+    <p class="ss-hint">Touchez l’écran pour revenir</p>
+  </div>
+
+  <!-- Case centrale en plein écran : seulement les messages -->
+  <div class="board-full" id="board-full" hidden>
+    <div class="board-full-window"><div class="board-track" id="board-full-track"></div></div>
     <p class="ss-hint">Touchez l’écran pour revenir</p>
   </div>
 
