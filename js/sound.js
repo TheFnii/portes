@@ -461,24 +461,15 @@ export class Sound {
     }
   }
 
-  // Le cachet de cire se brise : petit craquement sec, puis froissement du rabat.
-  unseal() {
+  // L'enveloppe s'ouvre : froissement du rabat, puis carillon cristallin quand la lettre apparaît.
+  opening() {
     if (!this.ready) return;
-    if (this.file('sceau')) return;
+    if (this.file('ouverture')) return;
     const t = this.ctx.currentTime + 0.01;
-    this.crumple(t, 0.12, 0.35);
-    this.rustle(t + 0.05, 0.25, 0.12, 2400, 900, 1.2);
-    this.crumple(t + 0.8, 0.5, 0.14);
-    this.rustle(t + 0.8, 0.8, 0.08, 600, 2600, 0.8);
-  }
-
-  // La lettre apparaît : carillon cristallin.
-  letter() {
-    if (!this.ready) return;
-    if (this.file('lettre')) return;
-    const t = this.ctx.currentTime + 0.02;
-    [1046.5, 1318.5, 1568, 2093, 2637].forEach((f, i) => this.glass(f, t + i * 0.09, 0.05 - i * 0.006, 2.4));
-    this.shimmer(t + 0.1, 1.6, 0.04);
+    this.crumple(t, 0.35, 0.2);
+    this.rustle(t, 0.5, 0.1, 600, 2600, 0.8);
+    [1046.5, 1318.5, 1568, 2093, 2637].forEach((f, i) => this.glass(f, t + 0.3 + i * 0.09, 0.05 - i * 0.006, 2.4));
+    this.shimmer(t + 0.35, 1.6, 0.04);
   }
 
   // Palier de likes : fanfare et cloches.

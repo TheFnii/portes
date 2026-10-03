@@ -201,103 +201,58 @@
 .env-caption { margin: 0 0 14px; }
 .cel-donut.reading .env-caption { opacity: 0; transition: opacity .5s ease; }
 
-/* Ouverture : construite à partir du dos (côté sceau) */
-.env-open { position: absolute; inset: 0; visibility: hidden; perspective: 900px; }
-.cel-donut.landed .env-card { visibility: hidden; }
-.cel-donut.landed .env-open { visibility: visible; }
-.env-open > * { position: absolute; inset: 0; }
-.eo-pocket,
-.eo-flap-front { width: 100%; height: 100%; object-fit: fill; display: block; }
-.eo-pocket {
-  z-index: 3;
-  clip-path: polygon(0 0, 50% var(--d), 100% 0, 100% 100%, 0 100%);
-  filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .55));
-}
-/* Fond de l'enveloppe (visible là où était le cachet de cire) */
-.eo-backing { z-index: 0; inset: 3% 2% 3% 2%; border-radius: 8px; background: linear-gradient(170deg, #f3e6c8, #e2cda2); }
-.eo-inside {
-  z-index: 1;
-  clip-path: polygon(0 0, 100% 0, 50% var(--d));
-  background: linear-gradient(180deg, #4a3220, #8a6a44 70%, #b8925e);
-}
-.eo-flap {
-  z-index: 4;
-  transform-origin: 50% 0;
-  transform-style: preserve-3d;
-  transition: transform .85s cubic-bezier(.5, 0, .3, 1);
-}
-.eo-flap > * { position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 50% var(--d)); }
-/* Face avant du rabat (l'image) : cachée quand il est retourné. Dessous, l'intérieur du rabat,
-   visible une fois ouvert (il pointe alors vers le haut, au-dessus de l'enveloppe). */
-.eo-flap-front { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(1px); }
-.eo-flap-back { background: linear-gradient(180deg, #6e5233, #c4a06a); }
-.cel-donut.opened .eo-flap { transform: rotateX(178deg); }
-.cel-donut.opened .eo-flap,
-.cel-donut.opened .eo-inside { z-index: 1; }
-
-/* Le cachet de cire : deux moitiés qui se séparent */
-.cel-donut.unsealed .eo-pocket,
-.cel-donut.unsealed .eo-flap-front {
-  -webkit-mask-image: radial-gradient(circle at var(--sx) var(--sy), transparent calc(var(--sr) * .98), #000 calc(var(--sr) + 1px));
-  mask-image: radial-gradient(circle at var(--sx) var(--sy), transparent calc(var(--sr) * .98), #000 calc(var(--sr) + 1px));
-}
-.eo-seal { inset: auto; left: calc(var(--sx) - var(--sr)); top: calc(var(--sy) - var(--sr)); width: calc(var(--sr) * 2); height: calc(var(--sr) * 2); z-index: 6; visibility: hidden; }
-.cel-donut.unsealed .eo-seal { visibility: visible; }
-.eo-seal i { position: absolute; inset: 0; border-radius: 50%; background-repeat: no-repeat; }
-.eo-seal .l { clip-path: polygon(0 0, 54% 0, 44% 28%, 58% 52%, 45% 76%, 52% 100%, 0 100%); }
-.eo-seal .r { clip-path: polygon(54% 0, 100% 0, 100% 100%, 52% 100%, 45% 76%, 58% 52%, 44% 28%); }
-.cel-donut.unsealed .eo-seal .l { animation: seal-l .9s cubic-bezier(.3, .1, .6, 1) forwards; }
-.cel-donut.unsealed .eo-seal .r { animation: seal-r .9s cubic-bezier(.3, .1, .6, 1) forwards; }
-@keyframes seal-l { 15% { transform: translate(-4%, 0) rotate(-6deg); } to { transform: translate(-80%, 140%) rotate(-50deg); opacity: 0; } }
-@keyframes seal-r { 15% { transform: translate(4%, 0) rotate(6deg); } to { transform: translate(80%, 160%) rotate(45deg); opacity: 0; } }
-
-/* La lettre glisse hors de l'enveloppe */
-.eo-letter {
-  z-index: 2;
-  left: 9%;
-  right: 9%;
-  top: 7%;
-  bottom: 12%;
-  border-radius: 6px;
-  background: linear-gradient(170deg, #fffaf0, #f3e4c4);
-  box-shadow: 0 0 18px rgba(0, 0, 0, .25);
-  display: flex;
-  flex-direction: column;
-  gap: 9%;
-  padding: 12% 12% 0;
-  transition: transform 1s cubic-bezier(.3, .1, .3, 1);
-}
-.eo-letter span { height: 4%; border-radius: 3px; background: rgba(107, 74, 42, .28); }
-.eo-letter span:nth-child(2) { width: 82%; }
-.eo-letter span:nth-child(3) { width: 64%; }
-.cel-donut.rising .eo-letter { transform: translateY(-62%); }
-.cel-donut.reading .env-fly { opacity: 0; transform: scale(.9); transition: opacity .6s ease, transform .6s ease; }
-
-/* La lettre au centre : [Pseudo], le message, ✦ */
+/* La lettre ouverte, au centre : [Pseudo], le message, ✦ — un morceau d'enveloppe dépasse derrière */
+.cel-donut.reading .env-fly { opacity: 0; transform: scale(.85); transition: opacity .4s ease, transform .4s ease; }
 .letter-card {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(92vw, 660px);
-  max-height: 86vh;
-  overflow-y: auto;
-  padding: clamp(24px, 5vmin, 48px) clamp(22px, 5vmin, 54px) clamp(40px, 6vmin, 60px);
+  width: min(92vw, 640px);
+  pointer-events: auto;
+  cursor: pointer;
+  transform: translate(-50%, -50%) scale(.6);
+  opacity: 0;
+  transition: transform .6s cubic-bezier(.2, 1.2, .3, 1), opacity .4s ease;
+}
+.letter-card.in { transform: translate(-50%, -50%); opacity: 1; }
+.letter-card.folding { transform: translate(-50%, -50%) scale(.8); opacity: 0; transition-duration: .35s; }
+.letter-env {
+  position: absolute;
+  z-index: 0;
+  left: 6%;
+  width: 88%;
+  bottom: -16%;
+  transform: rotate(-4deg);
+  filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .55));
+}
+.letter-paper {
+  position: relative;
+  z-index: 1;
+  max-height: 80vh;
+  overflow: hidden;
+  padding: clamp(24px, 5vmin, 48px) clamp(22px, 5vmin, 54px) clamp(44px, 6vmin, 64px);
   border-radius: 10px;
   background:
     radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, .7), transparent 60%),
     linear-gradient(170deg, #fffaf0, #f2e2c0 70%, #e8d3a8);
   border: 1px solid rgba(176, 138, 74, .6);
-  box-shadow: 0 0 0 6px rgba(255, 245, 220, .08), 0 30px 80px rgba(0, 0, 0, .65), 0 0 60px rgba(255, 210, 140, .25);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .65), 0 0 60px rgba(255, 210, 140, .25);
   color: #2e1c0c;
   text-align: left;
-  pointer-events: auto;
-  cursor: pointer;
-  transform: translate(-50%, -50%) scaleY(.2) scaleX(.6);
-  opacity: 0;
-  transition: transform .7s cubic-bezier(.2, 1.1, .3, 1), opacity .5s ease;
 }
-.letter-card.in { transform: translate(-50%, -50%); opacity: 1; }
-.letter-card.folding { transform: translate(-50%, -50%) scaleY(.15); opacity: 0; transition-duration: .35s; }
+/* Lettre vierge fournie (Réglages) : l'image donne la forme, le texte se place dans ses marges. */
+.letter-card.has-paper { width: min(92vw, 640px, calc(82vh * var(--ratio, .75))); }
+.has-paper .letter-paper {
+  aspect-ratio: var(--ratio, .75);
+  max-height: none;
+  padding: var(--margin, 12%);
+  border: 0;
+  border-radius: 0;
+  background: var(--paper) center / 100% 100% no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 26px 50px rgba(0, 0, 0, .6));
+}
+.letter-text { max-height: 100%; }
 .l-name {
   margin: 0 0 .8em;
   font: 700 calc(clamp(24px, 4.6vmin, 40px) * var(--lfs, 1))/1.15 'Cinzel', serif;
@@ -319,6 +274,7 @@
   text-shadow: 0 0 10px rgba(255, 210, 110, .9), 0 0 24px rgba(255, 190, 80, .6);
   animation: l-twinkle 1.8s ease-in-out infinite;
 }
+.has-paper .l-sign { right: calc(var(--margin, 12%) * .9); bottom: calc(var(--margin, 12%) * .55); }
 @keyframes l-twinkle { 50% { transform: scale(.75) rotate(20deg); opacity: .55; } }
 .cel-letter-only { background: radial-gradient(ellipse at 50% 45%, rgba(30, 12, 50, .72), rgba(4, 2, 10, .8)); }
 

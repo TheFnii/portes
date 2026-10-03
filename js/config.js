@@ -21,8 +21,7 @@ export const SOUND_FILES = {
   galaxie: 'sounds/galaxie.mp3',  // Galaxie
   enveloppe: 'sounds/enveloppe.mp3', // Donut : l'enveloppe arrive
   palier: 'sounds/palier.mp3',    // palier de likes
-  sceau: 'sounds/sceau.mp3',      // le cachet de cire se brise
-  lettre: 'sounds/lettre.mp3',    // la lettre de l'univers apparaît
+  ouverture: 'sounds/ouverture.mp3', // l'enveloppe s'ouvre, la lettre apparaît
 };
 
 // Images fournies (voir images/LISEZMOI.md). Sans fichier, l'application garde ses dessins.
@@ -35,6 +34,7 @@ export const IMAGES = {
   animGalaxie: 'images/animations/galaxie',    // animation de la Galaxie
   animEnveloppe: 'images/animations/enveloppe', // enveloppe (Donut) : côté destinataire, le pseudo est écrit dessus
   animEnveloppeDos: 'images/animations/enveloppe-dos', // enveloppe (Donut) : côté du sceau de cire
+  animLettre: 'images/animations/lettre',      // lettre ouverte vierge (le message est écrit dessus)
 };
 export const IMAGE_EXTENSIONS = ['png', 'webp', 'jpg', 'jpeg', 'gif', 'svg'];
 

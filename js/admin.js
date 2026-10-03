@@ -313,15 +313,15 @@ const MEDIA_SLOTS = {
   'media-anims': [
     ['img:animChat', 'Chat porte-bonheur', 'grande animation', 1400],
     ['img:animGalaxie', 'Galaxie', 'grande animation', 1400],
-    ['img:animEnveloppeDos', 'Enveloppe : côté sceau', 'virevolte, puis se retourne', 1400],
+    ['img:animEnveloppeDos', 'Enveloppe : côté sceau', 'virevolte, puis dépasse derrière la lettre', 1400],
     ['img:animEnveloppe', 'Enveloppe : côté destinataire', 'le pseudo est écrit dessus', 1400],
+    ['img:animLettre', 'Lettre ouverte (vierge)', 'le message est écrit dessus', 1600],
   ],
   'media-sounds': [
     ['snd:chat', 'Chat porte-bonheur', 'miaulement'],
     ['snd:galaxie', 'Galaxie', 'harpe'],
     ['snd:enveloppe', 'Enveloppe', 'papier froissé'],
-    ['snd:sceau', 'Cachet de cire', 'il se brise'],
-    ['snd:lettre', 'Lettre de l’univers', 'elle apparaît'],
+    ['snd:ouverture', 'Ouverture de l’enveloppe', 'la lettre apparaît'],
     ['snd:palier', 'Palier de likes', 'fanfare'],
     ['snd:de', 'Dé', 'le dé qui roule'],
     ['snd:porte', 'Porte', 'la porte s’ouvre'],

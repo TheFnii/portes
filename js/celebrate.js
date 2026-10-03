@@ -172,9 +172,8 @@ export class Celebrate {
   }
 
   // Message de l'univers (Donut) : l'enveloppe virevolte parmi les étoiles et les comètes
-  // (on voit passer le côté du pseudo et celui du sceau), s'arrête côté sceau, le cachet de
-  // cire se brise, le rabat s'ouvre et la lettre apparaît. L'ouverture est construite à
-  // partir des deux images fournies (face et dos).
+  // (on voit passer le côté du pseudo et celui du sceau), s'arrête, on entend son ouverture
+  // et la lettre ouverte s'affiche aussitôt, l'enveloppe dépassant derrière.
   async donut({ name, text, message, target }) {
     const s = this.getSettings();
     const front = image('animEnveloppe');
@@ -184,7 +183,6 @@ export class Celebrate {
     for (let i = 0; i < 6; i++) {
       comets += `<b class="comet" style="top:${(8 + Math.random() * 70).toFixed(0)}%;animation-delay:${(i * 0.35).toFixed(2)}s"></b>`;
     }
-    const D = clampPct(s.flapDepth, 57);
     const el = this.stage('cel-donut', `
       ${comets}
       <div class="env-fly" style="aspect-ratio:${ratio.toFixed(4)}">
@@ -197,14 +195,6 @@ export class Celebrate {
             <span class="env-name">${esc(name)}</span>`}
           </div>
         </div>
-        <div class="env-open" style="--d:${D}%">
-          <div class="eo-backing"></div>
-          <div class="eo-inside"></div>
-          <div class="eo-letter"><span></span><span></span><span></span></div>
-          <img class="eo-pocket" src="${esc(back)}" alt="">
-          <div class="eo-flap"><img class="eo-flap-front" src="${esc(back)}" alt=""><div class="eo-flap-back"></div></div>
-          <div class="eo-seal"><i class="l"></i><i class="r"></i></div>
-        </div>
       </div>`);
     this.sound.envelope(2.2);
     const c = this.center();
@@ -213,45 +203,16 @@ export class Celebrate {
     }, 220);
     await wait(2300);
     clearInterval(sparkle);
+    await wait(250);
 
-    // Elle s'arrête, côté sceau.
-    el.classList.add('landed');
-    const fly = el.querySelector('.env-fly');
-    const r = fly.getBoundingClientRect();
-    const sx = (clampPct(s.sealX, 50) / 100) * r.width;
-    const sy = (clampPct(s.sealY, 56) / 100) * r.height;
-    const sr = (clampPct(s.sealSize, 17) / 200) * r.width;
-    const open = el.querySelector('.env-open');
-    open.style.setProperty('--sx', `${sx}px`);
-    open.style.setProperty('--sy', `${sy}px`);
-    open.style.setProperty('--sr', `${sr}px`);
-    el.querySelectorAll('.eo-seal i').forEach((half) => {
-      half.style.backgroundImage = `url("${back}")`;
-      half.style.backgroundSize = `${r.width}px ${r.height}px`;
-      half.style.backgroundPosition = `${-(sx - sr)}px ${-(sy - sr)}px`;
-    });
-    this.fx.burst(c.x, c.y, { count: 40, speed: 220, life: 1.4, stars: 0.5 });
-    await wait(700);
-
-    // Le cachet de cire se brise.
-    el.classList.add('unsealed');
-    this.sound.unseal();
-    this.fx.burst(r.left + sx, r.top + sy, { count: 46, speed: 200, life: 1.2, stars: 0.6, size: 0.9 });
-    await wait(800);
-
-    // Le rabat s'ouvre, la lettre sort.
-    el.classList.add('opened');
-    await wait(900);
-    el.classList.add('rising');
-    await wait(1000);
-
-    // La lettre se déplie au centre de l'écran.
+    // Ouverture : le son, puis directement la lettre ouverte.
+    this.sound.opening();
     el.classList.add('reading');
-    const card = this.letterCard(name, message);
+    const card = await this.letterCard(name, message, back);
     el.appendChild(card);
     void card.offsetWidth;
     card.classList.add('in');
-    this.sound.letter();
+    this.fitLetter(card);
     this.fx.burst(c.x, c.y, { count: 50, speed: 240, life: 1.6, stars: 0.6, glow: 'violet' });
     await this.readLetter(card);
 
@@ -273,11 +234,12 @@ export class Celebrate {
   // Une lettre relue (touchée dans la liste des Messages de l'univers).
   async letter({ name, message }) {
     const el = this.stage('cel-letter-only', '');
-    const card = this.letterCard(name, message);
+    const card = await this.letterCard(name, message, image('animEnveloppeDos') || BACK_URL);
     el.appendChild(card);
     void card.offsetWidth;
     card.classList.add('in');
-    this.sound.letter();
+    this.fitLetter(card);
+    this.sound.opening();
     await this.readLetter(card);
     el.classList.add('out');
     await wait(500);
@@ -285,14 +247,36 @@ export class Celebrate {
     if (!this.root.querySelector('.cel')) this.root.hidden = true;
   }
 
-  // [Pseudo], — le message — ✦ (une étoile scintillante en guise de signature).
-  letterCard(name, message) {
+  // [Pseudo], — le message — ✦ (une étoile scintillante en guise de signature), sur la lettre
+  // vierge fournie (Réglages) ou un papier dessiné ; un morceau d'enveloppe dépasse derrière.
+  async letterCard(name, message, envelope) {
+    const s = this.getSettings();
+    const paper = image('animLettre');
+    const ratio = paper ? await imageRatio(paper, 0.75) : 0;
     const card = document.createElement('div');
-    card.className = 'letter-card';
-    const long = String(message || '').length;
-    card.style.setProperty('--lfs', long > 420 ? '0.82' : long > 280 ? '0.9' : '1');
-    card.innerHTML = `<p class="l-name">${esc(name)},</p><p class="l-msg">${esc(message || '')}</p><span class="l-sign" aria-hidden="true">✦</span>`;
+    card.className = `letter-card${paper ? ' has-paper' : ''}`;
+    if (paper) {
+      card.style.setProperty('--paper', `url("${paper}")`);
+      card.style.setProperty('--ratio', ratio.toFixed(4));
+      card.style.setProperty('--margin', `${Math.min(30, Math.max(0, Number(s.letterMargin) || 12))}%`);
+    }
+    card.innerHTML = `${envelope ? `<img class="letter-env" src="${esc(envelope)}" alt="">` : ''}
+      <div class="letter-paper"><div class="letter-text">
+        <p class="l-name">${esc(name)},</p><p class="l-msg">${esc(message || '')}</p>
+      </div><span class="l-sign" aria-hidden="true">✦</span></div>`;
     return card;
+  }
+
+  // Le texte prend la plus grande taille qui tient sur la lettre.
+  fitLetter(card) {
+    const text = card.querySelector('.letter-text');
+    const box = card.querySelector('.letter-paper');
+    let k = 1;
+    card.style.setProperty('--lfs', k);
+    while (k > 0.5 && (text.scrollHeight > box.clientHeight * 0.98 || box.scrollHeight > box.clientHeight + 1)) {
+      k -= 0.05;
+      card.style.setProperty('--lfs', k.toFixed(2));
+    }
   }
 
   // Le temps de lire (réglable) ; toucher la lettre la referme plus tôt.

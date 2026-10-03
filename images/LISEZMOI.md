@@ -16,6 +16,7 @@ Tant qu'une image manque, l'application garde son dessin ou son emoji.
 | `animations/galaxie.png`        | grande animation de la Galaxie                              |
 | `animations/enveloppe-dos.png`  | enveloppe, côté sceau de cire : elle virevolte puis se retourne |
 | `animations/enveloppe.png`      | enveloppe, côté destinataire : le pseudo est écrit dessus   |
+| `animations/lettre.png`         | lettre ouverte vierge : le message est écrit dessus         |
 
 Conseils :
 

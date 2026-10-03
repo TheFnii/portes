@@ -78,13 +78,13 @@ Le tirage est vraiment aléatoire : il utilise le générateur cryptographique d
 
 ## Messages de l’univers (Donut)
 
-Chaque Donut ouvre une **lettre de l’univers** : l’enveloppe virevolte parmi les étoiles et les comètes (on voit passer le côté du pseudo et celui du sceau), s’arrête, le cachet de cire se brise, le rabat s’ouvre et la lettre apparaît :
+Chaque Donut ouvre une **lettre de l’univers** : l’enveloppe virevolte parmi les étoiles et les comètes (on voit passer le côté du pseudo et celui du sceau), on entend son ouverture, et la lettre ouverte s’affiche aussitôt, l’enveloppe dépassant derrière :
 
 > **Pseudo,**
 > le message de l’univers
 > ✦
 
-Les messages viennent du **Grimoire** (cartes « Messages de l’univers » de `book.json`), tirés au hasard sans répétition pendant le live. Dans **Réglages → Messages de l’univers** : parcourir tous les messages, en supprimer (avec confirmation), en ajouter. La position du cachet de cire et la pointe du rabat (pour vos images) ainsi que le temps de lecture se règlent dans **Personnalisation → Animations des cadeaux**. Toucher la lettre la referme.
+Les messages viennent du **Grimoire** (cartes « Messages de l’univers » de `book.json`), tirés au hasard sans répétition pendant le live. Dans **Réglages → Messages de l’univers** : parcourir tous les messages, en supprimer (avec confirmation), en ajouter. La lettre vierge (image) se dépose dans **Réglages → Images et sons → Lettre ouverte (vierge)** ; les marges du texte sur cette image et le temps de lecture se règlent dans **Personnalisation → Animations des cadeaux**. Toucher la lettre la referme.
 
 La case « Message de l’univers » garde tous les pseudos jusqu’à la fin du live (le plus récent en haut) : toucher un pseudo rouvre sa lettre. Sur la page des viewers, le bouton ✉️ ouvre la même liste.
 
@@ -235,8 +235,7 @@ Par défaut, l’application synthétise ses propres sons. Pour utiliser les vô
 | `galaxie.mp3`  | Galaxie (harpe)                                   |
 | `enveloppe.mp3`| Donut : l’enveloppe virevolte (papier froissé)    |
 | `palier.mp3`   | palier de likes atteint                           |
-| `sceau.mp3`    | le cachet de cire de l’enveloppe se brise         |
-| `lettre.mp3`   | la lettre de l’univers apparaît                   |
+| `ouverture.mp3`| l’enveloppe s’ouvre, la lettre apparaît           |
 
 Sur GitHub : dossier `sounds` → **Add file** → **Upload files**. Supprimez le fichier pour revenir au son d’origine.
 
@@ -257,6 +256,7 @@ Pour qu’ils soient sur tous les appareils, déposez-les plutôt dans le dossie
 | `animations/galaxie.png`    | grande animation de la Galaxie                            |
 | `animations/enveloppe-dos.png` | enveloppe, côté sceau de cire : elle virevolte puis se retourne |
 | `animations/enveloppe.png`  | enveloppe, côté destinataire : le pseudo est écrit dessus |
+| `animations/lettre.png`     | lettre ouverte vierge : le message est écrit dessus       |
 
 Tant qu’une image manque, l’application garde son dessin. La position, la taille, la couleur et l’écriture du pseudo sur l’enveloppe se règlent dans **Réglages → Personnalisation → Animations des cadeaux**. Détails dans `images/LISEZMOI.md`.
 
