@@ -671,7 +671,9 @@ body:not(.at-home) .cast-status { top: calc(max(14px, env(safe-area-inset-top)) 
   animation: tour-point 1.2s ease-in-out infinite;
 }
 @keyframes tour-point { 50% { transform: translateX(18%); } }
-.tour-star.has-img .tour-arm { display: none; }
+.tour-star.flying .tour-arm,
+.tour-star.hidden-arm .tour-arm { display: none; }
+.tour-star.flying .tour-star-body { animation: none; }
 .tour-bubble {
   position: fixed;
   padding: clamp(18px, 3vmin, 30px) clamp(20px, 3.4vmin, 34px);

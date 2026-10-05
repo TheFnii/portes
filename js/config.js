@@ -34,10 +34,6 @@ export const IMAGES = {
   animGalaxie: 'images/animations/galaxie',    // animation de la Galaxie
   animEnveloppe: 'images/animations/enveloppe', // enveloppe (Donut) : côté destinataire, le pseudo est écrit dessus
   animEnveloppeDos: 'images/animations/enveloppe-dos', // enveloppe (Donut) : côté du sceau de cire
-  starRight: 'images/etoile/droite',           // étoile de la présentation, qui pointe à droite
-  starLeft: 'images/etoile/gauche',            // … à gauche
-  starUp: 'images/etoile/haut',                // … vers le haut
-  starDown: 'images/etoile/bas',               // … vers le bas
   animLettre: 'images/animations/lettre',      // lettre ouverte vierge (le message est écrit dessus)
 };
 export const IMAGE_EXTENSIONS = ['png', 'webp', 'jpg', 'jpeg', 'gif', 'svg'];

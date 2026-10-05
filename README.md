@@ -96,7 +96,7 @@ Dans la case, le petit ✎ à côté d’un pseudo permet de modifier ou supprim
 
 ## Présentation des cases (écran de veille ⭐)
 
-Le bouton ⭐, à côté de la lune, lance une présentation : une petite étoile montre tour à tour chaque case du tableau de bord (mise en lumière) et une bulle explique à quoi elle sert. Touchez l’écran pour revenir. Dans **Réglages → Présentation des cases** : pour chaque case, activée ou non, titre et texte de la bulle, position de l’étoile (automatique, à gauche, à droite, au-dessus, en dessous), durée, et ordre. Les images de l’étoile (une par direction : droite, gauche, haut, bas) se déposent dans **Images et sons des cadeaux** ; sans image, une étoile dessinée pointe vers la case.
+Le bouton ⭐, à côté de la lune, lance une présentation : une petite étoile montre tour à tour chaque case du tableau de bord (mise en lumière) et une bulle explique à quoi elle sert. Touchez l’écran pour revenir. Dans **Réglages → Présentation des cases** : pour chaque case, activée ou non, titre et texte de la bulle, position de l’étoile (automatique, à gauche, à droite, au-dessus, en dessous), durée, et ordre. L’étoile vient de votre planche (30 poses, dans `images/etoile/`) : elle salue au début, vole d’une case à l’autre, puis prend la pose choisie pour chaque case (ou regarde la case, en automatique) ; une petite flèche dorée montre la case.
 
 ## Paliers de likes par personne
 

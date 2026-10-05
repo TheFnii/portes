@@ -355,7 +355,10 @@ output { color: var(--gold-light); font-weight: 600; }
 .tour-row-head .check { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; }
 .tour-row-head input[type='checkbox'] { width: 24px; height: 24px; accent-color: #d9a94a; }
 .tour-move { display: inline-flex; gap: 6px; }
-.tour-row-opts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+.tour-row-opts { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, .8fr); gap: 12px; align-items: end; }
+.pose-row { display: flex; align-items: center; gap: 10px; }
+.pose-preview { width: 52px; height: 52px; object-fit: contain; flex: none; }
+@media (max-width: 700px) { .tour-row-opts { grid-template-columns: 1fr; } }
 .tour-row .field input[type='text'],
 .tour-row .field input[type='number'],
 .tour-row .field select {

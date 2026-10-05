@@ -11,7 +11,7 @@ import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
 import { grimoireMessages, loadEdits, saveEdits, buildDeck, messageId } from './universe.js';
-import { TOUR_TARGETS, TOUR_SIDES, loadTour, saveTour, defaultTour } from './tour.js';
+import { TOUR_TARGETS, TOUR_SIDES, STAR_POSES, starImage, loadTour, saveTour, defaultTour } from './tour.js';
 import { loadMyTracks, addFileTrack, addUrlTrack, removeTrack, moveTrack, renameTrack } from './playlist.js';
 
 const $ = (id) => document.getElementById(id);
@@ -317,10 +317,6 @@ const MEDIA_SLOTS = {
     ['img:animEnveloppeDos', 'Enveloppe : côté sceau', 'virevolte, puis dépasse derrière la lettre', 1400],
     ['img:animEnveloppe', 'Enveloppe : côté destinataire', 'le pseudo est écrit dessus', 1400],
     ['img:animLettre', 'Lettre ouverte (vierge)', 'le message est écrit dessus', 1600],
-    ['img:starRight', 'Étoile : pointe à droite', 'écran de présentation ⭐', 600],
-    ['img:starLeft', 'Étoile : pointe à gauche', 'écran de présentation ⭐', 600],
-    ['img:starUp', 'Étoile : pointe vers le haut', 'écran de présentation ⭐', 600],
-    ['img:starDown', 'Étoile : pointe vers le bas', 'écran de présentation ⭐', 600],
   ],
   'media-sounds': [
     ['snd:chat', 'Chat porte-bonheur', 'miaulement'],
@@ -715,6 +711,8 @@ function tourRow(st, i, n) {
     <label class="field"><span>Titre de la bulle</span><input type="text" data-t="title" value="${esc(st.title || '')}"></label>
     <label class="field"><span>Texte de la bulle</span><textarea rows="3" data-t="text">${esc(st.text || '')}</textarea></label>
     <div class="tour-row-opts">
+      <label class="field tour-pose"><span>Pose de l’étoile</span><span class="pose-row"><img class="pose-preview" src="${starImage(STAR_POSES.some(([k]) => k === st.pose) ? st.pose : 'regard-droite')}" alt="">
+        <select data-t="pose"><option value="auto"${STAR_POSES.some(([k]) => k === st.pose) ? '' : ' selected'}>Regarde la case (automatique)</option>${STAR_POSES.map(([v, l]) => `<option value="${v}"${v === st.pose ? ' selected' : ''}>${l}</option>`).join('')}</select></span></label>
       <label class="field"><span>Position de l’étoile</span><select data-t="side">${TOUR_SIDES.map(([v, l]) => `<option value="${v}"${v === st.side ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="field"><span>Durée (secondes)</span><input type="number" min="3" max="120" data-t="seconds" value="${Number(st.seconds) || 9}"></label>
     </div>
@@ -735,6 +733,7 @@ function collectTour() {
     title: row.querySelector('[data-t="title"]').value.trim(),
     text: row.querySelector('[data-t="text"]').value.trim(),
     side: row.querySelector('[data-t="side"]').value,
+    pose: row.querySelector('[data-t="pose"]').value,
     seconds: Math.min(120, Math.max(3, Number(row.querySelector('[data-t="seconds"]').value) || 9)),
   }));
 }
@@ -747,6 +746,10 @@ $('tour-rows').addEventListener('click', (e) => {
   if (j < 0 || j >= list.length) return;
   [list[i], list[j]] = [list[j], list[i]];
   renderTourRows(list);
+});
+$('tour-rows').addEventListener('change', (e) => {
+  const sel = e.target.closest('[data-t="pose"]');
+  if (sel) sel.closest('.pose-row').querySelector('.pose-preview').src = starImage(sel.value === 'auto' ? 'regard-droite' : sel.value);
 });
 $('tour-save').addEventListener('click', () => {
   saveTour(collectTour());

@@ -3,8 +3,6 @@
 // explique à quoi elle sert. Textes, position de l'étoile et durées : Réglages.
 
 import { STORAGE } from './config.js';
-import { image } from './images.js';
-import { esc } from './shell.js';
 
 // Les cases présentables : élément du tableau de bord et texte par défaut.
 export const TOUR_TARGETS = {
@@ -22,7 +20,7 @@ export const TOUR_SIDES = [['auto', 'Automatique'], ['left', 'À gauche de la ca
 
 export function defaultTour() {
   return ['pinned', 'list', 'board', 'likes', 'gifters', 'univ', 'game'].map((key) => ({
-    key, on: true, title: TOUR_TARGETS[key].title, text: TOUR_TARGETS[key].text, side: 'auto', seconds: 9,
+    key, on: true, title: TOUR_TARGETS[key].title, text: TOUR_TARGETS[key].text, side: 'auto', pose: 'auto', seconds: 9,
   }));
 }
 
@@ -38,20 +36,24 @@ export function saveTour(steps) {
   localStorage.setItem(STORAGE.tour, JSON.stringify(steps));
 }
 
-// L'étoile dessinée (si aucune image n'est fournie) : un visage doux et un petit bras qui pointe.
-const STAR_SVG = `<svg viewBox="0 0 120 120" aria-hidden="true">
-  <defs><radialGradient id="tour-star" cx="45%" cy="40%" r="65%"><stop offset="0" stop-color="#fffbe0"/><stop offset=".55" stop-color="#ffd86e"/><stop offset="1" stop-color="#e09a22"/></radialGradient></defs>
-  <path d="M60 6 L74 42 L112 44 L82 68 L93 106 L60 84 L27 106 L38 68 L8 44 L46 42 Z" fill="url(#tour-star)" stroke="#a8670f" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="49" cy="56" r="4.5" fill="#3a2410"/><circle cx="71" cy="56" r="4.5" fill="#3a2410"/>
-  <circle cx="50.5" cy="54.5" r="1.4" fill="#fff"/><circle cx="72.5" cy="54.5" r="1.4" fill="#fff"/>
-  <path d="M51 66 q9 8 18 0" fill="none" stroke="#3a2410" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="42" cy="66" r="4" fill="#ff9aa8" opacity=".7"/><circle cx="78" cy="66" r="4" fill="#ff9aa8" opacity=".7"/>
-</svg>`;
-const ARM_SVG = `<svg viewBox="0 0 60 30" aria-hidden="true"><path d="M2 15 Q20 9 40 12 L40 5 L58 15 L40 25 L40 18 Q20 21 2 15 Z" fill="#ffd86e" stroke="#a8670f" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
+// Les poses de l'étoile (images/etoile/<nom>.webp, découpées dans la planche fournie).
+export const STAR_POSES = [
+  ['regard-gauche', 'Regard gauche'], ['regard-droite', 'Regard droite'], ['en-haut', 'En haut'], ['en-bas', 'En bas'],
+  ['face', 'Face'], ['heureuse', 'Heureuse'], ['clin-oeil', 'Clin d’œil'], ['joyeuse', 'Joyeuse'], ['surprise', 'Surprise'],
+  ['curieuse', 'Curieuse'], ['calme', 'Calme'], ['grincheuse', 'Grincheuse'], ['triste', 'Triste'], ['rire', 'Rire'],
+  ['amoureuse', 'Amoureuse'], ['timide', 'Timide'], ['cool', 'Cool'], ['excitee', 'Excitée'], ['sereine', 'Sereine'],
+  ['question', 'Question'], ['determinee', 'Déterminée'], ['salue', 'Salue'], ['tourne', 'Tourne / Étincelle'],
+  ['vol-gauche', 'Vol gauche'], ['vol-droite', 'Vol droite'], ['cache-gauche', 'Cache-cache gauche'], ['cache-droite', 'Cache-cache droite'],
+  ['dos', 'Dos'], ['dos-gauche', 'Dos gauche'], ['dos-droite', 'Dos droite'],
+];
+export const starImage = (pose) => `images/etoile/${pose}.webp`;
 
-// Image fournie pour chaque direction (la pointe vers la case).
-const POSE_IMAGE = { right: 'starRight', left: 'starLeft', up: 'starUp', down: 'starDown' };
-const POSE_ANGLE = { right: 0, down: 90, left: 180, up: -90 };
+// Une petite flèche dorée qui part de l'étoile vers la case.
+const ARM_SVG = `<svg viewBox="0 0 60 30" aria-hidden="true"><path d="M2 15 Q20 9 40 12 L40 5 L58 15 L40 25 L40 18 Q20 21 2 15 Z" fill="#ffd86e" stroke="#a8670f" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
+const DIR_ANGLE = { right: 0, down: 90, left: 180, up: -90 };
+// Pose automatique : l'étoile regarde la case.
+const LOOK = { right: 'regard-droite', left: 'regard-gauche', down: 'en-bas', up: 'en-haut' };
+const POSE_KEYS = new Set(STAR_POSES.map(([k]) => k));
 
 export class Tour {
   constructor(root) {
@@ -64,6 +66,8 @@ export class Tour {
     this.star = root.querySelector('.tour-star');
     this.bubble = root.querySelector('.tour-bubble');
     this.timer = null;
+    // Les images sont chargées d'avance (pas de clignotement au changement de pose).
+    this.preload = STAR_POSES.map(([k]) => { const i = new Image(); i.src = starImage(k); return i; });
     window.addEventListener('resize', () => { if (this.active) this.show(this.index, true); });
   }
 
@@ -91,8 +95,21 @@ export class Tour {
     return true;
   }
 
+  // Change l'image de l'étoile (flying : pendant le vol, la flèche se cache).
+  pose(name, flying = false) {
+    const body = this.star.querySelector('.tour-star-body');
+    if (body.dataset.pose !== name) {
+      body.dataset.pose = name;
+      body.innerHTML = `<img src="${starImage(name)}" alt="">`;
+    }
+    this.star.classList.toggle('flying', flying);
+    this.star.classList.toggle('hidden-arm', /^(vol|dos|cache|tourne)/.test(name));
+  }
+
   close() {
     clearTimeout(this.timer);
+    clearTimeout(this.poseTimer);
+    this.starPos = null;
     this.root.hidden = true;
     this.root.classList.remove('in');
   }
@@ -129,12 +146,25 @@ export class Tour {
     if (side === 'bottom') { sx = r.left + r.width / 2 - S / 2; sy = r.bottom + gap; }
     sx = Math.min(W - S - 8, Math.max(8, sx));
     sy = Math.min(H - S - 8, Math.max(8, sy));
-    const pose = { left: 'right', right: 'left', top: 'down', bottom: 'up' }[side];
-    const poseImg = image(POSE_IMAGE[pose]);
+    const dir = { left: 'right', right: 'left', top: 'down', bottom: 'up' }[side];
+    const pose = POSE_KEYS.has(step.pose) ? step.pose : LOOK[dir];
+    const prev = this.starPos;
+    const moving = !resize && prev && Math.hypot(prev.x - sx, prev.y - sy) > 30;
     this.star.style.cssText = `left:${sx}px;top:${sy}px;width:${S}px;height:${S}px;--s:${S}px`;
-    this.star.className = `tour-star pose-${pose}${poseImg ? ' has-img' : ''}`;
-    this.star.querySelector('.tour-star-body').innerHTML = poseImg ? `<img src="${esc(poseImg)}" alt="">` : STAR_SVG;
-    this.star.querySelector('.tour-arm').style.setProperty('--a', `${POSE_ANGLE[pose]}deg`);
+    this.star.querySelector('.tour-arm').style.setProperty('--a', `${DIR_ANGLE[dir]}deg`);
+    clearTimeout(this.poseTimer);
+    if (moving) {
+      // Elle vole jusqu'à la case suivante, puis prend sa pose.
+      this.pose(sx < prev.x ? 'vol-gauche' : 'vol-droite', true);
+      this.poseTimer = setTimeout(() => this.pose(pose), 850);
+    } else if (!prev && !resize) {
+      // Au début, elle salue.
+      this.pose('salue');
+      this.poseTimer = setTimeout(() => this.pose(pose), 1500);
+    } else {
+      this.pose(pose);
+    }
+    this.starPos = { x: sx, y: sy };
 
     // La bulle : dans la plus grande zone libre de l'écran (hors case et étoile).
     const st = { left: sx, top: sy, right: sx + S, bottom: sy + S };
