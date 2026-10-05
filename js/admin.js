@@ -11,6 +11,7 @@ import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
 import { grimoireMessages, loadEdits, saveEdits, buildDeck, messageId } from './universe.js';
+import { TOUR_TARGETS, TOUR_SIDES, loadTour, saveTour, defaultTour } from './tour.js';
 import { loadMyTracks, addFileTrack, addUrlTrack, removeTrack, moveTrack, renameTrack } from './playlist.js';
 
 const $ = (id) => document.getElementById(id);
@@ -316,6 +317,10 @@ const MEDIA_SLOTS = {
     ['img:animEnveloppeDos', 'Enveloppe : côté sceau', 'virevolte, puis dépasse derrière la lettre', 1400],
     ['img:animEnveloppe', 'Enveloppe : côté destinataire', 'le pseudo est écrit dessus', 1400],
     ['img:animLettre', 'Lettre ouverte (vierge)', 'le message est écrit dessus', 1600],
+    ['img:starRight', 'Étoile : pointe à droite', 'écran de présentation ⭐', 600],
+    ['img:starLeft', 'Étoile : pointe à gauche', 'écran de présentation ⭐', 600],
+    ['img:starUp', 'Étoile : pointe vers le haut', 'écran de présentation ⭐', 600],
+    ['img:starDown', 'Étoile : pointe vers le bas', 'écran de présentation ⭐', 600],
   ],
   'media-sounds': [
     ['snd:chat', 'Chat porte-bonheur', 'miaulement'],
@@ -511,11 +516,44 @@ async function renderUniv() {
   $('univ-count').textContent = `${deck.length} message${deck.length > 1 ? 's' : ''}`;
   $('univ-list').innerHTML = shown.length
     ? shown.map((m) => `<li><p>${esc(m.text)}</p><div class="row"><span class="src">${m.source === 'added' ? 'Ajouté' : 'Grimoire'}</span>
-        <button class="btn btn-ghost" data-univ-del="${m.id}" type="button">Supprimer</button></div></li>`).join('')
+        <span class="univ-actions"><button class="btn btn-ghost" data-univ-edit="${m.id}" type="button">Modifier</button>
+        <button class="btn btn-ghost" data-univ-del="${m.id}" type="button">Supprimer</button></span></div></li>`).join('')
     : '<li class="empty">Aucun message.</li>';
 }
 $('univ-search').addEventListener('input', renderUniv);
+// Modifier un message : on retire l'ancien et on garde le nouveau texte.
+function replaceMessage(id, text) {
+  const edits = loadEdits();
+  const i = edits.added.findIndex((t) => messageId(t.trim()) === id);
+  if (i >= 0) edits.added[i] = text;
+  else {
+    edits.removed.push(id);
+    edits.added.unshift(text);
+  }
+  edits.removed = edits.removed.filter((r) => r !== messageId(text));
+  saveEdits(edits);
+}
 $('univ-list').addEventListener('click', (e) => {
+  const ed = e.target.closest('[data-univ-edit]');
+  if (ed) {
+    const li = ed.closest('li');
+    const p = li.querySelector('p');
+    li.innerHTML = `<textarea rows="5" data-univ-text>${esc(p.textContent)}</textarea>
+      <div class="row"><span></span><span class="univ-actions"><button class="btn btn-ghost" data-univ-cancel type="button">Annuler</button>
+      <button class="btn btn-primary" data-univ-save="${ed.dataset.univEdit}" type="button">Enregistrer</button></span></div>`;
+    li.querySelector('textarea').focus();
+    return;
+  }
+  if (e.target.closest('[data-univ-cancel]')) { renderUniv(); return; }
+  const sv = e.target.closest('[data-univ-save]');
+  if (sv) {
+    const text = sv.closest('li').querySelector('[data-univ-text]').value.trim();
+    if (!text) { status($('univ-status'), 'Le message est vide.'); return; }
+    replaceMessage(sv.dataset.univSave, text);
+    renderUniv();
+    status($('univ-status'), '✓ Message modifié.', 'live');
+    return;
+  }
   const b = e.target.closest('[data-univ-del]');
   if (!b) return;
   if (!window.confirm('Supprimer définitivement ce message du deck ?')) return;
@@ -661,3 +699,64 @@ $('music-grimoire').addEventListener('click', () => {
 });
 syncMusicToggle();
 renderMusic();
+
+// ---------- Présentation des cases (écran de veille ⭐) ----------
+
+function tourRow(st, i, n) {
+  const t = TOUR_TARGETS[st.key];
+  return `<div class="tour-row" data-key="${st.key}">
+    <div class="tour-row-head">
+      <label class="check"><input type="checkbox" data-t="on"${st.on ? ' checked' : ''}> <strong>${esc(t.label)}</strong></label>
+      <span class="tour-move">
+        <button class="x-btn" data-t-move="-1" type="button" aria-label="Monter"${i ? '' : ' disabled'}>↑</button>
+        <button class="x-btn" data-t-move="1" type="button" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button>
+      </span>
+    </div>
+    <label class="field"><span>Titre de la bulle</span><input type="text" data-t="title" value="${esc(st.title || '')}"></label>
+    <label class="field"><span>Texte de la bulle</span><textarea rows="3" data-t="text">${esc(st.text || '')}</textarea></label>
+    <div class="tour-row-opts">
+      <label class="field"><span>Position de l’étoile</span><select data-t="side">${TOUR_SIDES.map(([v, l]) => `<option value="${v}"${v === st.side ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Durée (secondes)</span><input type="number" min="3" max="120" data-t="seconds" value="${Number(st.seconds) || 9}"></label>
+    </div>
+  </div>`;
+}
+function renderTourRows(list = loadTour()) {
+  // Les cases absentes de la liste enregistrée sont proposées à la fin (désactivées).
+  const keys = list.map((s) => s.key);
+  Object.keys(TOUR_TARGETS).forEach((k) => {
+    if (!keys.includes(k)) list.push({ key: k, on: false, title: TOUR_TARGETS[k].title, text: TOUR_TARGETS[k].text, side: 'auto', seconds: 9 });
+  });
+  $('tour-rows').innerHTML = list.map((s, i) => tourRow(s, i, list.length)).join('');
+}
+function collectTour() {
+  return [...$('tour-rows').querySelectorAll('.tour-row')].map((row) => ({
+    key: row.dataset.key,
+    on: row.querySelector('[data-t="on"]').checked,
+    title: row.querySelector('[data-t="title"]').value.trim(),
+    text: row.querySelector('[data-t="text"]').value.trim(),
+    side: row.querySelector('[data-t="side"]').value,
+    seconds: Math.min(120, Math.max(3, Number(row.querySelector('[data-t="seconds"]').value) || 9)),
+  }));
+}
+$('tour-rows').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-t-move]');
+  if (!b) return;
+  const list = collectTour();
+  const i = list.findIndex((s) => s.key === b.closest('.tour-row').dataset.key);
+  const j = i + Number(b.dataset.tMove);
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  renderTourRows(list);
+});
+$('tour-save').addEventListener('click', () => {
+  saveTour(collectTour());
+  status($('tour-status'), '✓ Présentation enregistrée.', 'live');
+});
+$('tour-reset').addEventListener('click', () => {
+  if (!window.confirm('Remettre les textes, positions et durées par défaut ?')) return;
+  const d = defaultTour();
+  saveTour(d);
+  renderTourRows(d);
+  status($('tour-status'), 'Présentation remise par défaut.', 'live');
+});
+renderTourRows();

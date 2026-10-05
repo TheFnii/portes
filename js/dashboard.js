@@ -42,7 +42,7 @@ export function entryDetail(e) {
 export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
 
 export class Dashboard {
-  constructor({ onRemove, onOpenLetter, onBoardFull }) {
+  constructor({ onRemove, onOpenLetter, onEditLetter, onBoardFull }) {
     this.seen = new Set();
     this.lastCurrent = null;
     this.s = {};
@@ -52,6 +52,8 @@ export class Dashboard {
     });
     // Toucher un pseudo rouvre sa lettre de l'univers.
     $('donut-list').addEventListener('click', (e) => {
+      const ed = e.target.closest('[data-edit-letter]');
+      if (ed) { onEditLetter(ed.dataset.editLetter); return; }
       const b = e.target.closest('[data-letter]');
       if (b) onOpenLetter(b.dataset.letter);
     });
@@ -178,9 +180,10 @@ export class Dashboard {
     }
     $('donut-count').textContent = d.length;
     $('donut-list').innerHTML = d.length
-      ? d.map((e) => `<li${this.seenLetters && !this.seenLetters.has(e.id) ? ' class="new"' : ''}><button class="letter-btn" data-letter="${esc(e.id)}" type="button" aria-label="Relire la lettre de ${esc(e.name)}">
+      ? d.map((e) => `<li${this.seenLetters && !this.seenLetters.has(e.id) ? ' class="new"' : ''}><button class="letter-btn" ${e.message ? `data-letter="${esc(e.id)}"` : 'disabled'} type="button" aria-label="Relire la lettre de ${esc(e.name)}">
           <span class="env-mini gift-icon" aria-hidden="true">${logo('donut', '', '✉️')}</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}
-          <span class="reread" aria-hidden="true">Relire</span></button></li>`).join('')
+          ${e.message ? '<span class="reread" aria-hidden="true">Relire</span>' : ''}</button>
+          <button class="x-btn edit-letter" data-edit-letter="${esc(e.id)}" type="button" aria-label="Modifier ou supprimer le message de ${esc(e.name)}">✎</button></li>`).join('')
       : `<li class="empty">${esc(this.s.univEmpty || '')}</li>`;
     this.seenLetters = new Set(d.map((e) => e.id));
   }

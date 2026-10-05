@@ -121,6 +121,7 @@
     <footer class="dash-bottom">
       <div class="dash-tools">
         <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
+        <button class="icon-btn tour-btn" data-action="tour" type="button" title="Présentation des cases" aria-label="Présentation des cases">⭐</button>
         <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
         <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
       </div>
@@ -204,6 +205,9 @@
     </div>
     <p class="ss-hint">Touchez l’écran pour revenir</p>
   </div>
+
+  <!-- Écran de veille « présentation » : l'étoile présente les cases -->
+  <div class="tour" id="tour" hidden></div>
 
   <!-- Case centrale en plein écran : seulement les messages -->
   <div class="board-full" id="board-full" hidden>

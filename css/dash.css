@@ -336,8 +336,8 @@ body.at-home .live-status {
   top: auto;
   right: auto;
   bottom: calc(env(safe-area-inset-bottom) + 20px);
-  left: calc(max(16px, env(safe-area-inset-left)) + 3 * 68px);
-  max-width: calc(50vw - 3 * 68px - 200px);
+  left: calc(max(16px, env(safe-area-inset-left)) + 4 * 68px);
+  max-width: calc(50vw - 4 * 68px - 200px);
   zoom: var(--ts, 1);
 }
 .corner-game {
@@ -608,3 +608,97 @@ body:not(.at-home) .cast-status { top: calc(max(14px, env(safe-area-inset-top)) 
 .board-full .board-item { font-size: clamp(34px, 6.4vmin, 76px); padding: 4vh 2vw; }
 .board-full .board-sep { font-size: clamp(22px, 3.4vmin, 40px); }
 .board-full .board-track.still { display: flex; flex-direction: column; justify-content: center; min-height: 100%; }
+
+.donuts .side-list li { display: flex; align-items: center; gap: 6px; }
+.letter-btn:disabled { cursor: default; opacity: .85; }
+.edit-letter { width: 34px; height: 34px; font-size: 15px; opacity: .7; }
+.donuts .letter-btn { flex: 1; min-width: 0; }
+#letter-edit {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(232, 199, 122, .45);
+  background: rgba(0, 0, 0, .35);
+  color: var(--ink);
+  font: 500 20px/1.4 'Cormorant Garamond', serif;
+  resize: vertical;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ---------- Écran de veille « présentation » : l'étoile présente les cases ---------- */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 92;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+.tour.in { opacity: 1; }
+.tour-spot {
+  position: fixed;
+  border-radius: 26px;
+  box-shadow: 0 0 0 200vmax rgba(6, 3, 12, .8), 0 0 0 3px rgba(255, 220, 140, .9), 0 0 40px 8px rgba(255, 210, 120, .55);
+  transition: left .8s cubic-bezier(.5, 0, .2, 1), top .8s cubic-bezier(.5, 0, .2, 1), width .8s cubic-bezier(.5, 0, .2, 1), height .8s cubic-bezier(.5, 0, .2, 1);
+  pointer-events: none;
+  animation: tour-glow 2.4s ease-in-out infinite;
+}
+@keyframes tour-glow { 50% { box-shadow: 0 0 0 200vmax rgba(6, 3, 12, .8), 0 0 0 3px rgba(255, 235, 170, 1), 0 0 60px 14px rgba(255, 210, 120, .7); } }
+.tour-star {
+  position: fixed;
+  transition: left .8s cubic-bezier(.5, 0, .2, 1), top .8s cubic-bezier(.5, 0, .2, 1);
+  filter: drop-shadow(0 0 18px rgba(255, 210, 110, .8));
+}
+.tour-star-body { position: absolute; inset: 0; animation: tour-float 2.6s ease-in-out infinite; }
+.tour-star-body svg,
+.tour-star-body img { width: 100%; height: 100%; object-fit: contain; display: block; }
+@keyframes tour-float { 50% { transform: translateY(-6%) rotate(4deg); } }
+.tour-arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--a, 0deg));
+}
+.tour-arm svg {
+  position: absolute;
+  left: calc(var(--s) * .36);
+  top: calc(var(--s) * -.11);
+  width: calc(var(--s) * .44);
+  height: calc(var(--s) * .22);
+  animation: tour-point 1.2s ease-in-out infinite;
+}
+@keyframes tour-point { 50% { transform: translateX(18%); } }
+.tour-star.has-img .tour-arm { display: none; }
+.tour-bubble {
+  position: fixed;
+  padding: clamp(18px, 3vmin, 30px) clamp(20px, 3.4vmin, 34px);
+  border-radius: 30px;
+  background: linear-gradient(170deg, #fffaf0, #f4e6c8);
+  border: 3px solid #c99a3c;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .55), 0 0 40px rgba(255, 210, 130, .3);
+  color: #2e1c0c;
+  overflow: hidden;
+}
+.tour-bubble.pop { animation: tour-pop .55s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes tour-pop { from { transform: scale(.85); opacity: 0; } }
+.tour-title { margin: 0 0 .4em; font: 700 clamp(22px, 3.6vmin, 36px)/1.15 'Cinzel', serif; color: #6b3d0e; }
+.tour-text { margin: 0; font: 500 clamp(20px, 3.2vmin, 32px)/1.4 'Cormorant Garamond', serif; }
+.tour-tail {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #fbf2de;
+  border: 3px solid #c99a3c;
+  transform: rotate(45deg);
+}
+.tour-bubble { overflow: visible; }
+.tail-left .tour-tail { left: -14px; border-top: 0; border-right: 0; }
+.tail-right .tour-tail { right: -14px; border-bottom: 0; border-left: 0; }
+.tail-top .tour-tail { top: -14px; border-right: 0; border-bottom: 0; }
+.tail-bottom .tour-tail { bottom: -14px; border-left: 0; border-top: 0; }
+.tour-dots { position: fixed; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); margin: 0; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+.tour-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(246, 227, 168, .3); }
+.tour-dots span.on { background: var(--gold-light); box-shadow: 0 0 8px var(--gold); }

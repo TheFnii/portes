@@ -49,6 +49,8 @@ export const SETTINGS = [
       { key: 'galaxyText', label: 'Texte de la Galaxie ({q} questions)', type: 'text', def: '{q} questions en priorité pour :' },
       { key: 'galaxyQuestions', label: 'Questions par Galaxie', type: 'number', def: 3, min: 1, max: 20 },
       { key: 'animDonut', label: 'Animation de l’enveloppe (Donut)', type: 'bool', def: true },
+      { key: 'animLetter', label: 'Afficher la lettre de l’univers après l’enveloppe (sinon : l’enveloppe se retourne côté pseudo)', type: 'bool', def: true },
+      { key: 'donutMessages', label: 'Tirer un message du deck pour chaque Donut (gardé dans la case « Message de l’univers »)', type: 'bool', def: true },
       { key: 'donutText', label: 'Texte de l’enveloppe', type: 'text', def: 'Un message de l’univers pour' },
       { key: 'envNameX', label: 'Enveloppe illustrée : position du pseudo, de gauche à droite', type: 'range', def: 50, min: 10, max: 90, unit: '%' },
       { key: 'envNameY', label: 'Enveloppe illustrée : position du pseudo, de haut en bas', type: 'range', def: 55, min: 10, max: 90, unit: '%' },

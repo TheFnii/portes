@@ -174,7 +174,8 @@ export class Celebrate {
   // Message de l'univers (Donut) : l'enveloppe virevolte parmi les étoiles et les comètes
   // (on voit passer le côté du pseudo et celui du sceau), s'arrête, on entend son ouverture
   // et la lettre ouverte s'affiche aussitôt, l'enveloppe dépassant derrière.
-  async donut({ name, text, message, target }) {
+  // letter : afficher la lettre après l'enveloppe (sinon l'enveloppe se retourne côté pseudo).
+  async donut({ name, text, message, letter = true, target }) {
     const s = this.getSettings();
     const front = image('animEnveloppe');
     const back = image('animEnveloppeDos') || BACK_URL;
@@ -204,6 +205,28 @@ export class Celebrate {
     await wait(2300);
     clearInterval(sparkle);
     await wait(250);
+
+    if (!letter || !message) {
+      // Sans lettre : l'enveloppe se retourne côté pseudo, puis file vers la case.
+      el.classList.add('show-name');
+      this.fx.burst(c.x, c.y, { count: 50, speed: 240, life: 1.6, stars: 0.5 });
+      await wait(Math.max(1500, this.seconds * 1000));
+      const fly = el.querySelector('.env-fly');
+      const box = target && target.getBoundingClientRect();
+      if (box && box.width) {
+        const r = fly.getBoundingClientRect();
+        fly.style.animation = 'none';
+        fly.style.transition = 'transform .9s cubic-bezier(.5, 0, .2, 1), opacity .9s ease';
+        fly.style.transform = `translate(${box.left + box.width / 2 - (r.left + r.width / 2)}px, ${box.top + 40 - (r.top + r.height / 2)}px) scale(.12)`;
+        fly.style.opacity = '0.2';
+        await wait(900);
+      }
+      el.classList.add('out');
+      await wait(500);
+      el.remove();
+      if (!this.root.querySelector('.cel')) this.root.hidden = true;
+      return;
+    }
 
     // Ouverture : le son, puis directement la lettre ouverte.
     this.sound.opening();

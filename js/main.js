@@ -19,6 +19,7 @@ import { Dashboard } from './dashboard.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
+import { Tour } from './tour.js';
 import { Broadcaster, castMedia, castManifest } from './broadcast.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
@@ -63,7 +64,7 @@ const celebrate = new Celebrate({ root: $('celebrate'), fx, sound, getSettings: 
 
 // Grande animation, ici et sur les téléphones des viewers.
 function play(kind, data) {
-  castEvent('cel', { kind, data: { name: data.name, text: data.text, title: data.title, giftImage: data.giftImage, message: data.message } });
+  castEvent('cel', { kind, data: { name: data.name, text: data.text, title: data.title, giftImage: data.giftImage, message: data.message, letter: data.letter } });
   return celebrate.play(kind, data);
 }
 
@@ -73,8 +74,29 @@ const dash = new Dashboard({
     const e = queue.letter(id);
     if (e) play('letter', { name: e.name, message: e.message || '' });
   },
+  onEditLetter: (id) => editLetter(id),
   onBoardFull: () => openBoardFull(),
 });
+
+// Modifier ou supprimer un message de l'univers reçu (case « Message de l'univers »).
+function editLetter(id) {
+  const e = queue.letter(id);
+  if (!e) return;
+  notice(`Message de ${e.name}`,
+    `<label class="field"><span>Message</span><textarea id="letter-edit" rows="6">${esc(e.message || '')}</textarea></label>`,
+    [
+      { label: 'Enregistrer', primary: true, onClick: () => { e.message = $('letter-edit').value.trim(); changed(); } },
+      {
+        label: 'Supprimer',
+        onClick: () => {
+          if (!window.confirm(`Supprimer la lettre de ${e.name} ?`)) return;
+          queue.removeDonut(id);
+          changed();
+        },
+      },
+      { label: 'Annuler' },
+    ]);
+}
 
 // ---------- Case centrale en plein écran (on en sort en touchant l'écran) ----------
 
@@ -321,14 +343,14 @@ function onGift(g) {
   } else if (role === 'donut') {
     // Une lettre de l'univers : un message du deck. Le pseudo rejoint la case
     // « Message de l'univers » une fois la lettre lue.
-    const message = drawMessage();
+    const message = settings.donutMessages ? drawMessage() : '';
     const add = () => {
-      pendingMessages.splice(pendingMessages.indexOf(message), 1);
+      if (message) pendingMessages.splice(pendingMessages.indexOf(message), 1);
       queue.addDonut(user, n, message);
       changed();
     };
     if (settings.animDonut && features.donuts) {
-      play('donut', { name: user.name, text: settings.donutText, message, target: $('donut-box') }).then(add);
+      play('donut', { name: user.name, text: settings.donutText, message, letter: settings.animLetter, target: $('donut-box') }).then(add);
     } else {
       sound.join();
       add();
@@ -902,6 +924,19 @@ function openScreensaver() {
   body.classList.add('saver');
   enterFullscreen(false);
 }
+// Écran de veille « présentation » : l'étoile fait le tour des cases.
+const tour = new Tour($('tour'));
+function openTour() {
+  $('drawer').hidden = true;
+  if (state.screen !== 'dash') { toast('La présentation se lance depuis le tableau de bord.'); return; }
+  if (!tour.open()) { toast('Aucune case à présenter : activez-en dans les réglages.'); return; }
+  enterFullscreen(false);
+}
+$('tour').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  tour.close();
+});
+
 function closeScreensaver() {
   $('screensaver').hidden = true;
   body.classList.remove('saver');
@@ -924,11 +959,16 @@ document.addEventListener('click', (e) => {
   else if (a === 'start-simple') startSession('simple');
   else if (a === 'fullscreen') toggleFullscreen();
   else if (a === 'screensaver') openScreensaver();
+  else if (a === 'tour') openTour();
 });
 
 // Clavier (pratique sur ordinateur)
 document.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
+  if (tour.active) {
+    if (e.key === 'Escape') tour.close();
+    return;
+  }
   if (!$('notice').hidden || !$('screensaver').hidden) {
     if (e.key === 'Escape') { closeNotice(); closeScreensaver(); }
     return;

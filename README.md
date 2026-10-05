@@ -88,6 +88,16 @@ Les messages viennent du **Grimoire** (cartes « Messages de l’univers » de `
 
 La case « Message de l’univers » garde tous les pseudos jusqu’à la fin du live (le plus récent en haut) : toucher un pseudo rouvre sa lettre. Sur la page des viewers, le bouton ✉️ ouvre la même liste.
 
+Deux interrupteurs dans **Personnalisation → Animations des cadeaux** :
+- **Afficher la lettre** : sinon, l’enveloppe se retourne côté pseudo puis rejoint la case (le message reste consultable dans la case) ;
+- **Tirer un message du deck** : sinon, seule l’enveloppe avec le pseudo est montrée et la case ne garde que les pseudos.
+
+Dans la case, le petit ✎ à côté d’un pseudo permet de modifier ou supprimer le message reçu. Dans **Réglages → Messages de l’univers**, chaque message du deck peut être modifié ou supprimé.
+
+## Présentation des cases (écran de veille ⭐)
+
+Le bouton ⭐, à côté de la lune, lance une présentation : une petite étoile montre tour à tour chaque case du tableau de bord (mise en lumière) et une bulle explique à quoi elle sert. Touchez l’écran pour revenir. Dans **Réglages → Présentation des cases** : pour chaque case, activée ou non, titre et texte de la bulle, position de l’étoile (automatique, à gauche, à droite, au-dessus, en dessous), durée, et ordre. Les images de l’étoile (une par direction : droite, gauche, haut, bas) se déposent dans **Images et sons des cadeaux** ; sans image, une étoile dessinée pointe vers la case.
+
 ## Paliers de likes par personne
 
 Quand une personne atteint un palier avec ses propres likes (10 000 par défaut), son pseudo s’affiche en grand avec l’animation de victoire et elle rejoint la liste à traiter. Dans **Réglages → Paliers de likes par personne** : ajouter d’autres paliers et choisir pour chacun « Animation de victoire » et/ou « Ajout à la liste ». Elle reste dans le Top Likes avec son nombre de likes.
@@ -286,6 +296,7 @@ js/
   viewer.js           page des viewers
   universe.js         deck des messages de l’univers (Grimoire + ajouts)
   playlist.js         musiques ajoutées à la radio
+  tour.js             écran de veille « présentation » (l’étoile)
   broadcast.js        diffusion signée tablette → viewers
   mqtt.js             petit client du relais (MQTT sur WebSocket)
   gifts.js            rôles des cadeaux et comptage des combos

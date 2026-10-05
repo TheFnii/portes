@@ -208,7 +208,7 @@ $('v-letters-panel').addEventListener('click', (e) => {
 
 function renderDash(st) {
   const f = st.features || {};
-  renderLetters(f.donuts === false ? [] : st.letters);
+  renderLetters(f.donuts === false ? [] : (st.letters || []).filter((l) => l.message));
   document.querySelectorAll('[data-feature]').forEach((el) => el.classList.toggle('feature-off', f[el.dataset.feature] === false));
   document.documentElement.style.setProperty('--ts', ((settings.textScale || 100) / 100).toFixed(2));
   const pin = $('v-pinned');
