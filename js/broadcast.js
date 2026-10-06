@@ -7,6 +7,7 @@
 import { LIVE_BROKERS, LIVE_TOPIC, STORAGE, IMAGES, SOUND_FILES, CAST_MAX } from './config.js';
 import { MqttClient } from './mqtt.js';
 import { getMedia, smallDataUrl } from './media.js';
+import { loadStickers } from './stickers.js';
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
 const CHUNK = 48000; // caractères par morceau de fichier
@@ -98,7 +99,7 @@ export class Broadcaster {
       onMessage: (topic, text) => {
         if (topic !== this.t.need || !this.onNeed) return;
         try {
-          const ids = (JSON.parse(text).ids || []).filter((id) => typeof id === 'string' && /^(img|snd)-\w+$/.test(id));
+          const ids = (JSON.parse(text).ids || []).filter((id) => typeof id === 'string' && /^(img|snd|stk)-\w+$/.test(id));
           if (ids.length) this.onNeed(ids.slice(0, 20));
         } catch (e) { /* demande illisible */ }
       },
@@ -220,6 +221,14 @@ export function castManifest(b) {
   return out;
 }
 
+// Autocollant (data URL gardée sur l'appareil) → fichier.
+function stickerBlob(id) {
+  const url = loadStickers()[id];
+  if (!url) return null;
+  const { buffer, type } = dataUrlBytes(url);
+  return new Blob([buffer], { type });
+}
+
 // Envoie aux viewers les images et les sons déposés (seulement ce qui a changé).
 // only : 'img:animChat', 'snd:chat'… pour n'envoyer qu'un fichier ;
 // force : ids ('img-animChat'…) à renvoyer même s'ils sont déjà partis.
@@ -228,11 +237,12 @@ export async function castMedia(b, { only, force = [] } = {}) {
   const list = [
     ...Object.keys(IMAGES).map((k) => `img:${k}`),
     ...Object.keys(SOUND_FILES).map((k) => `snd:${k}`),
+    ...Object.keys(loadStickers()).map((k) => `stk:${k}`),
   ];
   for (const key of list) {
     if (only && only !== key) continue;
     const id = key.replace(':', '-');
-    const blob = await getMedia(key);
+    const blob = key.startsWith('stk:') ? stickerBlob(key.slice(4)) : await getMedia(key);
     const sig = await fingerprint(blob);
     const sent = readSent(b.key.channel);
     const prev = sent.items[key];
@@ -241,7 +251,10 @@ export async function castMedia(b, { only, force = [] } = {}) {
     if (force.length && !force.includes(id)) continue;
     let buffer = null;
     let type = '';
-    if (blob && key.startsWith('img:')) {
+    if (blob && key.startsWith('stk:')) {
+      buffer = await blob.arrayBuffer();
+      type = blob.type;
+    } else if (blob && key.startsWith('img:')) {
       if (blob.size <= CAST_MAX.image) {
         buffer = await blob.arrayBuffer();
         type = blob.type;

@@ -2,6 +2,7 @@
 
 import { DEFAULT_SPEED } from './config.js';
 import { loadMessages } from './messages.js';
+import { rich } from './stickers.js';
 
 export class Ticker {
   constructor(el, track, { speedFactor = 1 } = {}) {
@@ -41,7 +42,7 @@ export class Ticker {
       this.messages.forEach((m) => {
         const item = document.createElement('span');
         item.className = 'ticker-item';
-        item.textContent = m;
+        item.innerHTML = rich(m);
         const sep = document.createElement('span');
         sep.className = 'ticker-sep';
         sep.textContent = '✦';

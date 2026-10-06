@@ -3,6 +3,7 @@
 
 import { esc } from './shell.js';
 import { image } from './images.js';
+import { rich } from './stickers.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -135,7 +136,7 @@ export class Celebrate {
     const el = this.stage('cel-cat', `
       <div class="cel-rays"></div>
       <div class="cel-icon${image('animChat') ? ' custom' : ''}">${img}</div>
-      <p class="cel-text">${esc(text)}</p>
+      <p class="cel-text">${rich(text)}</p>
       <p class="cel-name">${esc(name)}</p>`);
     const fallback = el.querySelector('img');
     if (fallback) fallback.addEventListener('error', () => { fallback.outerHTML = CAT_SVG; });
@@ -159,7 +160,7 @@ export class Celebrate {
     const art = url ? `<img class="cel-galaxy-img" src="${esc(url)}" alt="">` : '<div class="cel-spiral"></div><div class="cel-core"></div>';
     const el = this.stage('cel-galaxy', `
       <div class="cel-galaxy-disc${url ? ' custom' : ''}">${art}${stars}</div>
-      <p class="cel-text">${esc(text)}</p>
+      <p class="cel-text">${rich(text)}</p>
       <p class="cel-name">${esc(name)}</p>`);
     this.sound.harp();
     const c = this.center();
@@ -192,7 +193,7 @@ export class Celebrate {
           <div class="env-face env-front${front ? ' env-art' : ''}">${front ? `
             <img src="${esc(front)}" alt="">
             <span class="env-name-on ${s.envNameFont === 'cinzel' ? 'cinzel' : 'script'}" style="left:${s.envNameX}%;top:${s.envNameY}%;color:${esc(s.envNameColor)};--env-size:${(s.envNameSize / 100).toFixed(2)}">${esc(name)}</span>` : `
-            <span class="env-to">${esc(text)}</span>
+            <span class="env-to">${rich(text)}</span>
             <span class="env-name">${esc(name)}</span>`}
           </div>
         </div>
@@ -285,7 +286,7 @@ export class Celebrate {
     }
     card.innerHTML = `${envelope ? `<img class="letter-env" src="${esc(envelope)}" alt="">` : ''}
       <div class="letter-paper"><div class="letter-text">
-        <p class="l-name">${esc(name)},</p><p class="l-msg">${esc(message || '')}</p>
+        <p class="l-name">${esc(name)},</p><p class="l-msg">${rich(message || '')}</p>
       </div><span class="l-sign" aria-hidden="true">✦</span></div>`;
     return card;
   }
@@ -314,7 +315,7 @@ export class Celebrate {
   async milestone({ name, title }) {
     const el = this.stage('cel-milestone', `
       <div class="cel-medal">🏅</div>
-      <p class="cel-title">${esc(title)}</p>
+      <p class="cel-title">${rich(title)}</p>
       <p class="cel-name">${esc(name)}</p>`);
     this.sound.fanfare();
     this.confetti(this.seconds * 1000 + 1200);
@@ -323,7 +324,7 @@ export class Celebrate {
 
   // Annonce discrète (palier qui approche).
   async banner({ text }) {
-    const el = this.stage('cel-banner', `<p>${esc(text)}</p>`);
+    const el = this.stage('cel-banner', `<p>${rich(text)}</p>`);
     await wait(3500);
     el.classList.add('out');
     await wait(600);

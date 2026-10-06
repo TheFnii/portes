@@ -57,7 +57,7 @@ body.ticker-on .dash { --dash-ticker-space: 40px; }
 .panel-head h3 {
   margin: 0;
   min-width: 0;
-  font: 600 22px/1.15 'Cinzel', serif;
+  font: 600 22px/1.15 var(--font-title);
   color: var(--gold-light);
 }
 .panel-head h2 { font-size: 23px; flex: 1; }
@@ -69,7 +69,7 @@ body.ticker-on .dash { --dash-ticker-space: 40px; }
   border-radius: 99px;
   background: rgba(232, 199, 122, .18);
   color: var(--gold-light);
-  font: 700 18px/1.2 'Cinzel', serif;
+  font: 700 18px/1.2 var(--font-title);
   text-align: center;
 }
 
@@ -87,7 +87,7 @@ body.ticker-on .dash { --dash-ticker-space: 40px; }
   margin: 0;
   max-height: 100%;
   overflow: hidden;
-  font: 600 40px/1.18 'Cormorant Garamond', serif;
+  font: 600 40px/1.18 var(--font-text);
   color: #fff8e6;
   text-shadow: 0 2px 6px rgba(0, 0, 0, .6);
   overflow-wrap: anywhere;
@@ -135,9 +135,9 @@ body.ticker-on .dash { --dash-ticker-space: 40px; }
 .side-list li.new { animation: feed-in .45s ease; }
 .side-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side-list .empty { color: rgba(243, 233, 210, .45); font-style: italic; border: 0; font-size: 18px; }
-.side-list .mult { flex: none; font: 700 16px/1 'Cinzel', serif; color: var(--gold); }
-.side-list .medal { flex: none; width: 28px; text-align: center; font: 700 17px/1 'Cinzel', serif; color: rgba(246, 227, 168, .6); }
-.side-list .value { flex: none; font: 700 17px/1 'Cinzel', serif; }
+.side-list .mult { flex: none; font: 700 16px/1 var(--font-title); color: var(--gold); }
+.side-list .medal { flex: none; width: 28px; text-align: center; font: 700 17px/1 var(--font-title); color: rgba(246, 227, 168, .6); }
+.side-list .value { flex: none; font: 700 17px/1 var(--font-title); }
 .likers .value { color: #ffb3c4; }
 .likers .count { background: rgba(255, 140, 170, .18); color: #ffd0da; }
 .gifters .value { color: #ffd76a; }
@@ -159,7 +159,7 @@ h3 .env-mini.gift-icon { width: 1.3em; height: 1.3em; }
 .board-title {
   margin: 0 0 8px;
   text-align: center;
-  font: 600 24px/1.15 'Cinzel', serif;
+  font: 600 24px/1.15 var(--font-title);
   color: var(--gold-light);
 }
 .board-title:empty { display: none; }
@@ -191,7 +191,7 @@ h3 .env-mini.gift-icon { width: 1.3em; height: 1.3em; }
   margin: 0;
   padding: 18px 6px;
   text-align: center;
-  font: italic 600 30px/1.3 'Cormorant Garamond', serif;
+  font: italic 600 30px/1.3 var(--font-text);
   color: #f7ead0;
   text-shadow: 0 0 14px rgba(255, 200, 110, .3), 0 1px 2px rgba(0, 0, 0, .9);
 }
@@ -219,7 +219,7 @@ h3 .env-mini.gift-icon { width: 1.3em; height: 1.3em; }
   background: rgba(255, 140, 170, .2);
   border: 1px solid #ffb3c4;
   color: #ffd6df;
-  font: 600 14px/1.2 'Cinzel', serif;
+  font: 600 14px/1.2 var(--font-title);
   animation: blink 1.2s ease-in-out infinite;
 }
 
@@ -248,14 +248,14 @@ h3 .env-mini.gift-icon { width: 1.3em; height: 1.3em; }
 .queue-current .who { flex: 1; min-width: 0; }
 .queue-current .who strong {
   display: block;
-  font: 700 clamp(24px, 3.4vmin, 38px)/1.1 'Cinzel', serif;
+  font: 700 clamp(24px, 3.4vmin, 38px)/1.1 var(--font-title);
   color: #fff4d0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .queue-current .who small { font-size: 19px; color: rgba(246, 227, 168, .8); }
-.queue-current .kicker { font: 600 13px/1 'Cinzel', serif; letter-spacing: .2em; color: var(--gold); text-transform: uppercase; }
+.queue-current .kicker { font: 600 13px/1 var(--font-title); letter-spacing: .2em; color: var(--gold); text-transform: uppercase; }
 .queue-current .gift-icon { width: 56px; height: 56px; font-size: 40px; }
 .queue-current.pop { animation: current-pop .6s cubic-bezier(.2, 1.4, .4, 1); }
 @keyframes current-pop { from { transform: scale(.94); opacity: .3; } }
@@ -279,14 +279,14 @@ h3 .env-mini.gift-icon { width: 1.3em; height: 1.3em; }
   font-size: 22px;
 }
 .queue-list li.new { animation: feed-in .45s ease; }
-.queue-list .rank { flex: none; width: 26px; font: 700 16px/1 'Cinzel', serif; color: rgba(246, 227, 168, .6); text-align: right; }
+.queue-list .rank { flex: none; width: 26px; font: 700 16px/1 var(--font-title); color: rgba(246, 227, 168, .6); text-align: right; }
 .queue-list .who { flex: 1; min-width: 0; }
 .queue-list .who .name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-list .who small { display: block; font-size: 16px; color: rgba(246, 227, 168, .7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .queue-list li.sep {
   border: 0;
   padding: 10px 0 2px 36px;
-  font: 600 13px/1 'Cinzel', serif;
+  font: 600 13px/1 var(--font-title);
   letter-spacing: .15em;
   color: var(--gold);
   text-transform: uppercase;
@@ -388,10 +388,10 @@ body.at-home .live-status {
 .radio.playing .radio-disc { animation: spin 4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .radio-info { min-width: 0; max-width: min(220px, 16vw); }
-.radio-info small { display: block; font: 600 12px/1 'Cinzel', serif; letter-spacing: .15em; color: var(--gold); }
+.radio-info small { display: block; font: 600 12px/1 var(--font-title); letter-spacing: .15em; color: var(--gold); }
 .radio-info strong {
   display: block;
-  font: 600 19px/1.3 'Cormorant Garamond', serif;
+  font: 600 19px/1.3 var(--font-text);
   color: #fff4d0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -419,7 +419,7 @@ body.at-home .live-status {
   animation: drawer-in .25s ease;
 }
 .radio-menu header { display: flex; align-items: center; gap: 10px; }
-.radio-menu header h3 { margin: 0; font: 600 20px/1 'Cinzel', serif; color: var(--gold-light); }
+.radio-menu header h3 { margin: 0; font: 600 20px/1 var(--font-title); color: var(--gold-light); }
 .radio-volume { display: flex; align-items: center; gap: 10px; margin: 12px 0 8px; font-size: 20px; }
 .radio-volume input { flex: 1; accent-color: #e2b451; min-height: 36px; }
 .radio-playlist { list-style: none; margin: 0; padding: 0; overflow-y: auto; min-height: 0; }
@@ -434,12 +434,12 @@ body.at-home .live-status {
   border-bottom: 1px solid rgba(232, 199, 122, .14);
   background: none;
   color: var(--ink);
-  font: 500 20px/1.2 'Cormorant Garamond', serif;
+  font: 500 20px/1.2 var(--font-text);
   text-align: left;
 }
 .radio-playlist button.current { color: #fff4d0; font-weight: 700; }
 .radio-playlist button.current::before { content: '♪'; color: var(--gold); }
-.radio-playlist .num { width: 26px; color: rgba(246, 227, 168, .5); font: 600 14px/1 'Cinzel', serif; }
+.radio-playlist .num { width: 26px; color: rgba(246, 227, 168, .5); font: 600 14px/1 var(--font-title); }
 
 /* ---------- Jeu des Portes : départ, compte à rebours, session ---------- */
 
@@ -462,7 +462,7 @@ body.at-home .live-status {
   border: 1px solid rgba(232, 199, 122, .6);
   box-shadow: 0 0 60px rgba(255, 200, 120, .2), 0 30px 80px rgba(0, 0, 0, .6);
 }
-.game-start-card h2 { margin: 12px 0 0; font: 700 38px/1.15 'Cinzel', serif; color: var(--gold-light); }
+.game-start-card h2 { margin: 12px 0 0; font: 700 38px/1.15 var(--font-title); color: var(--gold-light); }
 .game-start-card .hint { font-size: 22px; line-height: 1.4; }
 .game-start-actions { display: grid; gap: 12px; margin-top: 22px; }
 
@@ -476,7 +476,7 @@ body.at-home .live-status {
   background: radial-gradient(circle at 50% 50%, rgba(30, 10, 50, .5), rgba(0, 0, 0, .65));
 }
 .countdown span {
-  font: 700 clamp(120px, 34vmin, 320px)/1 'Cinzel', serif;
+  font: 700 clamp(120px, 34vmin, 320px)/1 var(--font-title);
   color: #fff3c4;
   text-align: center;
   text-shadow: 0 0 40px rgba(255, 200, 100, .95), 0 0 100px rgba(255, 150, 60, .6);
@@ -504,7 +504,7 @@ body.at-home .live-status {
   background: rgba(20, 10, 30, .82);
   border: 1.5px solid rgba(232, 199, 122, .5);
   box-shadow: 0 4px 16px rgba(0, 0, 0, .45);
-  font: 600 17px/1.2 'Cinzel', serif;
+  font: 600 17px/1.2 var(--font-title);
   color: var(--gold-light);
 }
 .session-bar .btn { flex: none; white-space: nowrap; }
@@ -536,7 +536,7 @@ body.focusing .session-bar { opacity: 0; pointer-events: none; }
   border-radius: 99px;
   background: rgba(18, 10, 28, .9);
   border: 1px solid rgba(232, 199, 122, .35);
-  font: 600 12px/1.3 'Cinzel', serif;
+  font: 600 12px/1.3 var(--font-title);
   color: rgba(243, 233, 210, .55);
   pointer-events: none;
 }
@@ -565,7 +565,7 @@ body:not(.at-home) .cast-status { top: calc(max(14px, env(safe-area-inset-top)) 
   padding: 3px 9px;
   border-radius: 99px;
   border: 1px solid rgba(232, 199, 122, .45);
-  font: 600 12px/1.2 'Cinzel', serif;
+  font: 600 12px/1.2 var(--font-title);
   letter-spacing: .06em;
   color: var(--gold-light);
 }
@@ -620,7 +620,7 @@ body:not(.at-home) .cast-status { top: calc(max(14px, env(safe-area-inset-top)) 
   border: 1.5px solid rgba(232, 199, 122, .45);
   background: rgba(0, 0, 0, .35);
   color: var(--ink);
-  font: 500 20px/1.4 'Cormorant Garamond', serif;
+  font: 500 20px/1.4 var(--font-text);
   resize: vertical;
   user-select: text;
   -webkit-user-select: text;
@@ -676,7 +676,10 @@ body:not(.at-home) .cast-status { top: calc(max(14px, env(safe-area-inset-top)) 
 .tour-star.flying .tour-star-body { animation: none; }
 .tour-bubble {
   position: fixed;
-  padding: clamp(18px, 3vmin, 30px) clamp(20px, 3.4vmin, 34px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(18px, 3vmin, 34px) clamp(20px, 3.4vmin, 40px);
   border-radius: 30px;
   background: linear-gradient(170deg, #fffaf0, #f4e6c8);
   border: 3px solid #c99a3c;
@@ -686,8 +689,8 @@ body:not(.at-home) .cast-status { top: calc(max(14px, env(safe-area-inset-top)) 
 }
 .tour-bubble.pop { animation: tour-pop .55s cubic-bezier(.2, 1.4, .4, 1); }
 @keyframes tour-pop { from { transform: scale(.85); opacity: 0; } }
-.tour-title { margin: 0 0 .4em; font: 700 clamp(22px, 3.6vmin, 36px)/1.15 'Cinzel', serif; color: #6b3d0e; }
-.tour-text { margin: 0; font: 500 clamp(20px, 3.2vmin, 32px)/1.4 'Cormorant Garamond', serif; }
+.tour-title { margin: 0 0 .4em; font-family: var(--font-star); font-weight: 700; font-size: calc(var(--tour-fs, 30px) * 1.15); line-height: 1.15; color: #6b3d0e; }
+.tour-text { margin: 0; font-family: var(--font-star); font-weight: 500; font-size: var(--tour-fs, 30px); line-height: 1.4; white-space: pre-line; }
 .tour-tail {
   position: absolute;
   width: 24px;

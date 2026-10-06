@@ -4,6 +4,8 @@
 import { ROLES } from './gifts.js';
 import { image, LOGO_OF_ROLE } from './images.js';
 import { fill } from './settings.js';
+import { applyFonts } from './fonts.js';
+import { rich } from './stickers.js';
 import { esc } from './shell.js';
 
 const $ = (id) => document.getElementById(id);
@@ -42,7 +44,7 @@ export function entryDetail(e) {
 export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
 
 export class Dashboard {
-  constructor({ onRemove, onOpenLetter, onEditLetter, onBoardFull }) {
+  constructor({ onRemove, onOpenLetter, onBoardFull }) {
     this.seen = new Set();
     this.lastCurrent = null;
     this.s = {};
@@ -52,8 +54,6 @@ export class Dashboard {
     });
     // Toucher un pseudo rouvre sa lettre de l'univers.
     $('donut-list').addEventListener('click', (e) => {
-      const ed = e.target.closest('[data-edit-letter]');
-      if (ed) { onEditLetter(ed.dataset.editLetter); return; }
       const b = e.target.closest('[data-letter]');
       if (b) onOpenLetter(b.dataset.letter);
     });
@@ -70,9 +70,10 @@ export class Dashboard {
 
   applySettings(s, features) {
     this.s = s;
+    applyFonts(s);
     document.querySelectorAll('[data-text]').forEach((el) => {
       const v = s[el.dataset.text];
-      if (v !== undefined) el.textContent = v;
+      if (v !== undefined) el.innerHTML = rich(v);
     });
     const root = document.documentElement.style;
     root.setProperty('--ts', (s.textScale / 100).toFixed(2));
@@ -127,13 +128,13 @@ export class Dashboard {
   detail(e) { return entryDetail(e); }
 
   renderQueue(queue) {
-    $('queue-title').textContent = this.title(queue);
+    $('queue-title').innerHTML = rich(this.title(queue));
     const list = queue.list();
     const cur = list[0];
     const box = $('queue-current');
     if (!cur) {
       box.className = 'queue-current empty';
-      box.textContent = this.s.listEmpty || '';
+      box.innerHTML = rich(this.s.listEmpty || '');
     } else {
       box.className = 'queue-current';
       if (this.lastCurrent !== cur.id) {
@@ -141,7 +142,7 @@ export class Dashboard {
         box.classList.add('pop');
       }
       box.innerHTML = `${this.icon(cur)}
-        <div class="who"><span class="kicker">${esc(this.s.currentLabel || '')}</span><strong>${esc(cur.name)}</strong><small>${esc(this.detail(cur))}</small></div>`;
+        <div class="who"><span class="kicker">${rich(this.s.currentLabel || '')}</span><strong>${esc(cur.name)}</strong><small>${esc(this.detail(cur))}</small></div>`;
     }
     this.lastCurrent = cur ? cur.id : null;
 
@@ -182,9 +183,8 @@ export class Dashboard {
     $('donut-list').innerHTML = d.length
       ? d.map((e) => `<li${this.seenLetters && !this.seenLetters.has(e.id) ? ' class="new"' : ''}><button class="letter-btn" ${e.message ? `data-letter="${esc(e.id)}"` : 'disabled'} type="button" aria-label="Relire la lettre de ${esc(e.name)}">
           <span class="env-mini gift-icon" aria-hidden="true">${logo('donut', '', '✉️')}</span><span class="name">${esc(e.name)}</span>${e.count > 1 ? `<span class="mult">×${e.count}</span>` : ''}
-          ${e.message ? '<span class="reread" aria-hidden="true">Relire</span>' : ''}</button>
-          <button class="x-btn edit-letter" data-edit-letter="${esc(e.id)}" type="button" aria-label="Modifier ou supprimer le message de ${esc(e.name)}">✎</button></li>`).join('')
-      : `<li class="empty">${esc(this.s.univEmpty || '')}</li>`;
+          ${e.message ? '<span class="reread" aria-hidden="true">Relire</span>' : ''}</button></li>`).join('')
+      : `<li class="empty">${rich(this.s.univEmpty || '')}</li>`;
     this.seenLetters = new Set(d.map((e) => e.id));
   }
 
@@ -251,7 +251,7 @@ export class Dashboard {
     track.textContent = '';
     track.className = 'board-track';
     if (!messages.length) return;
-    const copy = () => messages.map((m) => `<p class="board-item">${esc(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
+    const copy = () => messages.map((m) => `<p class="board-item">${rich(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
     track.innerHTML = `<div>${copy()}</div><div aria-hidden="true">${copy()}</div>`;
     requestAnimationFrame(() => {
       const h = track.firstElementChild.getBoundingClientRect().height;

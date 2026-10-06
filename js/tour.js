@@ -38,13 +38,19 @@ export function saveTour(steps) {
 
 // Les poses de l'étoile (images/etoile/<nom>.webp, découpées dans la planche fournie).
 export const STAR_POSES = [
-  ['regard-gauche', 'Regard gauche'], ['regard-droite', 'Regard droite'], ['en-haut', 'En haut'], ['en-bas', 'En bas'],
-  ['face', 'Face'], ['heureuse', 'Heureuse'], ['clin-oeil', 'Clin d’œil'], ['joyeuse', 'Joyeuse'], ['surprise', 'Surprise'],
-  ['curieuse', 'Curieuse'], ['calme', 'Calme'], ['grincheuse', 'Grincheuse'], ['triste', 'Triste'], ['rire', 'Rire'],
-  ['amoureuse', 'Amoureuse'], ['timide', 'Timide'], ['cool', 'Cool'], ['excitee', 'Excitée'], ['sereine', 'Sereine'],
-  ['question', 'Question'], ['determinee', 'Déterminée'], ['salue', 'Salue'], ['tourne', 'Tourne / Étincelle'],
-  ['vol-gauche', 'Vol gauche'], ['vol-droite', 'Vol droite'], ['cache-gauche', 'Cache-cache gauche'], ['cache-droite', 'Cache-cache droite'],
-  ['dos', 'Dos'], ['dos-gauche', 'Dos gauche'], ['dos-droite', 'Dos droite'],
+  ['regard-droite', 'Regarde à droite'], ['regard-droite-doux', 'Regarde à droite (douce)'],
+  ['regard-gauche', 'Regarde à gauche'], ['regard-gauche-doux', 'Regarde à gauche (douce)'], ['regard-gauche-sourire', 'Regarde à gauche (sourire)'],
+  ['en-bas', 'Regarde en bas'], ['en-bas-droite', 'Regarde en bas à droite'], ['en-bas-gauche', 'Regarde en bas à gauche'],
+  ['en-haut-droite', 'Monte vers la droite'], ['en-haut-gauche', 'Monte vers la gauche'],
+  ['face', 'Face'], ['douce', 'Douce'], ['curieuse', 'Curieuse'], ['heureuse', 'Heureuse'], ['joyeuse', 'Joyeuse'],
+  ['grand-sourire', 'Grand sourire'], ['rieuse', 'Rieuse'], ['rire', 'Rire'], ['eclat-de-rire', 'Éclat de rire'],
+  ['clin-oeil', 'Clin d’œil'], ['clin-doux', 'Clin d’œil doux'], ['espiegle', 'Espiègle'], ['malicieuse', 'Malicieuse'],
+  ['emerveillee', 'Émerveillée'], ['surprise', 'Surprise'], ['etonnee', 'Étonnée'], ['sereine', 'Sereine'],
+  ['timide', 'Timide'], ['bisou', 'Bisou'], ['triste', 'Triste'], ['grincheuse', 'Grincheuse'],
+  ['vol-droite', 'Vol vers la droite'], ['vol-gauche', 'Vol vers la gauche'],
+  ['vol-droite-clin', 'Vol clin d’œil (droite)'], ['vol-gauche-clin', 'Vol clin d’œil (gauche)'],
+  ['vol-droite-joie', 'Vol joyeux (droite)'], ['vol-gauche-joie', 'Vol joyeux (gauche)'],
+  ['vol-droite-reve', 'Vol rêveur (droite)'], ['vol-gauche-reve', 'Vol rêveur (gauche)'],
 ];
 export const starImage = (pose) => `images/etoile/${pose}.webp`;
 
@@ -52,12 +58,15 @@ export const starImage = (pose) => `images/etoile/${pose}.webp`;
 const ARM_SVG = `<svg viewBox="0 0 60 30" aria-hidden="true"><path d="M2 15 Q20 9 40 12 L40 5 L58 15 L40 25 L40 18 Q20 21 2 15 Z" fill="#ffd86e" stroke="#a8670f" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
 const DIR_ANGLE = { right: 0, down: 90, left: 180, up: -90 };
 // Pose automatique : l'étoile regarde la case.
-const LOOK = { right: 'regard-droite', left: 'regard-gauche', down: 'en-bas', up: 'en-haut' };
+const LOOK = { right: 'regard-droite', left: 'regard-gauche', down: 'en-bas', up: 'en-haut-droite' };
 const POSE_KEYS = new Set(STAR_POSES.map(([k]) => k));
 
 export class Tour {
-  constructor(root) {
+  // getSettings : réglages (taille de la bulle…) ; render : texte → HTML (autocollants).
+  constructor(root, { getSettings = () => ({}), render = (t) => t } = {}) {
     this.root = root;
+    this.getSettings = getSettings;
+    this.render = render;
     root.innerHTML = `<div class="tour-spot"></div>
       <div class="tour-star"><div class="tour-star-body"></div><div class="tour-arm">${ARM_SVG}</div></div>
       <div class="tour-bubble"><h2 class="tour-title"></h2><p class="tour-text"></p><span class="tour-tail"></span></div>
@@ -95,6 +104,22 @@ export class Tour {
     return true;
   }
 
+  // Le texte prend la plus grande taille qui tient dans la bulle.
+  fitText(max) {
+    const b = this.bubble;
+    let fs = max;
+    b.style.setProperty('--tour-fs', `${fs}px`);
+    const title = b.querySelector('.tour-title');
+    const text = b.querySelector('.tour-text');
+    const style = getComputedStyle(b);
+    const room = b.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    const used = () => title.offsetHeight + text.offsetHeight + parseFloat(getComputedStyle(title).marginBottom || 0);
+    while (fs > 14 && used() > room) {
+      fs -= 2;
+      b.style.setProperty('--tour-fs', `${fs}px`);
+    }
+  }
+
   // Change l'image de l'étoile (flying : pendant le vol, la flèche se cache).
   pose(name, flying = false) {
     const body = this.star.querySelector('.tour-star-body');
@@ -103,7 +128,7 @@ export class Tour {
       body.innerHTML = `<img src="${starImage(name)}" alt="">`;
     }
     this.star.classList.toggle('flying', flying);
-    this.star.classList.toggle('hidden-arm', /^(vol|dos|cache|tourne)/.test(name));
+    this.star.classList.toggle('hidden-arm', /^vol/.test(name));
   }
 
   close() {
@@ -158,8 +183,8 @@ export class Tour {
       this.pose(sx < prev.x ? 'vol-gauche' : 'vol-droite', true);
       this.poseTimer = setTimeout(() => this.pose(pose), 850);
     } else if (!prev && !resize) {
-      // Au début, elle salue.
-      this.pose('salue');
+      // Au début, elle arrive toute joyeuse.
+      this.pose('joyeuse');
       this.poseTimer = setTimeout(() => this.pose(pose), 1500);
     } else {
       this.pose(pose);
@@ -174,16 +199,17 @@ export class Tour {
       { x: 16, y: 16, w: W - 32, h: Math.min(r.top, st.top) - 32, tail: 'bottom' },
       { x: 16, y: Math.max(r.bottom, st.bottom) + 16, w: W - 32, h: H - Math.max(r.bottom, st.bottom) - 32, tail: 'top' },
     ].filter((z) => z.w > 160 && z.h > 110);
-    const zone = zones.sort((a, b) => b.w * b.h - a.w * a.h)[0] || { x: W * 0.1, y: H * 0.6, w: W * 0.8, h: H * 0.35, tail: 'top' };
-    this.bubble.querySelector('.tour-title').textContent = step.title || '';
-    this.bubble.querySelector('.tour-text').textContent = step.text || '';
-    const bw = Math.min(zone.w, 620);
-    this.bubble.style.maxWidth = `${bw}px`;
-    this.bubble.style.maxHeight = `${zone.h}px`;
+    const zone = zones.sort((a, b) => Math.min(b.w, 900) * Math.min(b.h, 700) - Math.min(a.w, 900) * Math.min(a.h, 700))[0] || { x: W * 0.1, y: H * 0.6, w: W * 0.8, h: H * 0.35, tail: 'top' };
+    this.bubble.querySelector('.tour-title').innerHTML = this.render(step.title || '');
+    this.bubble.querySelector('.tour-text').innerHTML = this.render(step.text || '');
+    // La bulle prend la plus grande partie de l'espace libre (réglable), le texte s'y ajuste.
+    const set = this.getSettings();
+    const k = Math.min(1, Math.max(0.5, (Number(set.tourBubble) || 92) / 100));
+    const bw = Math.max(200, zone.w * k);
+    const bh = Math.max(120, zone.h * k);
     this.bubble.className = `tour-bubble tail-${zone.tail}`;
-    this.bubble.style.left = '0px';
-    this.bubble.style.top = '0px';
-    this.bubble.style.visibility = 'hidden';
+    Object.assign(this.bubble.style, { width: `${bw}px`, height: `${bh}px`, left: '0px', top: '0px', visibility: 'hidden' });
+    this.fitText(Number(set.tourTextMax) || 54);
     requestAnimationFrame(() => {
       const b = this.bubble.getBoundingClientRect();
       // Au plus près de l'étoile, sans sortir de la zone.

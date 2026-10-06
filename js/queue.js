@@ -190,21 +190,29 @@ export class Ranking {
   }
 }
 
-// Paliers de likes : 100k, puis tous les 50k (réglable).
-// - à partir de « palier − alerte » likes (99 800), on se prépare ;
-// - dès que le total atteint réellement le palier, la première personne qui l'écrit
-//   dans le chat (« 100k », « 100 000 », « palier »…) le remporte.
+// Paliers de likes : 100k, puis tous les 50k (réglable). Règles :
+// - seul compte un message qui contient le bon nombre (« 150k » pour le palier 150k…),
+//   quel que soit le texte autour ;
+// - on écoute un peu avant le palier (« alerte ») ; on note l'instant exact du franchissement ;
+// - les messages envoyés moins d'1 seconde avant le franchissement comptent, et tous ceux d'après ;
+// - un seul gagnant : le message le plus proche de l'instant du franchissement.
 export class Milestones {
-  constructor({ first = 100000, step = 50000, alert = 200, words = ['palier'] } = {}) {
-    this.configure({ first, step, alert, words });
+  constructor({ first = 100000, step = 50000, alert = 200 } = {}) {
+    this.configure({ first, step, alert });
     this.reached = 0; // dernier palier attribué
+    this.total = 0;
+    this.reset();
   }
 
-  configure({ first, step, alert, words }) {
+  configure({ first, step, alert }) {
     this.first = Math.max(1, Number(first) || 100000);
     this.step = Math.max(1, Number(step) || 50000);
     this.alert = Math.max(0, Number(alert) || 0);
-    this.words = (words || []).map((w) => String(w).trim().toLowerCase()).filter(Boolean);
+  }
+
+  reset() {
+    this.crossedAt = null; // instant du franchissement du palier en cours
+    this.candidates = []; // { t, user }
   }
 
   // Prochain palier à attribuer.
@@ -213,8 +221,8 @@ export class Milestones {
     return this.reached + this.step;
   }
 
-  // 'idle' | 'alert' (bientôt) | 'open' (atteint, en attente d'une personne dans le chat)
-  status(total) {
+  // 'idle' | 'alert' (bientôt) | 'open' (atteint, en attente du gagnant)
+  status(total = this.total) {
     const n = this.next();
     if (total >= n) return 'open';
     if (total >= n - this.alert) return 'alert';
@@ -225,25 +233,48 @@ export class Milestones {
     return n % 1000 === 0 ? `${n / 1000}k` : n.toLocaleString('fr-FR');
   }
 
-  // Le message cite-t-il le palier ? « 100k », « 100 k », « 100000 », « 100 000 », « 100.000 », ou un mot-clé.
+  // Le message contient-il le nombre du palier ? « 150k », « 150 k », « 150K », « 150000 »,
+  // « 150 000 », « 150.000 »… Un autre nombre (« 100k » pour le palier 150k) ne compte pas.
   mentions(text, n) {
     const t = String(text || '').toLowerCase().normalize('NFKC');
+    const compact = t.replace(/(\d)[\s.,  ](?=\d{3}(?!\d))/g, '$1');
+    if (new RegExp(`(^|[^\\d])${n}(?![\\d])`).test(compact)) return true;
     const k = n / 1000;
-    const compact = t.replace(/(\d)[\s.,  ](?=\d{3}\b)/g, '$1');
-    if (new RegExp(`(^|[^\\d])${n}([^\\d]|$)`).test(compact)) return true;
-    if (Number.isInteger(k) && new RegExp(`(^|[^\\d])${k}\\s?k(?![a-z])`).test(t)) return true;
-    return this.words.some((w) => t.includes(w));
+    return Number.isInteger(k) && new RegExp(`(^|[^\\d.,])${k}\\s?k(?![a-z])`).test(t);
   }
 
-  // Un message du chat : renvoie le palier remporté (ou null).
-  claim(text, total) {
+  // Nouveau total de likes, à l'instant t (ms).
+  observeTotal(total, t) {
+    this.total = Math.max(this.total, Number(total) || 0);
+    if (this.crossedAt === null && this.total >= this.next()) this.crossedAt = t;
+  }
+
+  // Message du chat à l'instant t (ms). Renvoie true s'il participe à la course.
+  observeChat({ text, t, user }) {
     const n = this.next();
-    if (total < n || !this.mentions(text, n)) return null;
-    // Si plusieurs paliers ont été franchis d'un coup, on attribue le plus haut.
-    let won = n;
-    while (total >= won + this.step) won += this.step;
-    this.reached = won;
-    return won;
+    if (this.status() === 'idle' || !this.mentions(text, n)) return false;
+    this.candidates.push({ t, user });
+    // On ne garde que les messages encore utiles (pas plus d'1 s avant le franchissement).
+    const limit = (this.crossedAt ?? t) - 1000;
+    if (this.candidates.length > 50) this.candidates = this.candidates.filter((c) => c.t >= limit);
+    return true;
+  }
+
+  // Désigne le gagnant s'il est connu. Sans message après le franchissement, on attend que
+  // la seconde soit passée (force) : un message juste après pourrait être plus proche.
+  resolve(force = false) {
+    if (this.crossedAt === null) return null;
+    const T = this.crossedAt;
+    const valid = this.candidates.filter((c) => c.t >= T - 1000);
+    if (!valid.length) return null;
+    if (!force && !valid.some((c) => c.t >= T)) return null;
+    const win = valid.reduce((best, c) => (Math.abs(c.t - T) < Math.abs(best.t - T) ? c : best));
+    const palier = this.next();
+    this.reached = palier;
+    this.reset();
+    // Le palier suivant est peut-être déjà franchi (énorme vague de likes).
+    if (this.total >= this.next()) this.crossedAt = T;
+    return { palier, user: win.user, t: win.t, crossedAt: T };
   }
 }
 

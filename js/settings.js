@@ -5,9 +5,25 @@
 //   {n} nombre · {pseudo} pseudo · {q} questions · {palier} palier (100k…)
 
 import { STORAGE } from './config.js';
+import { FONT_OPTIONS } from './fonts.js';
 import { load, save } from './prefs.js';
 
 export const SETTINGS = [
+  {
+    group: 'Polices d’écriture',
+    items: [
+      { key: 'fontText', label: 'Police des textes (toute l’app et la page des viewers)', type: 'select', def: 'cormorant', options: FONT_OPTIONS },
+      { key: 'fontTitle', label: 'Police des titres', type: 'select', def: 'cinzel', options: FONT_OPTIONS },
+      { key: 'fontStar', label: 'Police de la bulle de l’étoile (présentation)', type: 'select', def: 'lora', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
+    ],
+  },
+  {
+    group: 'Présentation (étoile ⭐)',
+    items: [
+      { key: 'tourBubble', label: 'Taille de la bulle (part de l’espace libre de l’écran)', type: 'range', def: 92, min: 50, max: 100, unit: '%' },
+      { key: 'tourTextMax', label: 'Taille maximale du texte de la bulle', type: 'range', def: 54, min: 24, max: 90, unit: ' px' },
+    ],
+  },
   {
     group: 'Disposition du tableau de bord',
     items: [
@@ -69,10 +85,9 @@ export const SETTINGS = [
       { key: 'milestoneFirst', label: 'Premier palier', type: 'number', def: 100000, min: 1000, max: 100000000 },
       { key: 'milestoneStep', label: 'Puis tous les', type: 'number', def: 50000, min: 1000, max: 100000000 },
       { key: 'milestoneAlert', label: 'Se préparer combien de likes avant', type: 'number', def: 200, min: 0, max: 100000 },
-      { key: 'milestoneWords', label: 'Mots acceptés dans le chat en plus du nombre (séparés par des virgules)', type: 'text', def: 'palier' },
       { key: 'milestoneTitle', label: 'Texte affiché en grand ({palier})', type: 'text', def: 'Palier {palier} likes !' },
       { key: 'milestoneLabel', label: 'Texte dans la liste ({palier})', type: 'text', def: '{palier} likes' },
-      { key: 'milestoneAlertText', label: 'Annonce juste avant le palier ({palier})', type: 'text', def: 'Le palier {palier} approche : soyez le premier à l’écrire !' },
+      { key: 'milestoneAlertText', label: 'Annonce juste avant le palier ({palier})', type: 'text', def: 'Le palier {palier} approche : écrivez « {palier} » au bon moment !' },
       { key: 'personalTiers', label: 'Paliers par personne (10 000 likes…) activés — les paliers se règlent dans « Paliers de likes par personne »', type: 'bool', def: true },
       { key: 'tierTitle', label: 'Palier par personne : texte affiché en grand ({n} = likes)', type: 'text', def: '{n} likes !' },
       { key: 'tierLabel', label: 'Palier par personne : texte dans la liste ({n} = likes)', type: 'text', def: '{n} likes' },

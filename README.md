@@ -51,7 +51,12 @@ Tout est sauvegardé sur l’appareil : un rechargement de page en plein live ne
 Les animations passent l’une après l’autre. Chacune peut être désactivée dans les Réglages.
 
 ### Les paliers de likes
-À partir de **99 800 likes**, un bandeau annonce que le palier approche. Dès que le compteur atteint **réellement 100 000** (puis 150 000, 200 000…), la **première personne qui l’écrit dans le chat** (« 100k », « 100 000 », « 100000 » ou « palier ») remporte le palier. Les messages envoyés avant d’atteindre le palier ne comptent pas. Les nombres et les mots acceptés sont réglables.
+Règles strictes, un seul gagnant par palier (100k, puis tous les 50k, réglable) :
+- seul compte un message qui contient **le bon nombre** (« 100k » pour 100k, « 150k » pour 150k ; « 100 000 », « 100000 », « 100 k » aussi), quel que soit le texte autour ; un autre nombre ne compte pas ;
+- l’écoute commence un peu avant le palier (à partir de 99 800 par défaut, un bandeau prévient) ;
+- l’instant exact où le compteur franchit le palier est noté ;
+- les messages envoyés **moins d’1 seconde avant** le franchissement comptent, ainsi que **tous ceux d’après** ;
+- le gagnant est le message **le plus proche** de l’instant du franchissement.
 
 ### La radio
 Elle lit la playlist de la radio du Grimoire. Quand elle joue, le titre du morceau s’affiche. **Touchez le lecteur** : un petit menu s’ouvre avec le **volume** et la **playlist** (touchez un titre pour le jouer) ; touchez en dehors ou la flèche ← pour le fermer. Pendant le Jeu des Portes, le volume baisse.
@@ -92,11 +97,16 @@ Deux interrupteurs dans **Personnalisation → Animations des cadeaux** :
 - **Afficher la lettre** : sinon, l’enveloppe se retourne côté pseudo puis rejoint la case (le message reste consultable dans la case) ;
 - **Tirer un message du deck** : sinon, seule l’enveloppe avec le pseudo est montrée et la case ne garde que les pseudos.
 
-Dans la case, le petit ✎ à côté d’un pseudo permet de modifier ou supprimer le message reçu. Dans **Réglages → Messages de l’univers**, chaque message du deck peut être modifié ou supprimé.
+Dans la case, toucher **Relire** rouvre une lettre. Dans **Réglages → Messages de l’univers** : chaque message du deck peut être modifié ou supprimé, et les **messages reçus pendant le live** aussi.
+
+## Polices et autocollants
+
+- **Polices** (Réglages → Personnalisation → Polices d’écriture) : une police pour les textes, une pour les titres, et une à part pour la bulle de l’étoile (Lora, très lisible, par défaut). Elles s’appliquent aussi à la page des viewers.
+- **Autocollants** : dans les champs de texte des Réglages (ruban, case centrale, messages de l’univers, bulles de l’étoile, textes de la personnalisation), vos autocollants de l’iPad s’insèrent comme des emojis. Le bouton ✦ d’un champ ouvre « Mes autocollants » (réutiliser, ajouter une image, supprimer). Ils s’affichent partout, y compris chez les viewers.
 
 ## Présentation des cases (écran de veille ⭐)
 
-Le bouton ⭐, à côté de la lune, lance une présentation : une petite étoile montre tour à tour chaque case du tableau de bord (mise en lumière) et une bulle explique à quoi elle sert. Touchez l’écran pour revenir. Dans **Réglages → Présentation des cases** : pour chaque case, activée ou non, titre et texte de la bulle, position de l’étoile (automatique, à gauche, à droite, au-dessus, en dessous), durée, et ordre. L’étoile vient de votre planche (30 poses, dans `images/etoile/`) : elle salue au début, vole d’une case à l’autre, puis prend la pose choisie pour chaque case (ou regarde la case, en automatique) ; une petite flèche dorée montre la case.
+Le bouton ⭐, à côté de la lune, lance une présentation : une petite étoile montre tour à tour chaque case du tableau de bord (mise en lumière) et une bulle explique à quoi elle sert. Touchez l’écran pour revenir. Dans **Réglages → Présentation des cases** : pour chaque case, activée ou non, titre et texte de la bulle, position de l’étoile (automatique, à gauche, à droite, au-dessus, en dessous), durée, et ordre. L’étoile vient de vos planches (39 poses, dont des versions en miroir, dans `images/etoile/`) : elle arrive joyeuse, vole d’une case à l’autre, puis prend la pose choisie pour chaque case (ou regarde la case, en automatique) ; une petite flèche dorée montre la case. La bulle prend la plus grande place libre de l’écran (taille réglable dans Personnalisation → Présentation) et son texte s’ajuste.
 
 ## Paliers de likes par personne
 
@@ -141,7 +151,7 @@ Chaque rubrique se replie (petite flèche) pour garder le menu court ; **Tout re
   - *Disposition* : côté de la liste (droite ou gauche), largeurs des colonnes, hauteur du message épinglé, taille des textes, nombre de personnes dans les tops.
   - *Textes du tableau de bord* : titre de la liste, boutons, titres des cases.
   - *Animations des cadeaux* : chacune activable, ses textes, le nombre de questions par Chat et par Galaxie, la durée.
-  - *Paliers de likes* : premier palier, intervalle, alerte, mots acceptés, textes.
+  - *Paliers de likes* : premier palier, intervalle, alerte, textes.
   - *Textes du Jeu des Portes* : titres, écran de départ, compte à rebours (activable), résultats.
   - Dans les textes, **{n}**, **{q}** et **{palier}** sont remplacés automatiquement. **Tout remettre par défaut** annule tout.
 - **Affichage et son** : chaque case du tableau de bord peut être masquée (message épinglé, enveloppes, Top Likes, Top Gifters, case centrale, liste, jeu, radio) ; le ruban et le son.
@@ -297,6 +307,8 @@ js/
   universe.js         deck des messages de l’univers (Grimoire + ajouts)
   playlist.js         musiques ajoutées à la radio
   tour.js             écran de veille « présentation » (l’étoile)
+  fonts.js            polices de l’app
+  stickers.js         autocollants dans les textes
   broadcast.js        diffusion signée tablette → viewers
   mqtt.js             petit client du relais (MQTT sur WebSocket)
   gifts.js            rôles des cadeaux et comptage des combos

@@ -8,6 +8,8 @@ import { TikTokLive } from './tiktok.js';
 import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
 import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
 import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
+import { applyFonts } from './fonts.js';
+import { makeRich, rich } from './stickers.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
 import { grimoireMessages, loadEdits, saveEdits, buildDeck, messageId } from './universe.js';
@@ -159,9 +161,9 @@ function settingField(item, value) {
   } else if (item.type === 'color') {
     input = `<input ${attrs} type="color" value="${esc(value)}">`;
   } else if (item.type === 'textarea') {
-    input = `<textarea ${attrs} rows="3">${esc(value)}</textarea>`;
+    input = `<textarea ${attrs} data-rich rows="3">${esc(value)}</textarea>`;
   } else {
-    input = `<input ${attrs} type="text" value="${esc(value)}" placeholder="${esc(item.def)}">`;
+    input = `<input ${attrs} data-rich type="text" value="${esc(value)}" placeholder="${esc(item.def)}">`;
   }
   return `<label class="field"><span>${esc(item.label)}</span>${input}</label>`;
 }
@@ -203,6 +205,7 @@ $('custom-groups').addEventListener('input', (e) => {
 });
 $('custom-save').addEventListener('click', () => {
   saveSettings(readSettings());
+  applyFonts(loadSettings());
   status($('custom-status'), '✓ Réglages enregistrés. Ils s’appliquent dès le retour au tableau de bord.', 'live');
 });
 $('custom-reset').addEventListener('click', () => {
@@ -503,15 +506,17 @@ $('fold-all').addEventListener('click', () => folds.forEach((d) => { d.open = fa
 // ---------- Messages de l'univers ----------
 
 let univGrimoire = [];
+let lastDeck = [];
 async function renderUniv() {
   if (!univGrimoire.length) univGrimoire = await grimoireMessages();
   const edits = loadEdits();
   const deck = buildDeck(univGrimoire, edits);
+  lastDeck = deck;
   const q = $('univ-search').value.trim().toLowerCase();
   const shown = q ? deck.filter((m) => m.text.toLowerCase().includes(q)) : deck;
   $('univ-count').textContent = `${deck.length} message${deck.length > 1 ? 's' : ''}`;
   $('univ-list').innerHTML = shown.length
-    ? shown.map((m) => `<li><p>${esc(m.text)}</p><div class="row"><span class="src">${m.source === 'added' ? 'Ajouté' : 'Grimoire'}</span>
+    ? shown.map((m) => `<li><p>${rich(m.text)}</p><div class="row"><span class="src">${m.source === 'added' ? 'Ajouté' : 'Grimoire'}</span>
         <span class="univ-actions"><button class="btn btn-ghost" data-univ-edit="${m.id}" type="button">Modifier</button>
         <button class="btn btn-ghost" data-univ-del="${m.id}" type="button">Supprimer</button></span></div></li>`).join('')
     : '<li class="empty">Aucun message.</li>';
@@ -534,7 +539,8 @@ $('univ-list').addEventListener('click', (e) => {
   if (ed) {
     const li = ed.closest('li');
     const p = li.querySelector('p');
-    li.innerHTML = `<textarea rows="5" data-univ-text>${esc(p.textContent)}</textarea>
+    const msg = (lastDeck.find((m) => m.id === ed.dataset.univEdit) || {}).text || p.textContent;
+    li.innerHTML = `<textarea rows="5" data-rich data-univ-text>${esc(msg)}</textarea>
       <div class="row"><span></span><span class="univ-actions"><button class="btn btn-ghost" data-univ-cancel type="button">Annuler</button>
       <button class="btn btn-primary" data-univ-save="${ed.dataset.univEdit}" type="button">Enregistrer</button></span></div>`;
     li.querySelector('textarea').focus();
@@ -708,8 +714,8 @@ function tourRow(st, i, n) {
         <button class="x-btn" data-t-move="1" type="button" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button>
       </span>
     </div>
-    <label class="field"><span>Titre de la bulle</span><input type="text" data-t="title" value="${esc(st.title || '')}"></label>
-    <label class="field"><span>Texte de la bulle</span><textarea rows="3" data-t="text">${esc(st.text || '')}</textarea></label>
+    <label class="field"><span>Titre de la bulle</span><input type="text" data-rich data-t="title" value="${esc(st.title || '')}"></label>
+    <label class="field"><span>Texte de la bulle</span><textarea rows="3" data-rich data-t="text">${esc(st.text || '')}</textarea></label>
     <div class="tour-row-opts">
       <label class="field tour-pose"><span>Pose de l’étoile</span><span class="pose-row"><img class="pose-preview" src="${starImage(STAR_POSES.some(([k]) => k === st.pose) ? st.pose : 'regard-droite')}" alt="">
         <select data-t="pose"><option value="auto"${STAR_POSES.some(([k]) => k === st.pose) ? '' : ' selected'}>Regarde la case (automatique)</option>${STAR_POSES.map(([v, l]) => `<option value="${v}"${v === st.pose ? ' selected' : ''}>${l}</option>`).join('')}</select></span></label>
@@ -763,3 +769,63 @@ $('tour-reset').addEventListener('click', () => {
   status($('tour-status'), 'Présentation remise par défaut.', 'live');
 });
 renderTourRows();
+
+// ---------- Messages de l'univers reçus pendant le live ----------
+
+function readQueue() {
+  try { return JSON.parse(localStorage.getItem(STORAGE.queue) || 'null'); } catch (e) { return null; }
+}
+function renderReceived() {
+  const q = readQueue();
+  const list = ((q && q.donuts) || []).filter((d) => d.message);
+  $('received-list').innerHTML = list.length
+    ? list.map((d) => `<li data-rid="${esc(d.id)}"><p><strong>${esc(d.name)},</strong><br>${rich(d.message)}</p><div class="row"><span class="src">Reçu</span>
+        <span class="univ-actions"><button class="btn btn-ghost" data-r-edit type="button">Modifier</button>
+        <button class="btn btn-ghost" data-r-del type="button">Supprimer</button></span></div></li>`).join('')
+    : '<li class="empty">Aucun message reçu pour l’instant.</li>';
+}
+// Le tableau de bord (s'il est ouvert) applique aussitôt le changement ; sinon il le retrouve au démarrage.
+function editReceived(id, message, remove = false) {
+  const q = readQueue();
+  if (q && Array.isArray(q.donuts)) {
+    if (remove) q.donuts = q.donuts.filter((d) => d.id !== id);
+    else q.donuts.forEach((d) => { if (d.id === id) d.message = message; });
+    localStorage.setItem(STORAGE.queue, JSON.stringify(q));
+  }
+  localStorage.setItem(STORAGE.letterEdit, JSON.stringify({ id, message, remove, at: Date.now() }));
+}
+$('received-list').addEventListener('click', (e) => {
+  const li = e.target.closest('[data-rid]');
+  if (!li) return;
+  const id = li.dataset.rid;
+  if (e.target.closest('[data-r-del]')) {
+    if (!window.confirm('Supprimer ce message reçu ?')) return;
+    editReceived(id, '', true);
+    renderReceived();
+    status($('univ-status'), 'Message reçu supprimé.', 'live');
+  } else if (e.target.closest('[data-r-edit]')) {
+    const d = ((readQueue() || {}).donuts || []).find((x) => x.id === id);
+    if (!d) return;
+    li.innerHTML = `<p><strong>${esc(d.name)},</strong></p><textarea rows="5" data-rich data-r-text>${esc(d.message)}</textarea>
+      <div class="row"><span></span><span class="univ-actions"><button class="btn btn-ghost" data-r-cancel type="button">Annuler</button>
+      <button class="btn btn-primary" data-r-save type="button">Enregistrer</button></span></div>`;
+  } else if (e.target.closest('[data-r-cancel]')) {
+    renderReceived();
+  } else if (e.target.closest('[data-r-save]')) {
+    editReceived(id, li.querySelector('[data-r-text]').value.trim());
+    renderReceived();
+    status($('univ-status'), '✓ Message reçu modifié.', 'live');
+  }
+});
+window.addEventListener('storage', (e) => { if (e.key === STORAGE.queue && !$('received-list').querySelector('textarea')) renderReceived(); });
+renderReceived();
+
+applyFonts(loadSettings());
+
+// ---------- Autocollants dans les champs de texte ----------
+// Chaque champ marqué data-rich accepte les autocollants de l'iPad (et les images collées).
+function enhanceRich(root = document) {
+  root.querySelectorAll('[data-rich]').forEach(makeRich);
+}
+new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) enhanceRich(n.matches?.('[data-rich]') ? n.parentElement : n); }))).observe(document.body, { childList: true, subtree: true });
+enhanceRich();

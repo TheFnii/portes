@@ -1,4 +1,8 @@
 :root {
+  /* Polices (réglables : Réglages → Personnalisation → Polices) */
+  --font-text: 'Cormorant Garamond', Georgia, serif;
+  --font-title: 'Cinzel', serif;
+  --font-star: var(--font-text);
   --gold: #e8c77a;
   --gold-light: #f6e3a8;
   --gold-deep: #b38634;
@@ -22,7 +26,7 @@ html, body {
 }
 
 body {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-text);
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
@@ -62,3 +66,6 @@ input {
     linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 38%, transparent 40%, transparent 60%, var(--gold) 62%, var(--gold) 80%, transparent) center / 100% 1.5px no-repeat;
   opacity: .9;
 }
+
+/* Autocollants (vos images utilisées comme des emojis dans les textes) */
+img.sticker { display: inline-block; height: 1.25em; width: auto; max-width: 3em; vertical-align: -0.28em; margin: 0 .06em; object-fit: contain; }

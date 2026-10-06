@@ -38,7 +38,7 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
   border-radius: 99px;
   background: rgba(18, 10, 28, .85);
   border: 1px solid rgba(232, 199, 122, .4);
-  font: 600 14px/1 'Cinzel', serif;
+  font: 600 14px/1 var(--font-title);
   letter-spacing: .08em;
   color: var(--gold-light);
 }
@@ -81,7 +81,7 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
 .v-foot {
   margin: 4px 0 0;
   text-align: center;
-  font: 500 13px/1 'Cinzel', serif;
+  font: 500 13px/1 var(--font-title);
   letter-spacing: .25em;
   color: rgba(232, 199, 122, .55);
 }
@@ -100,8 +100,8 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
 .v-wait.gone { opacity: 0; visibility: hidden; pointer-events: none; }
 .v-wait-card { max-width: 440px; text-align: center; }
 .v-wait-card .home-kicker { font-size: 13px; }
-.v-wait-card h1 { margin: 14px 0 0; font: 700 clamp(26px, 7vw, 36px)/1.15 'Cinzel', serif; color: var(--gold-light); }
-.v-wait-card p { margin: 8px 0 0; font: italic 500 20px/1.35 'Cormorant Garamond', serif; color: #f7ead0; }
+.v-wait-card h1 { margin: 14px 0 0; font: 700 clamp(26px, 7vw, 36px)/1.15 var(--font-title); color: var(--gold-light); }
+.v-wait-card p { margin: 8px 0 0; font: italic 500 20px/1.35 var(--font-text); color: #f7ead0; }
 
 /* ---------- Jeu des Portes sur téléphone ---------- */
 
@@ -119,7 +119,7 @@ body.viewer.at-home .stage-veil { opacity: 1; background: #120a1e; }
   margin: 0;
   padding: 0 16px;
   text-align: center;
-  font: 600 13px/1.35 'Cinzel', serif;
+  font: 600 13px/1.35 var(--font-title);
   color: var(--gold-light);
   text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
   transition: opacity .4s ease;
@@ -133,7 +133,7 @@ body.viewer.focusing .v-game-info { opacity: 0; }
     content: 'Tournez votre téléphone pour agrandir les portes';
     display: block;
     margin-top: 6px;
-    font: italic 500 14px/1.2 'Cormorant Garamond', serif;
+    font: italic 500 14px/1.2 var(--font-text);
     color: rgba(243, 233, 210, .6);
   }
   body.viewer .focus { align-items: flex-start; padding-top: max(16px, env(safe-area-inset-top)); }
@@ -205,7 +205,7 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   border-radius: 99px;
   background: linear-gradient(180deg, #ffd98a, #d9a94a);
   color: #2a1606;
-  font: 700 13px/22px 'Cinzel', serif;
+  font: 700 13px/22px var(--font-title);
   box-shadow: 0 0 10px rgba(255, 210, 120, .7);
 }
 .v-letters-panel {
@@ -231,7 +231,7 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   animation: v-result-in .45s cubic-bezier(.2, .9, .3, 1) both;
 }
 .vlp-card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.vlp-card h2 { margin: 0; font: 700 20px/1.2 'Cinzel', serif; color: var(--gold-light); }
+.vlp-card h2 { margin: 0; font: 700 20px/1.2 var(--font-title); color: var(--gold-light); }
 .vlp-hint { margin: 4px 0 10px; font-style: italic; color: rgba(243, 233, 210, .65); }
 .vlp-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .vlp-list button {
@@ -244,19 +244,19 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   border-bottom: 1px solid rgba(232, 199, 122, .15);
   background: none;
   color: var(--ink);
-  font: 500 19px/1.2 'Cormorant Garamond', serif;
+  font: 500 19px/1.2 var(--font-text);
   text-align: left;
   cursor: pointer;
 }
 .vlp-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vlp-list .gift-icon { width: 30px; height: 30px; font-size: 22px; }
-.vlp-list .mult { color: var(--gold); font: 700 14px/1 'Cinzel', serif; }
+.vlp-list .mult { color: var(--gold); font: 700 14px/1 var(--font-title); }
 .vlp-list .reread {
   flex: none;
   padding: 4px 10px;
   border-radius: 99px;
   border: 1px solid rgba(232, 199, 122, .45);
-  font: 600 12px/1.2 'Cinzel', serif;
+  font: 600 12px/1.2 var(--font-title);
   color: var(--gold-light);
 }
 .celebrate .letter-card { z-index: 2; }

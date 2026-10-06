@@ -75,6 +75,8 @@ export const STORAGE = {
   cast: 'portes.cast',            // diffusion vers la page des viewers (on/off)
   castKey: 'portes.cast.key',     // clé de signature de la diffusion (reste sur la tablette)
   viewerSound: 'portes.viewer.sound', // son coupé ou non sur la page des viewers
+  stickers: 'portes.stickers',     // autocollants (images utilisées comme emojis)
+  letterEdit: 'portes.letter.edit', // message reçu modifié depuis les Réglages
   univDeck: 'portes.univ.deck',    // messages de l'univers supprimés / ajoutés
   univGrimoire: 'portes.univ.grimoire', // copie des messages du Grimoire
   likeTiers: 'portes.liketiers',   // paliers de likes par personne

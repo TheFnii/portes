@@ -50,6 +50,15 @@ function avatarOf(user) {
   return (Array.isArray(list) ? list.find((u) => /^https:/.test(u)) : '') || '';
 }
 
+// Instant d'un événement (horloge de TikTok si elle est fournie, sinon celle de l'appareil).
+function timeOf(d) {
+  const c = d && d.common;
+  let t = Number(c && (c.createTime || c.clientSendTime));
+  if (!t) return Date.now();
+  if (t < 1e12) t *= 1000; // en secondes
+  return t;
+}
+
 export class TikTokLive extends EventTarget {
   constructor() {
     super();
@@ -169,6 +178,7 @@ export class TikTokLive extends EventTarget {
           name: user.nickname || user.uniqueId || '',
           avatar: avatarOf(user),
           text: d.comment ?? d.content ?? '',
+          t: timeOf(d),
         });
       } else if (m.type === 'WebcastGiftMessage') {
         const g = d.giftDetails || d.gift || {};
@@ -186,7 +196,7 @@ export class TikTokLive extends EventTarget {
           diamonds: Number(g.diamondCount) || 0,
         });
       } else if (m.type === 'WebcastLikeMessage') {
-        this.emit('like', { user: userOf(d.user), likeCount: Number(d.likeCount) || 0, totalLikeCount: Number(d.totalLikeCount) || 0 });
+        this.emit('like', { user: userOf(d.user), likeCount: Number(d.likeCount) || 0, totalLikeCount: Number(d.totalLikeCount) || 0, t: timeOf(d) });
       } else if (m.type === 'WebcastRoomPinMessage') {
         // Message épinglé par l'animatrice. Un message sans contenu signale un retrait.
         const chat = d.chatMessage;

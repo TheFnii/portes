@@ -79,12 +79,15 @@
       <ol class="univ-list" id="univ-list"></ol>
       <h3>Ajouter un message</h3>
       <label class="field"><span>Nouveau message</span>
-        <textarea id="univ-new" rows="4" placeholder="Écrivez le message de l’univers…"></textarea></label>
+        <textarea id="univ-new" data-rich rows="4" placeholder="Écrivez le message de l’univers…"></textarea></label>
       <div class="form-actions">
         <button class="btn btn-primary" id="univ-add" type="button">Ajouter au deck</button>
         <button class="btn btn-ghost" id="univ-restore" type="button">Rétablir les messages supprimés</button>
       </div>
       <p class="form-status" id="univ-status" role="status"></p>
+      <h3>Messages reçus pendant ce live</h3>
+      <p class="hint">Les lettres déjà envoyées (case « Message de l’univers » et page des viewers). Elles restent jusqu’à « Nouveau live ».</p>
+      <ol class="univ-list" id="received-list"></ol>
     </details>
 
     <!-- Paliers de likes par personne -->
@@ -167,7 +170,7 @@
     <details class="card fold" id="messages">
       <summary><h2><span class="fold-icon" aria-hidden="true">📜</span>Ruban défilant (bas de l’écran)</h2></summary>
       <p class="hint">Un message par ligne. Les emojis sont les bienvenus ✨🔮🌙</p>
-      <textarea id="msg-text" rows="8" spellcheck="true" placeholder="Bienvenue dans mon live ✨"></textarea>
+      <textarea id="msg-text" data-rich rows="8" spellcheck="true" placeholder="Bienvenue dans mon live ✨"></textarea>
       <label class="field">
         <span>Vitesse de défilement : <output id="msg-speed-out">80</output></span>
         <input id="msg-speed" type="range" min="40" max="180" step="5" value="80">
@@ -187,7 +190,7 @@
     <details class="card fold" id="case-centrale">
       <summary><h2><span class="fold-icon" aria-hidden="true">✦</span>Case centrale (règles, messages)</h2></summary>
       <p class="hint">Les messages défilent lentement de bas en haut dans la grande case du milieu. Un message par ligne.</p>
-      <textarea id="board-text" rows="8" spellcheck="true" placeholder="🐱 Chat porte-bonheur : 1 question en priorité"></textarea>
+      <textarea id="board-text" data-rich rows="8" spellcheck="true" placeholder="🐱 Chat porte-bonheur : 1 question en priorité"></textarea>
       <label class="field">
         <span>Vitesse de défilement : <output id="board-speed-out">30</output></span>
         <input id="board-speed" type="range" min="10" max="90" step="2" value="30">

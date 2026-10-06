@@ -20,6 +20,7 @@ import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
 import { Tour } from './tour.js';
+import { rich } from './stickers.js';
 import { Broadcaster, castMedia, castManifest } from './broadcast.js';
 import { loadSettings, fill } from './settings.js';
 import { loadMessages } from './messages.js';
@@ -74,28 +75,19 @@ const dash = new Dashboard({
     const e = queue.letter(id);
     if (e) play('letter', { name: e.name, message: e.message || '' });
   },
-  onEditLetter: (id) => editLetter(id),
   onBoardFull: () => openBoardFull(),
 });
 
-// Modifier ou supprimer un message de l'univers reçu (case « Message de l'univers »).
-function editLetter(id) {
-  const e = queue.letter(id);
-  if (!e) return;
-  notice(`Message de ${e.name}`,
-    `<label class="field"><span>Message</span><textarea id="letter-edit" rows="6">${esc(e.message || '')}</textarea></label>`,
-    [
-      { label: 'Enregistrer', primary: true, onClick: () => { e.message = $('letter-edit').value.trim(); changed(); } },
-      {
-        label: 'Supprimer',
-        onClick: () => {
-          if (!window.confirm(`Supprimer la lettre de ${e.name} ?`)) return;
-          queue.removeDonut(id);
-          changed();
-        },
-      },
-      { label: 'Annuler' },
-    ]);
+// Message reçu modifié ou supprimé depuis les Réglages (Messages de l'univers).
+function applyLetterEdit() {
+  const ed = readJSON(STORAGE.letterEdit, null);
+  if (!ed || !ed.id) return;
+  if (ed.remove) queue.removeDonut(ed.id);
+  else {
+    const e = queue.letter(ed.id);
+    if (e) e.message = String(ed.message || '');
+  }
+  changed();
 }
 
 // ---------- Case centrale en plein écran (on en sort en touchant l'écran) ----------
@@ -235,8 +227,8 @@ function snapshot() {
     files: castManifest(cast),
     game: state.screen === 'game' ? {
       phase: state.phase,
-      heading: $('stage-heading').textContent,
-      tagline: $('stage-tagline').textContent,
+      heading: state.heading || '',
+      tagline: state.tagline || '',
       info: state.phase === 'start' ? '' : $('session-info').textContent,
       counts: gameCounts,
       opened: round.opened,
@@ -303,7 +295,6 @@ function applyFeatures() {
     first: settings.milestoneFirst,
     step: settings.milestoneStep,
     alert: settings.milestoneAlert,
-    words: String(settings.milestoneWords || '').split(','),
   });
   dash.applySettings(settings, features);
   changed();
@@ -360,9 +351,15 @@ function onGift(g) {
 }
 
 let likesDirty = false;
-function onLike({ user, likeCount, totalLikeCount }) {
+function onLike({ user, likeCount, totalLikeCount, t }) {
   const before = (likes.users[user.key] && likes.users[user.key].value) || 0;
   likes.add(user, likeCount, totalLikeCount);
+  if (milestonesOn()) {
+    const waiting = milestones.crossedAt !== null;
+    milestones.observeTotal(likes.total, t || Date.now());
+    // Franchissement : on tranche au plus tard 1 s après (au premier message, si plus tôt).
+    if (!waiting && milestones.crossedAt !== null) setTimeout(() => resolveMilestone(true), 1100);
+  }
   const after = (likes.users[user.key] && likes.users[user.key].value) || 0;
   checkTiers(user, before, after);
   persist();
@@ -414,14 +411,22 @@ function checkMilestone() {
   }
 }
 
+// Message du chat : participe à la course au palier s'il contient le bon nombre.
 function claimMilestone(msg) {
   if (!milestonesOn()) return;
   const handle = normalizeHandle(msg.handle);
   if (handle && handle === normalizeHandle(load(STORAGE.tiktokUser))) return;
-  const won = milestones.claim(msg.text, likes.total);
-  if (!won) return;
-  const palier = Milestones.label(won);
   const user = { key: handle || String(msg.userId || msg.name), handle, name: msg.name || handle, avatar: msg.avatar || '' };
+  if (milestones.observeChat({ text: msg.text, t: msg.t || Date.now(), user })) resolveMilestone(false);
+}
+
+// Un seul gagnant : le message le plus proche de l'instant où le palier a été franchi.
+function resolveMilestone(force) {
+  const r = milestones.resolve(force);
+  if (!r) return;
+  if (milestones.crossedAt !== null) setTimeout(() => resolveMilestone(true), 1100);
+  const palier = Milestones.label(r.palier);
+  const user = r.user;
   queue.addMilestone(user, fill(settings.milestoneLabel, { palier }));
   play('milestone', { name: user.name, title: fill(settings.milestoneTitle, { palier }) });
   changed();
@@ -589,8 +594,10 @@ function updateUI() {
   } else if (p === 'between' && round.opened.length) {
     heading = settings.gameAgainTitle;
   }
-  $('stage-heading').textContent = heading;
-  $('stage-tagline').textContent = tagline;
+  state.heading = heading;
+  state.tagline = tagline;
+  $('stage-heading').innerHTML = rich(heading);
+  $('stage-tagline').innerHTML = rich(tagline);
 
   const left = round.closedDoors().length;
   const btn = $('btn-main');
@@ -695,9 +702,9 @@ async function roll() {
 function showResult(n, winners) {
   let html = `<p class="result-kicker">Le dé a parlé</p><div class="result-number">${n}</div>`;
   if (state.mode === 'simple') {
-    html += `<p class="result-title">${esc(fill(settings.resultSimple, { n }))}</p>`;
+    html += `<p class="result-title">${rich(fill(settings.resultSimple, { n }))}</p>`;
   } else {
-    html += `<p class="result-title">${esc(fill(settings.resultLive, { n }))}</p>`;
+    html += `<p class="result-title">${rich(fill(settings.resultLive, { n }))}</p>`;
     if (winners.length) {
       html += `<p class="result-text">${winners.length === 1 ? 'Une personne avait choisi cette porte :' : `${winners.length} personnes avaient choisi cette porte :`}</p><ul class="winners">`;
       winners.forEach((w, i) => {
@@ -710,7 +717,7 @@ function showResult(n, winners) {
       });
       html += '</ul>';
     } else {
-      html += `<p class="result-text">${esc(settings.resultNobody)}</p>`;
+      html += `<p class="result-text">${rich(settings.resultNobody)}</p>`;
     }
     const won = round.sessionWinners().length;
     html += `<p class="result-stats">🏆 ${won} gagnant${won > 1 ? 's' : ''} depuis le début du jeu · ${round.players.size} participant${round.players.size > 1 ? 's' : ''}</p>`;
@@ -925,7 +932,7 @@ function openScreensaver() {
   enterFullscreen(false);
 }
 // Écran de veille « présentation » : l'étoile fait le tour des cases.
-const tour = new Tour($('tour'));
+const tour = new Tour($('tour'), { getSettings: () => settings, render: (t) => rich(t) });
 function openTour() {
   $('drawer').hidden = true;
   if (state.screen !== 'dash') { toast('La présentation se lance depuis le tableau de bord.'); return; }
@@ -1023,6 +1030,8 @@ function reloadSettings() {
     gifters.total = 0;
     gifters.users = {};
     milestones.reached = 0;
+    milestones.total = 0;
+    milestones.reset();
     milestoneAnnounced = 0;
     tiersReached = {};
     pinned = null;
@@ -1045,6 +1054,13 @@ window.addEventListener('storage', (e) => {
   if (e.key === STORAGE.messages) loadTicker();
   else if (e.key === STORAGE.board) loadBoard();
   else if (e.key === STORAGE.univDeck) loadDeck();
+  else if (e.key === STORAGE.letterEdit) applyLetterEdit();
+  else if (e.key === STORAGE.stickers) {
+    // Nouvel autocollant : textes ré-affichés, et envoyé aux viewers.
+    reloadSettings();
+    loadTicker();
+    sendMedia();
+  }
   else if (e.key === STORAGE.likeTiers) tiers = loadTiers();
   else if (e.key === STORAGE.radioMine || e.key === STORAGE.radioGrimoire) radio.rebuild();
   else if (e.key === STORAGE.media) {

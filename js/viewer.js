@@ -12,6 +12,8 @@ import { Celebrate } from './celebrate.js';
 import { Receiver } from './broadcast.js';
 import { entryIcon, entryDetail, SECTIONS, COIN } from './dashboard.js';
 import { DEFAULTS } from './settings.js';
+import { applyFonts } from './fonts.js';
+import { rich, setReceivedSticker } from './stickers.js';
 import { imagesReady, setImageOverride, image } from './images.js';
 import { keepAwake, esc } from './shell.js';
 
@@ -106,11 +108,21 @@ function setText(id, v) {
   if (el.textContent !== v) el.textContent = v;
 }
 
+// Texte avec autocollants.
+function setRich(id, v) {
+  const el = $(id);
+  const html = rich(v);
+  if (el.dataset.html !== html) {
+    el.dataset.html = html;
+    el.innerHTML = html;
+  }
+}
+
 let seen = new Set();
 let lastCurrent = null;
 
 function renderQueue(st) {
-  setText('v-queue-title', st.title || '');
+  setRich('v-queue-title', st.title || '');
   const chip = $('v-chip');
   chip.hidden = !st.chip;
   chip.textContent = st.chip || '';
@@ -119,14 +131,14 @@ function renderQueue(st) {
   const box = $('v-current');
   if (!cur) {
     box.className = 'queue-current empty';
-    box.textContent = settings.listEmpty || '';
+    box.innerHTML = rich(settings.listEmpty || '');
   } else {
     box.className = 'queue-current';
     if (lastCurrent !== cur.id) {
       void box.offsetWidth;
       box.classList.add('pop');
     }
-    box.innerHTML = `${entryIcon(cur)}<div class="who"><span class="kicker">${esc(settings.currentLabel || '')}</span><strong>${esc(cur.name)}</strong><small>${esc(entryDetail(cur))}</small></div>`;
+    box.innerHTML = `${entryIcon(cur)}<div class="who"><span class="kicker">${rich(settings.currentLabel || '')}</span><strong>${esc(cur.name)}</strong><small>${esc(entryDetail(cur))}</small></div>`;
   }
   lastCurrent = cur ? cur.id : null;
   let html = '';
@@ -164,7 +176,7 @@ function renderBoard(board) {
   track.textContent = '';
   track.className = 'board-track';
   if (!messages.length) return;
-  const copy = () => messages.map((m) => `<p class="board-item">${esc(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
+  const copy = () => messages.map((m) => `<p class="board-item">${rich(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
   track.innerHTML = `<div>${copy()}</div><div aria-hidden="true">${copy()}</div>`;
   requestAnimationFrame(() => {
     const h = track.firstElementChild.getBoundingClientRect().height;
@@ -215,9 +227,9 @@ function renderDash(st) {
   pin.hidden = !st.pinned;
   setText('v-pinned-text', st.pinned || '');
   renderQueue(st);
-  setText('v-likes-title', settings.likesTitle || 'Top Likes');
-  setText('v-gifters-title', settings.giftersTitle || 'Top Gifters');
-  setText('v-board-title', settings.boardTitle || '');
+  setRich('v-likes-title', settings.likesTitle || 'Top Likes');
+  setRich('v-gifters-title', settings.giftersTitle || 'Top Gifters');
+  setRich('v-board-title', settings.boardTitle || '');
   renderTop('v-likes', 'v-likes-total', st.likes, '');
   renderTop('v-gifters', 'v-gifters-total', st.gifters, COIN);
   renderBoard(st.board);
@@ -253,7 +265,10 @@ function onState(st) {
   }
   last = st;
   checkFiles(st.files);
-  if (st.settings) settings = { ...DEFAULTS, ...st.settings };
+  if (st.settings) {
+    settings = { ...DEFAULTS, ...st.settings };
+    applyFonts(settings);
+  }
   renderDash(st);
   renderGame(st.game);
   renderStatus();
@@ -265,8 +280,8 @@ function renderGame(g) {
   if (g && !gameOpen) openGame();
   else if (!g && gameOpen) queue(closeGame);
   if (!g) return;
-  setText('stage-heading', g.heading || '');
-  setText('stage-tagline', g.tagline || '');
+  setRich('stage-heading', g.heading || '');
+  setRich('stage-tagline', g.tagline || '');
   setText('v-game-info', g.info || '');
   doors.setCounts(g.counts || null);
   doors.els.forEach((el, i) => el.classList.toggle('opened', (g.opened || []).includes(i + 1)));
@@ -469,6 +484,13 @@ function onFile(id, buffer, type) {
   const [kind, name] = id.split('-');
   if (kind === 'snd') {
     sound.setReceived(name, buffer);
+    return;
+  }
+  if (kind === 'stk') {
+    setReceivedSticker(name, buffer ? URL.createObjectURL(new Blob([buffer], { type: type || 'image/webp' })) : null);
+    boardKey = '';
+    if (last) renderDash(last);
+    if (last && last.game) renderGame(last.game);
     return;
   }
   if (kind !== 'img') return;

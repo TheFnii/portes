@@ -121,24 +121,57 @@ test('classements : likes et pièces offertes', () => {
   assert.equal(old.top(1)[0].value, 5);
 });
 
-test('paliers : alerte à 99 800, attribué au premier qui l’écrit une fois atteint', () => {
+test('paliers : seul le bon nombre compte, le plus proche du franchissement gagne', () => {
   const m = new Milestones();
+  const u = (name) => ({ name });
   assert.equal(m.status(99000), 'idle');
-  assert.equal(m.status(99800), 'alert');
-  assert.equal(m.claim('100k !!', 99900), null); // pas encore atteint
-  assert.equal(m.status(100050), 'open');
-  assert.equal(m.claim('bravo', 100050), null);
-  assert.equal(m.claim('on a fait 100k 🎉', 100050), 100000);
+  m.observeTotal(99000, 0);
+  assert.equal(m.observeChat({ text: '100k !', t: 1, user: u('trop tôt') }), false); // on n'écoute pas encore
+  m.observeTotal(99850, 1000);
+  assert.equal(m.status(), 'alert');
+  m.observeChat({ text: '100k', t: 8000, user: u('Ana') }); // 2 s avant : ne compte pas
+  m.observeChat({ text: 'allez les 150k', t: 9300, user: u('Faux') }); // mauvais nombre
+  m.observeChat({ text: 'on y est presque 100 000 ✨', t: 9400, user: u('Bea') }); // 0,6 s avant
+  m.observeTotal(100020, 10000); // franchissement à t = 10 000
+  assert.equal(m.resolve(), null); // on attend un message d'après (ou la fin de la seconde)
+  m.observeChat({ text: 'PALIER 100K', t: 10700, user: u('Cid') }); // 0,7 s après
+  const r = m.resolve();
+  assert.equal(r.palier, 100000);
+  assert.equal(r.user.name, 'Bea'); // 0,6 s avant est plus proche que 0,7 s après
   assert.equal(m.next(), 150000);
-  assert.equal(m.claim('100k', 120000), null); // déjà attribué
-  assert.equal(m.claim('150 000 !', 150010), 150000);
-  assert.equal(m.claim('PALIER', 200001), 200000);
+});
+
+test('paliers : un message juste après gagne ; sans message après, on tranche après 1 s', () => {
+  const m = new Milestones();
+  m.observeTotal(99900, 0);
+  m.observeChat({ text: '100k', t: 9200, user: { name: 'Avant' } }); // 0,8 s avant
+  m.observeTotal(100001, 10000);
+  m.observeChat({ text: 'yes 100k', t: 10300, user: { name: 'Apres' } }); // 0,3 s après
+  assert.equal(m.resolve().user.name, 'Apres');
+
+  const m2 = new Milestones();
+  m2.observeTotal(99900, 0);
+  m2.observeChat({ text: '100k', t: 9500, user: { name: 'Seul' } });
+  m2.observeTotal(100001, 10000);
+  assert.equal(m2.resolve(), null);
+  assert.equal(m2.resolve(true).user.name, 'Seul');
+
+  // Personne avant : le premier message d'après gagne, même tard.
+  const m3 = new Milestones();
+  m3.observeTotal(100500, 10000);
+  m3.observeChat({ text: '100k', t: 25000, user: { name: 'Tard' } });
+  assert.equal(m3.resolve().user.name, 'Tard');
+  // Le palier suivant (150k) demande « 150k ».
+  m3.observeTotal(149900, 30000);
+  assert.equal(m3.observeChat({ text: '100k', t: 30100, user: { name: 'X' } }), false);
+  assert.equal(m3.observeChat({ text: '150k', t: 30200, user: { name: 'Y' } }), true);
 });
 
 test('paliers : formes acceptées', () => {
-  const m = new Milestones({ words: [] });
-  ['100k', '100 k', '100K', '100000', '100 000', '100.000', '100,000'].forEach((t) => assert.ok(m.mentions(t, 100000), t));
-  ['10k', '1000', '100kg'].forEach((t) => assert.ok(!m.mentions(t, 100000), t));
+  const m = new Milestones();
+  ['100k', '100 k', '100K', '100000', '100 000', '100.000', '100,000', 'bravo pour les 100k !!'].forEach((t) => assert.ok(m.mentions(t, 100000), t));
+  ['10k', '1000', '100kg', '150k', '1100k', 'palier'].forEach((t) => assert.ok(!m.mentions(t, 100000), t));
+  assert.ok(m.mentions('150k', 150000));
   assert.equal(Milestones.label(150000), '150k');
 });
 
