@@ -7,6 +7,7 @@ import { fill } from './settings.js';
 import { applyFonts } from './fonts.js';
 import { rich } from './stickers.js';
 import { esc } from './shell.js';
+import { renderBoard, stopBoard } from './board.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -229,7 +230,7 @@ export class Dashboard {
     const box = $('pinned');
     if (!p || !box.clientHeight) return;
     const maxH = box.clientHeight - 24;
-    let size = 64;
+    let size = Math.round(64 * ((Number(this.s.sizePinned) || 100) / 100));
     p.style.fontSize = `${size}px`;
     while (size > 16 && (p.scrollHeight > maxH || p.scrollWidth > p.clientWidth + 1)) {
       size -= 2;
@@ -244,23 +245,29 @@ export class Dashboard {
     el.classList.add('flash');
   }
 
-  // ---------- Case centrale : messages qui défilent ----------
+  // ---------- Case centrale : messages qui défilent, ou un par un ----------
 
   renderBoard(messages, speed, trackId = 'board-track') {
-    const track = $(trackId);
-    track.textContent = '';
-    track.className = 'board-track';
-    if (!messages.length) return;
-    const copy = () => messages.map((m) => `<p class="board-item">${rich(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
-    track.innerHTML = `<div>${copy()}</div><div aria-hidden="true">${copy()}</div>`;
-    requestAnimationFrame(() => {
-      const h = track.firstElementChild.getBoundingClientRect().height;
-      const win = track.parentElement.clientHeight;
-      // Peu de messages qui tiennent dans la case : on ne fait pas défiler.
-      if (!track.firstElementChild) return;
-      track.classList.toggle('still', h < win * 0.8);
-      if (h < win * 0.8) track.lastElementChild.hidden = true;
-      track.style.setProperty('--board-dur', `${(h / Math.max(5, speed)).toFixed(1)}s`);
-    });
+    renderBoard($(trackId), messages, { speed, mode: this.s.boardMode, seconds: this.s.boardSeconds });
   }
+
+  // ---------- Fin du live : message spécial par-dessus la case centrale ----------
+
+  renderEndLive(on) {
+    const box = $('end-live');
+    const track = $('end-live-track');
+    if (!on) {
+      box.hidden = true;
+      stopBoard(track);
+      track.textContent = '';
+      return;
+    }
+    box.hidden = false;
+    $('end-live-title').innerHTML = rich(this.s.endTitle || '');
+    renderBoard(track, endMessages(this.s), { speed: this.s.endSpeed, mode: this.s.endMode, seconds: this.s.endSeconds });
+  }
+}
+
+export function endMessages(s) {
+  return String(s.endMessages || '').split('\n').map((m) => m.trim()).filter(Boolean);
 }

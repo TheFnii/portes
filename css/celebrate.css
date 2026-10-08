@@ -33,15 +33,15 @@
 
 .cel-text {
   margin: 18px 0 0;
-  font: italic 600 clamp(28px, 4.4vmin, 48px)/1.2 var(--font-text);
-  color: #f7ead0;
+  font: italic 600 calc(clamp(28px, 4.4vmin, 48px) * var(--fs-anim, 1))/1.2 var(--font-text);
+  color: var(--c-anim, #f7ead0);
   text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
 }
 .cel-name {
   margin: 6px 0 0;
   max-width: 90vw;
-  font: 700 clamp(44px, 9vmin, 110px)/1.05 var(--font-title);
-  color: #fff3c4;
+  font: 700 calc(clamp(44px, 9vmin, 110px) * var(--fs-anim, 1))/1.05 var(--font-title);
+  color: var(--c-anim, #fff3c4);
   text-shadow: 0 0 30px rgba(255, 200, 100, .9), 0 0 70px rgba(255, 150, 60, .5), 0 4px 6px rgba(0, 0, 0, .8);
   overflow-wrap: anywhere;
 }
@@ -258,12 +258,12 @@
 .l-name {
   margin: 0 0 .8em;
   font: 700 calc(clamp(24px, 4.6vmin, 40px) * var(--lfs, 1))/1.15 var(--font-title);
-  color: #4a2a10;
+  color: var(--c-letter, #4a2a10);
 }
 .l-msg {
   margin: 0;
   font: 500 calc(clamp(20px, 3.6vmin, 30px) * var(--lfs, 1))/1.45 var(--font-text);
-  color: #2e1c0c;
+  color: var(--c-letter, #2e1c0c);
   white-space: pre-line;
 }
 .l-sign {

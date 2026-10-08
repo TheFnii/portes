@@ -15,7 +15,9 @@ import { TikTokLive } from './tiktok.js';
 import { LiveQueue, Ranking, Milestones, crossedTiers } from './queue.js';
 import { roleOf, GiftCounter } from './gifts.js';
 import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
-import { Dashboard } from './dashboard.js';
+import { Dashboard, endMessages } from './dashboard.js';
+import { renderBoard, stopBoard } from './board.js';
+import { applyTheme, currentTheme } from './theme.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
@@ -95,13 +97,52 @@ function applyLetterEdit() {
 function openBoardFull() {
   const box = $('board-full');
   box.hidden = false;
-  requestAnimationFrame(() => dash.renderBoard(boardData.messages, boardData.speed * 1.8, 'board-full-track'));
+  box.classList.toggle('end', endLive);
+  requestAnimationFrame(() => {
+    if (endLive) {
+      renderBoard($('board-full-track'), endMessages(settings), { speed: settings.endSpeed * 1.8, mode: settings.endMode, seconds: settings.endSeconds });
+    } else dash.renderBoard(boardData.messages, boardData.speed * 1.8, 'board-full-track');
+  });
 }
 $('board-full').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   $('board-full').hidden = true;
+  stopBoard($('board-full-track'));
   $('board-full-track').textContent = '';
 });
+
+// ---------- Fin du live : message spécial par-dessus la case centrale ----------
+
+let endLive = loadFlag(STORAGE.endLive, false);
+function renderEndLive() {
+  dash.renderEndLive(endLive && features.board);
+  const b = $('end-btn');
+  b.classList.toggle('on', endLive);
+  b.setAttribute('aria-pressed', String(endLive));
+}
+function setEndLive(on) {
+  if (on && !features.board) {
+    toast('Le message de fin s’affiche dans la case centrale : activez-la dans les réglages.');
+    return;
+  }
+  if (on && !endMessages(settings).length && !settings.endTitle) {
+    toast('Écrivez le message de fin dans les réglages (Personnalisation → Fin du live).');
+    return;
+  }
+  endLive = on;
+  saveFlag(STORAGE.endLive, on);
+  renderEndLive();
+  castState();
+}
+
+// ---------- Thème (choisi, ou selon le moment de la journée) ----------
+
+let themeKey = applyTheme(settings);
+setInterval(() => {
+  if (currentTheme(settings) === themeKey) return;
+  themeKey = applyTheme(settings);
+  castState();
+}, 60000);
 
 // ---------- Messages de l'univers : le deck du Grimoire (+ ajouts / suppressions) ----------
 
@@ -215,6 +256,8 @@ function snapshot() {
       board: features.board, list: features.list, game: features.game, donuts: features.donuts,
     },
     pinned: features.pinned && pinned ? pinned.text : '',
+    endLive: endLive && features.board,
+    theme: themeKey,
     title: dash.title(queue),
     chip: chip.hidden ? '' : chip.textContent,
     list: queue.list().map((e) => ({
@@ -297,6 +340,8 @@ function applyFeatures() {
     alert: settings.milestoneAlert,
   });
   dash.applySettings(settings, features);
+  themeKey = applyTheme(settings);
+  renderEndLive();
   changed();
 }
 
@@ -433,15 +478,14 @@ function resolveMilestone(force) {
   checkMilestone();
 }
 
+// Un retrait d'épingle ne vide pas la case : le message reste jusqu'au prochain épinglage
+// (la question reste visible pendant tout le tirage).
 function onPin(p) {
-  if (p.pinned) {
-    pinned = { text: p.text, name: p.user ? p.user.name : '', pinId: p.pinId };
-    dash.flashPinned();
-    castEvent('pin');
-    sound.tink();
-  } else if (!p.pinId || !pinned || !pinned.pinId || pinned.pinId === p.pinId) {
-    pinned = null;
-  }
+  if (!p.pinned) return;
+  pinned = { text: p.text, name: p.user ? p.user.name : '', pinId: p.pinId };
+  dash.flashPinned();
+  castEvent('pin');
+  sound.tink();
   dash.renderPinned(pinned);
   persist();
   castState();
@@ -967,6 +1011,7 @@ document.addEventListener('click', (e) => {
   else if (a === 'fullscreen') toggleFullscreen();
   else if (a === 'screensaver') openScreensaver();
   else if (a === 'tour') openTour();
+  else if (a === 'endlive') setEndLive(!endLive);
 });
 
 // Clavier (pratique sur ordinateur)
@@ -1036,6 +1081,9 @@ function reloadSettings() {
     tiersReached = {};
     pinned = null;
     dash.renderPinned(pinned);
+    endLive = false;
+    saveFlag(STORAGE.endLive, false);
+    renderEndLive();
     changed();
   }
   ensureLive();
@@ -1055,6 +1103,7 @@ window.addEventListener('storage', (e) => {
   else if (e.key === STORAGE.board) loadBoard();
   else if (e.key === STORAGE.univDeck) loadDeck();
   else if (e.key === STORAGE.letterEdit) applyLetterEdit();
+  else if (e.key === STORAGE.endLive) { endLive = loadFlag(STORAGE.endLive, false); renderEndLive(); castState(); }
   else if (e.key === STORAGE.stickers) {
     // Nouvel autocollant : textes ré-affichés, et envoyé aux viewers.
     reloadSettings();

@@ -1,6 +1,6 @@
 /* ---------- Page des viewers (téléphone d'abord, tablette ensuite) ---------- */
 
-body.viewer { background: #120a1e; }
+body.viewer { background: rgb(var(--veil-rgb)); }
 
 /* Le tableau de bord défile dans sa propre zone (plus fluide sur iPhone). */
 .v-main {
@@ -36,25 +36,25 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
   gap: 8px;
   padding: 7px 14px;
   border-radius: 99px;
-  background: rgba(18, 10, 28, .85);
-  border: 1px solid rgba(232, 199, 122, .4);
+  background: rgba(var(--veil-rgb), .85);
+  border: 1px solid rgba(var(--accent-rgb), .4);
   font: 600 14px/1 var(--font-title);
   letter-spacing: .08em;
   color: var(--gold-light);
 }
 .v-status .dot { width: 10px; height: 10px; border-radius: 50%; background: #8a8a8a; }
 .v-status.live .dot { background: #ff4d6d; box-shadow: 0 0 10px #ff4d6d; animation: blink 1.4s ease-in-out infinite; }
-.v-status.wait .dot { background: #e8c77a; }
+.v-status.wait .dot { background: var(--gold); }
 .v-sound { width: 44px; height: 44px; font-size: 20px; }
 
 /* Panneaux à la taille d'un téléphone */
 .v-main .panel { padding: 12px 14px; border-radius: 20px; }
-.v-main .panel-head h2 { font-size: 19px; }
-.v-main .panel-head h3 { font-size: 18px; }
+.v-main .panel-head h2 { font-size: calc(19px * var(--fs-title, 1)); }
+.v-main .panel-head h3 { font-size: calc(18px * var(--fs-title, 1)); }
 .v-main .panel .count { font-size: 15px; min-width: 34px; }
 
 .v-pinned { min-height: 64px; padding: 12px 16px; }
-.v-pinned p { font-size: clamp(20px, 5.6vw, 30px); max-height: none; }
+.v-pinned p { font-size: calc(clamp(20px, 5.6vw, 30px) * var(--fs-pinned, 1)); max-height: none; }
 .v-pinned .pinned-icon { font-size: 22px; margin-top: 2px; }
 
 .v-queue { display: flex; flex-direction: column; }
@@ -70,7 +70,7 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
 .v-queue .queue-list li.sep { padding-left: 34px; font-size: 11px; }
 
 .v-board { height: 230px; display: flex; flex-direction: column; }
-.v-board .board-item { font-size: clamp(19px, 5.4vw, 26px); padding: 12px 4px; }
+.v-board .board-item { font-size: calc(clamp(19px, 5.4vw, 26px) * var(--fs-board, 1)); padding: 12px 4px; }
 
 .v-tops { display: grid; gap: 12px; }
 .v-tops .panel { display: flex; flex-direction: column; }
@@ -83,7 +83,7 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
   text-align: center;
   font: 500 13px/1 var(--font-title);
   letter-spacing: .25em;
-  color: rgba(232, 199, 122, .55);
+  color: rgba(var(--accent-rgb), .55);
 }
 
 /* En attente (pas de lien, ou live pas commencé) */
@@ -108,7 +108,7 @@ body.viewer:not(.at-home) .v-main { opacity: 0; visibility: hidden; pointer-even
 body.viewer.at-home .stage-wrap,
 body.viewer.at-home .v-game-info { visibility: hidden; }
 body.viewer .stage-veil { z-index: 2; }
-body.viewer.at-home .stage-veil { opacity: 1; background: #120a1e; }
+body.viewer.at-home .stage-veil { opacity: 1; background: rgb(var(--veil-rgb)); }
 
 .v-game-info {
   position: fixed;
@@ -163,8 +163,8 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
 
 /* Animations des cadeaux un peu plus compactes sur petit écran */
 @media (max-width: 520px) {
-  .cel-name { font-size: clamp(34px, 11vw, 60px); }
-  .cel-text { font-size: clamp(20px, 5.6vw, 30px); }
+  .cel-name { font-size: calc(clamp(34px, 11vw, 60px) * var(--fs-anim, 1)); }
+  .cel-text { font-size: calc(clamp(20px, 5.6vw, 30px) * var(--fs-anim, 1)); }
   .env-fly, .env-fly.custom { width: 86vw; }
 }
 
@@ -225,8 +225,8 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   flex-direction: column;
   padding: 16px 16px max(16px, env(safe-area-inset-bottom));
   border-radius: 24px;
-  background: linear-gradient(165deg, rgba(44, 20, 66, .97), rgba(14, 8, 24, .98));
-  border: 1px solid rgba(232, 199, 122, .55);
+  background: linear-gradient(165deg, var(--panel-a), var(--panel-b));
+  border: 1px solid rgba(var(--accent-rgb), .55);
   box-shadow: 0 -10px 60px rgba(0, 0, 0, .6), 0 0 40px rgba(255, 200, 120, .15);
   animation: v-result-in .45s cubic-bezier(.2, .9, .3, 1) both;
 }
@@ -241,7 +241,7 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   width: 100%;
   padding: 12px 6px;
   border: 0;
-  border-bottom: 1px solid rgba(232, 199, 122, .15);
+  border-bottom: 1px solid rgba(var(--accent-rgb), .15);
   background: none;
   color: var(--ink);
   font: 500 19px/1.2 var(--font-text);
@@ -255,8 +255,11 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
   flex: none;
   padding: 4px 10px;
   border-radius: 99px;
-  border: 1px solid rgba(232, 199, 122, .45);
+  border: 1px solid rgba(var(--accent-rgb), .45);
   font: 600 12px/1.2 var(--font-title);
   color: var(--gold-light);
 }
 .celebrate .letter-card { z-index: 2; }
+.v-board .end-live { padding: 10px 12px; }
+.v-board .end-live-title { font-size: calc(21px * var(--fs-end, 1)); }
+.v-board .end-live .board-item { font-size: calc(clamp(20px, 5.6vw, 28px) * var(--fs-end, 1)); }

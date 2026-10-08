@@ -295,9 +295,9 @@ export class Celebrate {
   fitLetter(card) {
     const text = card.querySelector('.letter-text');
     const box = card.querySelector('.letter-paper');
-    let k = 1;
+    let k = (Number(this.getSettings().sizeLetter) || 100) / 100;
     card.style.setProperty('--lfs', k);
-    while (k > 0.5 && (text.scrollHeight > box.clientHeight * 0.98 || box.scrollHeight > box.clientHeight + 1)) {
+    while (k > 0.4 && (text.scrollHeight > box.clientHeight * 0.98 || box.scrollHeight > box.clientHeight + 1)) {
       k -= 0.05;
       card.style.setProperty('--lfs', k.toFixed(2));
     }

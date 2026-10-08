@@ -13,6 +13,9 @@ import { Receiver } from './broadcast.js';
 import { entryIcon, entryDetail, SECTIONS, COIN } from './dashboard.js';
 import { DEFAULTS } from './settings.js';
 import { applyFonts } from './fonts.js';
+import { applyTheme } from './theme.js';
+import { renderBoard as drawBoard } from './board.js';
+import { endMessages } from './dashboard.js';
 import { rich, setReceivedSticker } from './stickers.js';
 import { imagesReady, setImageOverride, image } from './images.js';
 import { keepAwake, esc } from './shell.js';
@@ -169,23 +172,21 @@ let boardKey = '';
 function renderBoard(board) {
   const messages = (board && board.messages) || [];
   const speed = (board && board.speed) || 30;
-  const key = JSON.stringify([messages, speed]);
+  const key = JSON.stringify([messages, speed, settings.boardMode, settings.boardSeconds, settings.sizeBoard, settings.fontBoard]);
   if (key === boardKey) return;
   boardKey = key;
-  const track = $('v-board');
-  track.textContent = '';
-  track.className = 'board-track';
-  if (!messages.length) return;
-  const copy = () => messages.map((m) => `<p class="board-item">${rich(m)}</p><span class="board-sep" aria-hidden="true">✦</span>`).join('');
-  track.innerHTML = `<div>${copy()}</div><div aria-hidden="true">${copy()}</div>`;
-  requestAnimationFrame(() => {
-    const h = track.firstElementChild.getBoundingClientRect().height;
-    const win = track.parentElement.clientHeight;
-    const still = h < win * 0.8;
-    track.classList.toggle('still', still);
-    track.lastElementChild.hidden = still;
-    track.style.setProperty('--board-dur', `${(h / Math.max(5, speed)).toFixed(1)}s`);
-  });
+  drawBoard($('v-board'), messages, { speed, mode: settings.boardMode, seconds: settings.boardSeconds });
+}
+
+// Fin du live : le message spécial passe par-dessus la case centrale.
+let endKey = '';
+function renderEndLive(on) {
+  const key = on ? JSON.stringify([settings.endTitle, settings.endMessages, settings.endMode, settings.endSeconds, settings.endSpeed, settings.sizeEnd]) : '';
+  if (key === endKey) return;
+  endKey = key;
+  $('v-end-live').hidden = !on;
+  setRich('v-end-title', on ? settings.endTitle || '' : '');
+  drawBoard($('v-end-track'), on ? endMessages(settings) : [], { speed: settings.endSpeed, mode: settings.endMode, seconds: settings.endSeconds });
 }
 
 // ---------- Messages de l'univers : bouton enveloppe → pseudos → lettre ----------
@@ -233,6 +234,7 @@ function renderDash(st) {
   renderTop('v-likes', 'v-likes-total', st.likes, '');
   renderTop('v-gifters', 'v-gifters-total', st.gifters, COIN);
   renderBoard(st.board);
+  renderEndLive(!!st.endLive && f.board !== false);
 }
 
 // Fichiers attendus (manifeste de la tablette) : ceux qui manquent sont redemandés,
@@ -268,6 +270,7 @@ function onState(st) {
   if (st.settings) {
     settings = { ...DEFAULTS, ...st.settings };
     applyFonts(settings);
+    applyTheme(settings, st.theme);
   }
   renderDash(st);
   renderGame(st.game);
@@ -489,6 +492,7 @@ function onFile(id, buffer, type) {
   if (kind === 'stk') {
     setReceivedSticker(name, buffer ? URL.createObjectURL(new Blob([buffer], { type: type || 'image/webp' })) : null);
     boardKey = '';
+    endKey = '';
     if (last) renderDash(last);
     if (last && last.game) renderGame(last.game);
     return;

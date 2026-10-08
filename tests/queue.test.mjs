@@ -126,7 +126,7 @@ test('paliers : seul le bon nombre compte, le plus proche du franchissement gagn
   const u = (name) => ({ name });
   assert.equal(m.status(99000), 'idle');
   m.observeTotal(99000, 0);
-  assert.equal(m.observeChat({ text: '100k !', t: 1, user: u('trop tôt') }), false); // on n'écoute pas encore
+  m.observeChat({ text: '100k !', t: 1, user: u('trop tôt') }); // bien trop tôt : ne gagnera pas
   m.observeTotal(99850, 1000);
   assert.equal(m.status(), 'alert');
   m.observeChat({ text: '100k', t: 8000, user: u('Ana') }); // 2 s avant : ne compte pas
@@ -169,9 +169,11 @@ test('paliers : un message juste après gagne ; sans message après, on tranche 
 
 test('paliers : formes acceptées', () => {
   const m = new Milestones();
-  ['100k', '100 k', '100K', '100000', '100 000', '100.000', '100,000', 'bravo pour les 100k !!'].forEach((t) => assert.ok(m.mentions(t, 100000), t));
-  ['10k', '1000', '100kg', '150k', '1100k', 'palier'].forEach((t) => assert.ok(!m.mentions(t, 100000), t));
-  assert.ok(m.mentions('150k', 150000));
+  ['100k', '100 k', '100K', '100000', '100 000', '100.000', '100,000', 'bravo pour les 100k !!', '100', 'on y est 100', '100kkkk', '100KKK!!'].forEach((t) => assert.ok(m.mentions(t, 100000), t));
+  ['10k', '1000', '150k', '1100k', 'palier', '1.100', '100.5k', '150'].forEach((t) => assert.ok(!m.mentions(t, 100000), t));
+  ['150', '150k', '150kkkk', '150 000'].forEach((t) => assert.ok(m.mentions(t, 150000), t));
+  assert.ok(!m.mentions('100', 150000));
+  assert.ok(m.mentions('200', 200000));
   assert.equal(Milestones.label(150000), '150k');
 });
 

@@ -77,6 +77,7 @@ export const STORAGE = {
   viewerSound: 'portes.viewer.sound', // son coupé ou non sur la page des viewers
   stickers: 'portes.stickers',     // autocollants (images utilisées comme emojis)
   letterEdit: 'portes.letter.edit', // message reçu modifié depuis les Réglages
+  endLive: 'portes.endlive', // message de fin de live affiché
   univDeck: 'portes.univ.deck',    // messages de l'univers supprimés / ajoutés
   univGrimoire: 'portes.univ.grimoire', // copie des messages du Grimoire
   likeTiers: 'portes.liketiers',   // paliers de likes par personne

@@ -9,6 +9,7 @@ import { ROLES, DEFAULT_GIFT_NAMES } from './gifts.js';
 import { FEATURES, loadFeatures, saveFeatures, loadGiftConfig, saveGiftConfig, loadGiftLog } from './features.js';
 import { SETTINGS, DEFAULTS, loadSettings, saveSettings } from './settings.js';
 import { applyFonts } from './fonts.js';
+import { applyTheme } from './theme.js';
 import { makeRich, rich } from './stickers.js';
 import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
@@ -158,6 +159,10 @@ function settingField(item, value) {
     input = `<span class="range-row"><input ${attrs} type="range" min="${item.min}" max="${item.max}" step="1" value="${value}"><output>${value}${item.unit || ''}</output></span>`;
   } else if (item.type === 'number') {
     input = `<input ${attrs} type="number" inputmode="numeric" min="${item.min}" max="${item.max}" value="${value}">`;
+  } else if (item.type === 'color' && item.def === '') {
+    // Couleur facultative : vide = couleur du thème.
+    input = `<span class="color-row"><input ${attrs} type="color" value="${esc(value || '#f3e9d2')}" data-empty="${value ? '' : '1'}">
+      <button class="btn btn-ghost color-clear" type="button" data-color-clear="${item.key}">${value ? 'Couleur du thème' : 'Couleur du thème ✓'}</button></span>`;
   } else if (item.type === 'color') {
     input = `<input ${attrs} type="color" value="${esc(value)}">`;
   } else if (item.type === 'textarea') {
@@ -185,12 +190,20 @@ function readSettings() {
     else if (it.type === 'range' || it.type === 'number') {
       const v = Number(el.value);
       out[it.key] = Number.isFinite(v) ? Math.min(it.max, Math.max(it.min, v)) : it.def;
-    } else out[it.key] = el.value;
+    } else if (it.type === 'color' && el.dataset.empty === '1') out[it.key] = '';
+    else out[it.key] = el.value;
   }));
   return out;
 }
 
 $('custom-groups').addEventListener('click', (e) => {
+  const clear = e.target.closest('[data-color-clear]');
+  if (clear) {
+    e.preventDefault();
+    $(`set-${clear.dataset.colorClear}`).dataset.empty = '1';
+    clear.textContent = 'Couleur du thème ✓';
+    return;
+  }
   const b = e.target.closest('button[data-setting]');
   if (!b) return;
   const on = b.getAttribute('aria-pressed') !== 'true';
@@ -198,6 +211,10 @@ $('custom-groups').addEventListener('click', (e) => {
   b.querySelector('.state').textContent = on ? 'Oui' : 'Non';
 });
 $('custom-groups').addEventListener('input', (e) => {
+  if (e.target.type === 'color' && e.target.dataset.empty !== undefined) {
+    e.target.dataset.empty = '';
+    e.target.nextElementSibling.textContent = 'Couleur du thème';
+  }
   if (e.target.type === 'range') {
     const it = SETTINGS.flatMap((g) => g.items).find((x) => x.key === e.target.dataset.setting);
     e.target.nextElementSibling.textContent = `${e.target.value}${it.unit || ''}`;
@@ -206,6 +223,7 @@ $('custom-groups').addEventListener('input', (e) => {
 $('custom-save').addEventListener('click', () => {
   saveSettings(readSettings());
   applyFonts(loadSettings());
+  applyTheme(loadSettings());
   status($('custom-status'), '✓ Réglages enregistrés. Ils s’appliquent dès le retour au tableau de bord.', 'live');
 });
 $('custom-reset').addEventListener('click', () => {
@@ -821,6 +839,7 @@ window.addEventListener('storage', (e) => { if (e.key === STORAGE.queue && !$('r
 renderReceived();
 
 applyFonts(loadSettings());
+applyTheme(loadSettings());
 
 // ---------- Autocollants dans les champs de texte ----------
 // Chaque champ marqué data-rich accepte les autocollants de l'iPad (et les images collées).

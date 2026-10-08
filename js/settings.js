@@ -6,6 +6,7 @@
 
 import { STORAGE } from './config.js';
 import { FONT_OPTIONS } from './fonts.js';
+import { THEME_OPTIONS, TEXT_AREAS } from './theme.js';
 import { load, save } from './prefs.js';
 
 export const SETTINGS = [
@@ -14,7 +15,42 @@ export const SETTINGS = [
     items: [
       { key: 'fontText', label: 'Police des textes (toute l’app et la page des viewers)', type: 'select', def: 'cormorant', options: FONT_OPTIONS },
       { key: 'fontTitle', label: 'Police des titres', type: 'select', def: 'cinzel', options: FONT_OPTIONS },
+      { key: 'fontPinned', label: 'Police du message épinglé', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
+      { key: 'fontBoard', label: 'Police de la case centrale (et du message de fin de live)', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
+      { key: 'fontTicker', label: 'Police du bandeau déroulant', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontStar', label: 'Police de la bulle de l’étoile (présentation)', type: 'select', def: 'lora', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
+    ],
+  },
+  {
+    group: 'Thème et couleurs',
+    items: [
+      { key: 'theme', label: 'Thème de l’interface', type: 'select', def: 'nuit', options: THEME_OPTIONS },
+      { key: 'accentColor', label: 'Couleur des ornements (dorures, bordures, titres)', type: 'color', def: '' },
+      { key: 'panelColor', label: 'Couleur des cases', type: 'color', def: '' },
+    ],
+  },
+  {
+    group: 'Tailles et couleurs des textes',
+    items: TEXT_AREAS.flatMap((a) => [
+      ...(a.size ? [{ key: `size${a.key}`, label: `${a.label} : taille`, type: 'range', def: 100, min: 50, max: 200, unit: '%' }] : []),
+      { key: `color${a.key}`, label: `${a.label} : couleur`, type: 'color', def: '' },
+    ]),
+  },
+  {
+    group: 'Case centrale',
+    items: [
+      { key: 'boardMode', label: 'Affichage des messages', type: 'select', def: 'scroll', options: [['scroll', 'Défilement continu (de bas en haut)'], ['slides', 'Un message à la fois, qui glisse vers le suivant']] },
+      { key: 'boardSeconds', label: 'Un message à la fois : temps d’affichage de chaque message', type: 'range', def: 8, min: 3, max: 30, unit: ' s' },
+    ],
+  },
+  {
+    group: 'Fin du live 🏁',
+    items: [
+      { key: 'endTitle', label: 'Titre du message de fin (laisser vide pour aucun)', type: 'text', def: 'Merci d’avoir été là ✨' },
+      { key: 'endMessages', label: 'Messages de fin (un message par ligne)', type: 'textarea', def: 'Merci pour vos questions, vos cadeaux et votre bienveillance 💛\nLes réponses que vous n’avez pas eues ce soir viendront au prochain live\nAbonnez-vous pour ne pas manquer le prochain rendez-vous\nPrenez soin de vous, à très vite 🌙' },
+      { key: 'endMode', label: 'Affichage des messages de fin', type: 'select', def: 'slides', options: [['slides', 'Un message à la fois, qui glisse vers le suivant'], ['scroll', 'Défilement continu (de bas en haut)']] },
+      { key: 'endSeconds', label: 'Un message à la fois : temps d’affichage de chaque message', type: 'range', def: 7, min: 3, max: 30, unit: ' s' },
+      { key: 'endSpeed', label: 'Défilement continu : vitesse', type: 'range', def: 30, min: 10, max: 120, unit: '' },
     ],
   },
   {

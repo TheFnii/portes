@@ -99,6 +99,10 @@
       <section class="panel board" id="board-box" data-feature="board">
         <h2 class="board-title" data-text="boardTitle"></h2>
         <div class="board-window"><div class="board-track" id="board-track"></div></div>
+        <div class="end-live" id="end-live" hidden>
+          <h2 class="end-live-title" id="end-live-title"></h2>
+          <div class="board-window"><div class="board-track" id="end-live-track"></div></div>
+        </div>
         <button class="icon-btn board-full-btn" id="board-full-btn" type="button" title="Messages en plein écran" aria-label="Messages en plein écran">⛶</button>
       </section>
 
@@ -122,6 +126,7 @@
       <div class="dash-tools">
         <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
         <button class="icon-btn tour-btn" data-action="tour" type="button" title="Présentation des cases" aria-label="Présentation des cases">⭐</button>
+        <button class="icon-btn end-btn" id="end-btn" data-action="endlive" type="button" title="Fin du live" aria-label="Fin du live" aria-pressed="false">🏁</button>
         <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
         <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
       </div>

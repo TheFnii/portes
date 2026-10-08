@@ -52,7 +52,7 @@ Les animations passent l’une après l’autre. Chacune peut être désactivée
 
 ### Les paliers de likes
 Règles strictes, un seul gagnant par palier (100k, puis tous les 50k, réglable) :
-- seul compte un message qui contient **le bon nombre** (« 100k » pour 100k, « 150k » pour 150k ; « 100 000 », « 100000 », « 100 k » aussi), quel que soit le texte autour ; un autre nombre ne compte pas ;
+- tout message qui contient **le bon nombre** compte, quel que soit le texte autour : pour 150k, « 150 », « 150k », « 150kkkk », « 150 000 » ou « 150000 » ; un autre nombre ne compte pas ;
 - l’écoute commence un peu avant le palier (à partir de 99 800 par défaut, un bandeau prévient) ;
 - l’instant exact où le compteur franchit le palier est noté ;
 - les messages envoyés **moins d’1 seconde avant** le franchissement comptent, ainsi que **tous ceux d’après** ;
@@ -101,8 +101,28 @@ Dans la case, toucher **Relire** rouvre une lettre. Dans **Réglages → Message
 
 ## Polices et autocollants
 
-- **Polices** (Réglages → Personnalisation → Polices d’écriture) : une police pour les textes, une pour les titres, et une à part pour la bulle de l’étoile (Lora, très lisible, par défaut). Elles s’appliquent aussi à la page des viewers.
+- **Polices** (Réglages → Personnalisation → Polices d’écriture) : une police pour les textes, une pour les titres, et des polices à part pour le message épinglé, la case centrale, le bandeau déroulant et la bulle de l’étoile (Lora, très lisible, par défaut). Elles s’appliquent aussi à la page des viewers.
 - **Autocollants** : dans les champs de texte des Réglages (ruban, case centrale, messages de l’univers, bulles de l’étoile, textes de la personnalisation), vos autocollants de l’iPad s’insèrent comme des emojis. Le bouton ✦ d’un champ ouvre « Mes autocollants » (réutiliser, ajouter une image, supprimer). Ils s’affichent partout, y compris chez les viewers.
+
+## Thème, couleurs et tailles des textes
+
+- **Thème** (Réglages → Personnalisation → Thème et couleurs) : Nuit étoilée, Aube, Jour, Crépuscule, Forêt, Océan, Rose… ou **Selon l’heure** : aube à 6 h, jour à 10 h, crépuscule à 17 h, nuit à 21 h (l’heure de la tablette ; le thème change tout seul pendant le live).
+- **Couleur de l’interface** : la couleur des ornements (dorures, bordures, titres) et celle des cases peuvent remplacer celles du thème. « Couleur du thème » revient à la couleur d’origine.
+- **Tailles et couleurs des textes** : pour chaque texte (titres des cases, message épinglé, case centrale, bandeau, liste, tops, lettre de l’univers, animations, jeu, message de fin, bulle de l’étoile, autres textes), une taille et une couleur.
+
+Les viewers voient le même thème (y compris le thème « selon l’heure » de la tablette), les mêmes couleurs et les mêmes tailles.
+
+## Case centrale : défilement ou un message à la fois
+
+**Réglages → Personnalisation → Case centrale** : les messages défilent de bas en haut, ou bien s’affichent **un par un**, en grand, quelques secondes chacun (réglable), puis glissent vers le suivant. Même chose en plein écran et chez les viewers.
+
+## Fin du live 🏁
+
+Le bouton 🏁, à côté de l’étoile et de la lune, affiche un **message spécial par-dessus la case centrale** : un titre et vos messages de fin (un par ligne, autocollants possibles), qui défilent ou glissent un par un. Touchez 🏁 à nouveau pour l’enlever. Il reste affiché si vous rechargez l’app, il est vu aussi par les viewers, et il s’enlève tout seul quand vous commencez un nouveau live. À régler dans **Réglages → Personnalisation → Fin du live**.
+
+## Message épinglé
+
+Le message épinglé reste affiché jusqu’au prochain épinglage, même si vous le désépinglez sur TikTok.
 
 ## Présentation des cases (écran de veille ⭐)
 
@@ -223,7 +243,7 @@ L’indicateur en haut à droite du jeu montre l’état de la connexion : vert 
 - **Le chat** : les chiffres du Jeu des Portes.
 - **Les cadeaux** : nom, identifiant, valeur en pièces, expéditeur et nombre envoyé (combos compris) : liste, animations et Top Gifters.
 - **Les likes** : par personne pour le Top Likes, et le total du live pour les paliers.
-- **Le message épinglé** : affiché dans la case 📌 (et retiré quand vous le désépinglez).
+- **Le message épinglé** : affiché dans la case 📌, jusqu’au prochain message épinglé.
 
 ### Pendant le jeu
 Les spectateurs écrivent un chiffre de 1 à 12 dans le chat, seul (« 7 ») ou dans une phrase (« je prends la 7 ✨ ») ; les chiffres en emoji comme 7️⃣ ou 🔟 comptent aussi. Près de chaque porte, un petit personnage apparaît pour chaque personne qui l’a choisie (au-delà de 8, un « +N »). Chaque groupe porte le numéro de sa porte et se place là où il ne cache rien.
@@ -308,6 +328,8 @@ js/
   playlist.js         musiques ajoutées à la radio
   tour.js             écran de veille « présentation » (l’étoile)
   fonts.js            polices de l’app
+  theme.js            thèmes, couleurs, tailles des textes
+  board.js            case centrale : défilement ou un message à la fois
   stickers.js         autocollants dans les textes
   broadcast.js        diffusion signée tablette → viewers
   mqtt.js             petit client du relais (MQTT sur WebSocket)

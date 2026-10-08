@@ -1,5 +1,6 @@
 // Polices de l'application (Réglages → Personnalisation → Polices) : une pour les textes,
-// une pour les titres, et une à part pour la bulle de l'étoile (qui doit être très lisible).
+// une pour les titres, et des polices à part pour le message épinglé, la case centrale, le bandeau
+// et la bulle de l'étoile (qui doit être très lisible).
 // Les polices en ligne viennent de Google Fonts et ne sont chargées que si elles sont choisies.
 
 export const FONTS = {
@@ -33,9 +34,16 @@ export function applyFonts(s) {
   const pick = (key, def) => (FONTS[key] ? key : def);
   const text = pick(s.fontText, 'cormorant');
   const title = pick(s.fontTitle, 'cinzel');
-  const star = s.fontStar === 'same' ? text : pick(s.fontStar, 'lora');
-  [text, title, star].forEach(load);
+  const own = (key, def) => (key === 'same' ? text : pick(key, def));
+  const star = own(s.fontStar, 'lora');
+  const board = own(s.fontBoard, text);
+  const ticker = own(s.fontTicker, text);
+  const pinned = own(s.fontPinned, text);
+  [text, title, star, board, ticker, pinned].forEach(load);
   root.setProperty('--font-text', FONTS[text].css);
   root.setProperty('--font-title', FONTS[title].css);
   root.setProperty('--font-star', FONTS[star].css);
+  root.setProperty('--font-board', FONTS[board].css);
+  root.setProperty('--font-ticker', FONTS[ticker].css);
+  root.setProperty('--font-pinned', FONTS[pinned].css);
 }

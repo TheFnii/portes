@@ -233,14 +233,15 @@ export class Milestones {
     return n % 1000 === 0 ? `${n / 1000}k` : n.toLocaleString('fr-FR');
   }
 
-  // Le message contient-il le nombre du palier ? « 150k », « 150 k », « 150K », « 150000 »,
-  // « 150 000 », « 150.000 »… Un autre nombre (« 100k » pour le palier 150k) ne compte pas.
+  // Le message contient-il le nombre du palier ? Tout message qui contient le chiffre compte :
+  // « 150 », « 150k », « 150kkkk », « 150 K », « 150000 », « 150 000 », « 150.000 »…
+  // Un autre nombre (« 100 » pour le palier 150k, « 1150 ») ne compte pas.
   mentions(text, n) {
     const t = String(text || '').toLowerCase().normalize('NFKC');
     const compact = t.replace(/(\d)[\s.,  ](?=\d{3}(?!\d))/g, '$1');
-    if (new RegExp(`(^|[^\\d])${n}(?![\\d])`).test(compact)) return true;
+    if (new RegExp(`(^|[^\\d])${n}(?!\\d)`).test(compact)) return true;
     const k = n / 1000;
-    return Number.isInteger(k) && new RegExp(`(^|[^\\d.,])${k}\\s?k(?![a-z])`).test(t);
+    return Number.isInteger(k) && new RegExp(`(^|[^\\d])${k}(?![\\d]|[.,]\\d)`).test(compact);
   }
 
   // Nouveau total de likes, à l'instant t (ms).
@@ -252,11 +253,12 @@ export class Milestones {
   // Message du chat à l'instant t (ms). Renvoie true s'il participe à la course.
   observeChat({ text, t, user }) {
     const n = this.next();
-    if (this.status() === 'idle' || !this.mentions(text, n)) return false;
+    if (!this.mentions(text, n)) return false;
+    // Tous les messages qui citent le palier sont gardés (le compteur de likes peut arriver en
+    // retard) ; seuls comptent ceux d'au plus 1 s avant le franchissement.
     this.candidates.push({ t, user });
-    // On ne garde que les messages encore utiles (pas plus d'1 s avant le franchissement).
-    const limit = (this.crossedAt ?? t) - 1000;
-    if (this.candidates.length > 50) this.candidates = this.candidates.filter((c) => c.t >= limit);
+    const limit = this.crossedAt !== null ? this.crossedAt - 1000 : t - 120000;
+    if (this.candidates.length > 40) this.candidates = this.candidates.filter((c) => c.t >= limit);
     return true;
   }
 

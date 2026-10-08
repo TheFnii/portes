@@ -3,13 +3,25 @@
   --font-text: 'Cormorant Garamond', Georgia, serif;
   --font-title: 'Cinzel', serif;
   --font-star: var(--font-text);
+  --font-board: var(--font-text);
+  --font-ticker: var(--font-text);
+  --font-pinned: var(--font-text);
+  /* Couleurs du thème (réglables : Réglages → Personnalisation → Thème et couleurs, voir theme.js) */
+  --accent-rgb: 232, 199, 122;
+  --accent-light-rgb: 246, 227, 168;
+  --panel-a: rgba(40, 18, 62, .88);
+  --panel-b: rgba(12, 8, 22, .9);
+  --panel-solid-a: #1c0d2c;
+  --panel-solid-b: #110918;
+  --veil-rgb: 10, 4, 18;
+  --veil-deep-rgb: 5, 2, 9;
   --gold: #e8c77a;
   --gold-light: #f6e3a8;
   --gold-deep: #b38634;
   --ink: #f3e9d2;
   --night: #07100b;
   --violet: #2a1446;
-  --glass: rgba(18, 10, 28, .72);
+  --glass: rgba(var(--veil-rgb), .72);
   --radius: 18px;
   color-scheme: dark;
 }
