@@ -71,8 +71,8 @@ export async function hostKey({ renew = false } = {}) {
 }
 
 // Lien à donner aux viewers.
-export function viewerLink(pub) {
-  const u = new URL('live.html', location.href);
+export function viewerLink(pub, page = 'live.html') {
+  const u = new URL(page, location.href);
   u.search = '';
   u.hash = pub;
   return u.href;

@@ -421,3 +421,4 @@ output { color: var(--gold-light); font-weight: 600; }
 .color-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .color-row input[type=color] { flex: none; }
 .color-row .color-clear { min-height: 40px; padding: 6px 12px; font-size: 15px; }
+.sub-title { margin: 22px 0 4px; font: 600 18px/1.2 var(--font-title); color: var(--gold-light); }

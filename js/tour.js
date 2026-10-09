@@ -63,10 +63,19 @@ const POSE_KEYS = new Set(STAR_POSES.map(([k]) => k));
 
 export class Tour {
   // getSettings : réglages (taille de la bulle…) ; render : texte → HTML (autocollants).
-  constructor(root, { getSettings = () => ({}), render = (t) => t } = {}) {
+  // Page Broadcast : elementOf (où sont les cases), scale (grand écran), et follow() suit la
+  // tablette au lieu d'avancer toute seule ; onStep prévient à chaque case présentée.
+  constructor(root, {
+    getSettings = () => ({}), render = (t) => t, onStep = () => {},
+    elementOf = (key) => document.getElementById(TOUR_TARGETS[key].el), scale = () => 1,
+  } = {}) {
     this.root = root;
     this.getSettings = getSettings;
     this.render = render;
+    this.onStep = onStep;
+    this.elementOf = elementOf;
+    this.scale = scale;
+    this.auto = true;
     root.innerHTML = `<div class="tour-spot"></div>
       <div class="tour-star"><div class="tour-star-body"></div><div class="tour-arm">${ARM_SVG}</div></div>
       <div class="tour-bubble"><h2 class="tour-title"></h2><p class="tour-text"></p><span class="tour-tail"></span></div>
@@ -88,7 +97,7 @@ export class Tour {
   steps() {
     return loadTour().filter((s) => {
       if (!s.on) return false;
-      const el = document.getElementById(TOUR_TARGETS[s.key].el);
+      const el = this.elementOf(s.key);
       if (!el || el.closest('.feature-off')) return false;
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0;
@@ -98,6 +107,7 @@ export class Tour {
   open() {
     this.list = this.steps();
     if (!this.list.length) return false;
+    this.auto = true;
     this.root.hidden = false;
     this.index = 0;
     this.show(0);
@@ -131,6 +141,21 @@ export class Tour {
     this.star.classList.toggle('hidden-arm', /^vol/.test(name));
   }
 
+  // Page Broadcast : montre la case que la tablette présente (sans minuteur propre).
+  follow(list, i) {
+    if (!list || !list.length) { if (this.active) this.close(); return; }
+    const step = list[i];
+    const el = step && TOUR_TARGETS[step.key] && this.elementOf(step.key);
+    const r = el && el.getBoundingClientRect();
+    if (!r || !r.width || el.closest('.feature-off')) { this.close(); return; }
+    const same = this.active && this.list && this.index === i && JSON.stringify(this.list[i]) === JSON.stringify(step);
+    this.auto = false;
+    this.list = list;
+    this.index = i;
+    this.root.hidden = false;
+    if (!same) this.show(i);
+  }
+
   close() {
     clearTimeout(this.timer);
     clearTimeout(this.poseTimer);
@@ -147,7 +172,9 @@ export class Tour {
   show(i, resize = false) {
     if (!resize) clearTimeout(this.timer);
     const step = this.list[i];
-    const el = document.getElementById(TOUR_TARGETS[step.key].el);
+    const el = this.elementOf(step.key);
+    if (!el) return;
+    const k0 = this.scale();
     const W = window.innerWidth;
     const H = window.innerHeight;
     const pad = 10;
@@ -161,7 +188,7 @@ export class Tour {
     const space = { left: r.left, right: W - r.right, top: r.top, bottom: H - r.bottom };
     let side = step.side;
     if (!space[side] || side === 'auto') side = Object.entries(space).sort((a, b) => b[1] - a[1])[0][0];
-    const S = Math.max(80, Math.min(150, Math.min(W, H) * 0.16));
+    const S = Math.max(80, Math.min(150 * k0, Math.min(W, H) * 0.16));
     const gap = 14;
     let sx;
     let sy;
@@ -209,7 +236,7 @@ export class Tour {
     const bh = Math.max(120, zone.h * k);
     this.bubble.className = `tour-bubble tail-${zone.tail}`;
     Object.assign(this.bubble.style, { width: `${bw}px`, height: `${bh}px`, left: '0px', top: '0px', visibility: 'hidden' });
-    this.fitText(Number(set.tourTextMax) || 54);
+    this.fitText(Math.round((Number(set.tourTextMax) || 54) * k0));
     requestAnimationFrame(() => {
       const b = this.bubble.getBoundingClientRect();
       // Au plus près de l'étoile, sans sortir de la zone.
@@ -231,6 +258,7 @@ export class Tour {
     });
     this.root.querySelector('.tour-dots').innerHTML = this.list.map((s, k) => `<span${k === i ? ' class="on"' : ''}></span>`).join('');
     this.root.classList.add('in');
-    if (!resize) this.timer = setTimeout(() => this.next(), Math.max(3, Number(step.seconds) || 9) * 1000);
+    if (!resize && this.auto) this.timer = setTimeout(() => this.next(), Math.max(3, Number(step.seconds) || 9) * 1000);
+    if (!resize) this.onStep(this.list, i);
   }
 }

@@ -31,7 +31,10 @@
   pointer-events: none;
   transition: opacity .8s ease;
 }
-body.at-home .stage-veil { opacity: .92; }
+/* Tableau de bord : fond neutre, le jeu n'apparaît pas derrière (seulement quand on l'ouvre) */
+body.at-home .stage-veil { opacity: 1; background: radial-gradient(ellipse at 50% 40%, rgba(var(--veil-rgb), 1), rgb(var(--veil-deep-rgb))); }
+body.at-home .stage-wrap,
+body.at-home .backdrop { visibility: hidden; }
 body.focusing .stage-veil { opacity: 1; }
 
 .stage {

@@ -1,0 +1,55 @@
+/* ---------- Page Broadcast (output.html) : le tableau de bord de la tablette, en paysage,
+   pour la capture de fenêtre dans TikTok LIVE Studio. Pas de boutons, pas de curseur.
+   --oz : échelle de la fenêtre par rapport à l'iPad (calculée par viewer.js), pour que tout
+   reste net et à la bonne taille en 1080p, 1440p ou 4K. ---------- */
+
+html, body.output { background: rgb(var(--veil-deep-rgb)); }
+body.output { cursor: none; --oz: 1; }
+body.output * { cursor: none !important; }
+
+/* Le tableau de bord occupe tout l'écran (pas de barre de boutons en bas). */
+body.output .dash {
+  --dash-bottom-h: 18px;
+  padding: 18px 22px 0;
+}
+body.output.ticker-on .dash { --dash-ticker-space: calc(58px * max(1, var(--fs-ticker, 1))); }
+body.output .ticker { zoom: var(--oz); }
+body.output.at-home .ticker { bottom: 14px; }
+
+/* Les cases du tableau de bord ne réagissent à rien. */
+body.output .dash, body.output .ticker { pointer-events: none; }
+
+/* Le jeu : l'info de la partie, comme la barre de la tablette, en haut au centre. */
+body.output .v-game-info {
+  top: calc(14px * var(--oz));
+  bottom: auto;
+  font-size: calc(16px * var(--oz));
+}
+body.output .v-game-info::after { content: none; }
+
+/* Grandes vues par-dessus le tableau de bord */
+body.output .screensaver,
+body.output .board-full,
+body.output .rank-full { cursor: none; }
+body.output .ss-band { --ticker-font: 17vh; }
+body.output .screensaver .ticker-item { font-size: calc(var(--ticker-font) * min(1, var(--fs-ticker, 1))); }
+
+/* En attente du live */
+body.output .v-wait-card { max-width: 60vw; }
+body.output .v-wait-card h1 { font-size: 6vh; }
+body.output .v-wait-card p { font-size: 3vh; }
+
+.o-sound-hint {
+  position: fixed;
+  z-index: 200;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 20px;
+  border-radius: 99px;
+  background: rgba(var(--veil-rgb), .92);
+  border: 1px solid rgba(var(--accent-rgb), .5);
+  font: 600 16px/1.2 var(--font-title);
+  color: var(--gold-light);
+}

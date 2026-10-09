@@ -1,5 +1,7 @@
 // Page des viewers : copie en lecture seule du live, synchronisée en temps réel avec la
 // tablette (tableau de bord, Jeu des Portes, animations des cadeaux et des paliers).
+// Aussi la page Broadcast (output.html, body.output) : tout le tableau de bord de la tablette,
+// en paysage, avec ce qu'elle affiche par-dessus (écran de veille, plein écran, présentation).
 
 import { STORAGE } from './config.js';
 import { flowerDefs } from './doors-art.js';
@@ -10,7 +12,9 @@ import { FX } from './fx.js';
 import { Sound } from './sound.js';
 import { Celebrate } from './celebrate.js';
 import { Receiver } from './broadcast.js';
-import { entryIcon, entryDetail, SECTIONS, COIN } from './dashboard.js';
+import { entryIcon, entryDetail, SECTIONS, COIN, layoutGrid, fitPinnedText, bigRanking } from './dashboard.js';
+import { Ticker } from './ticker.js';
+import { Tour } from './tour.js';
 import { DEFAULTS } from './settings.js';
 import { applyFonts } from './fonts.js';
 import { applyTheme } from './theme.js';
@@ -23,6 +27,7 @@ import { keepAwake, esc } from './shell.js';
 const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const body = document.body;
+const OUTPUT = body.classList.contains('output');
 
 // ---------- Construction ----------
 
@@ -33,7 +38,8 @@ const stage = $('stage');
 const doors = new DoorStage({ doorsEl: $('doors'), plaza: $('plaza'), focusEl: $('focus'), focusDoorEl: $('focus-door') });
 const dice = new Dice($('dice'), { region: { x: 470, y: 330, w: 560, h: 670 }, rest: LAYOUT.dice });
 const fx = new FX($('fx'));
-const sound = new Sound({ key: STORAGE.viewerSound, defaultOn: false });
+// Broadcast : le son est actif (c'est lui que le live entend), après un premier clic.
+const sound = OUTPUT ? new Sound({ key: 'portes.output.sound', defaultOn: true }) : new Sound({ key: STORAGE.viewerSound, defaultOn: false });
 let settings = { ...DEFAULTS };
 const celebrate = new Celebrate({ root: $('celebrate'), fx, sound, getSettings: () => settings });
 
@@ -44,9 +50,22 @@ let rollId = 0;
 
 // ---------- Mise à l'échelle de la scène du jeu ----------
 
+// Broadcast : échelle de la fenêtre par rapport à l'iPad (1180 × 820), pour tout agrandir.
+let oz = 1;
 function fit() {
   const W = window.innerWidth;
   const H = window.innerHeight;
+  if (OUTPUT) {
+    oz = Math.max(0.6, Math.min(W / 1180, H / 820));
+    document.documentElement.style.setProperty('--oz', oz.toFixed(3));
+    body.style.setProperty('--oz', oz.toFixed(3));
+    document.documentElement.style.setProperty('--ts', (((settings.textScale || 100) / 100) * oz).toFixed(3));
+    const s = Math.min(W / LAYOUT.W, (H - 50 * oz) / LAYOUT.H);
+    stage.style.setProperty('--scale', s.toFixed(4));
+    stage.style.top = `calc(50% + ${Math.round(16 * oz)}px)`;
+    dice.resize(s);
+    return;
+  }
   const portrait = H > W;
   const s = Math.min(W / LAYOUT.W, (portrait ? H * 0.7 : H - 40) / LAYOUT.H);
   stage.style.setProperty('--scale', s.toFixed(4));
@@ -61,19 +80,56 @@ function stageToScreen(x, y) {
   return { x: r.left + (x / LAYOUT.W) * r.width, y: r.top + (y / LAYOUT.H) * r.height };
 }
 
+// Broadcast : les animations, la présentation et les grandes vues sont dessinées pour l'iPad.
+// On recopie leurs règles CSS avec chaque taille en px multipliée par --oz : tout grandit avec
+// la fenêtre (net en 1440p / 4K), sans toucher aux positions calculées en JavaScript.
+const SCALED = /^\.(cel|env|letter|l-|has-paper|celebrate|tour|board-full|rank-full|screensaver|ss-|result|winners|countdown|focus)/;
+function scaleOutputCss() {
+  const out = [];
+  [...document.styleSheets].forEach((sheet) => {
+    let rules;
+    try { rules = sheet.cssRules; } catch (e) { return; }
+    [...rules].forEach((r) => {
+      if (!(r instanceof CSSStyleRule)) return;
+      const parts = r.selectorText.split(',').map((x) => x.trim());
+      const keep = parts.filter((x) => SCALED.test(x.replace(/^body[^ ]*\s+/, '')));
+      if (!keep.length) return;
+      const decls = [];
+      // cssText garde les raccourcis (font: …) même avec des var().
+      r.style.cssText.split(/;(?![^(]*\))/).forEach((d) => {
+        const m = /^\s*([\w-]+)\s*:\s*([\s\S]+?)\s*$/.exec(d);
+        if (!m || /^(--|transition|animation|transform)/.test(m[1]) || !/\dpx/.test(m[2])) return;
+        decls.push(`${m[1]}: ${m[2].replace(/(-?\d*\.?\d+)px/g, 'calc($1px * var(--oz))')}`);
+      });
+      if (decls.length) out.push(`${keep.map((x) => `html ${x}`).join(', ')} { ${decls.join('; ')} }`);
+    });
+  });
+  const style = document.createElement('style');
+  style.textContent = out.join('\n');
+  document.head.appendChild(style);
+}
+if (OUTPUT) scaleOutputCss();
+
 // ---------- Son (coupé par défaut : le live a déjà le sien) ----------
 
 function renderSound() {
   const b = $('v-sound');
+  if (!b) return;
   b.textContent = sound.enabled ? '🔊' : '🔇';
   b.setAttribute('aria-label', sound.enabled ? 'Couper le son' : 'Activer le son');
 }
-$('v-sound').addEventListener('click', () => {
+if ($('v-sound')) $('v-sound').addEventListener('click', () => {
   sound.setEnabled(!sound.enabled);
   sound.unlock();
   if (sound.enabled) sound.tink();
   renderSound();
 });
+// Broadcast : un clic dans la fenêtre autorise le son (exigence des navigateurs).
+if (OUTPUT) {
+  $('o-sound-hint').hidden = false;
+  setTimeout(() => { $('o-sound-hint').hidden = true; }, 20000);
+  document.addEventListener('pointerdown', () => { $('o-sound-hint').hidden = true; }, { once: true });
+}
 document.addEventListener('pointerdown', () => { if (sound.enabled) sound.unlock(); keepAwake(); }, { capture: true });
 
 // ---------- État du live ----------
@@ -87,8 +143,10 @@ function isFresh() {
 function renderStatus() {
   const el = $('v-status');
   const fresh = isFresh();
-  el.className = `v-status ${connected && fresh ? 'live' : 'wait'}`;
-  el.querySelector('.label').textContent = !connected ? 'Connexion…' : fresh ? 'En direct' : 'Hors ligne';
+  if (el) {
+    el.className = `v-status ${connected && fresh ? 'live' : 'wait'}`;
+    el.querySelector('.label').textContent = !connected ? 'Connexion…' : fresh ? 'En direct' : 'Hors ligne';
+  }
   const w = $('v-wait');
   if (last && !last.list) {
     w.classList.remove('gone');
@@ -194,6 +252,7 @@ function renderEndLive(on) {
 let letters = [];
 function renderLetters(list) {
   letters = list || [];
+  if (OUTPUT) { renderDonutBox(); return; }
   const btn = $('v-letters');
   btn.hidden = !letters.length;
   $('v-letters-count').textContent = letters.length;
@@ -207,9 +266,30 @@ function renderLetters(list) {
       <span class="env-mini gift-icon" aria-hidden="true">${icon}</span><span class="name">${esc(l.name)}</span>
       ${l.count > 1 ? `<span class="mult">×${l.count}</span>` : ''}<span class="reread" aria-hidden="true">Lire</span></button></li>`).join('');
 }
-$('v-letters').addEventListener('click', () => { $('v-letters-panel').hidden = false; });
-$('v-letters-close').addEventListener('click', () => { $('v-letters-panel').hidden = true; });
-$('v-letters-panel').addEventListener('click', (e) => {
+// Broadcast : la case « Message de l'univers », comme sur la tablette.
+let seenLetters = null;
+function renderDonutBox() {
+  const logoUrl = image('logoEnveloppe');
+  const icon = logoUrl ? `<img src="${esc(logoUrl)}" alt="">` : '✉️';
+  if ($('v-donut-icon').dataset.src !== (logoUrl || '')) {
+    $('v-donut-icon').dataset.src = logoUrl || '';
+    $('v-donut-icon').innerHTML = icon;
+  }
+  setRich('v-univ-title', settings.univTitle || '');
+  setText('v-donut-count', String(letters.length));
+  const html = letters.length
+    ? letters.map((l) => `<li${seenLetters && !seenLetters.has(l.id) ? ' class="new"' : ''}><span class="letter-btn">
+        <span class="env-mini gift-icon" aria-hidden="true">${icon}</span><span class="name">${esc(l.name)}</span>${l.count > 1 ? `<span class="mult">×${l.count}</span>` : ''}
+        ${l.message ? '<span class="reread" aria-hidden="true">Relire</span>' : ''}</span></li>`).join('')
+    : `<li class="empty">${rich(settings.univEmpty || '')}</li>`;
+  const list = $('v-donut-list');
+  if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }
+  seenLetters = new Set(letters.map((l) => l.id));
+}
+
+if (!OUTPUT) $('v-letters').addEventListener('click', () => { $('v-letters-panel').hidden = false; });
+if (!OUTPUT) $('v-letters-close').addEventListener('click', () => { $('v-letters-panel').hidden = true; });
+if (!OUTPUT) $('v-letters-panel').addEventListener('click', (e) => {
   if (e.target === $('v-letters-panel')) { $('v-letters-panel').hidden = true; return; }
   const b = e.target.closest('[data-letter]');
   if (!b) return;
@@ -221,20 +301,90 @@ $('v-letters-panel').addEventListener('click', (e) => {
 
 function renderDash(st) {
   const f = st.features || {};
-  renderLetters(f.donuts === false ? [] : (st.letters || []).filter((l) => l.message));
+  renderLetters(f.donuts === false ? [] : (st.letters || []).filter((l) => OUTPUT || l.message));
   document.querySelectorAll('[data-feature]').forEach((el) => el.classList.toggle('feature-off', f[el.dataset.feature] === false));
-  document.documentElement.style.setProperty('--ts', ((settings.textScale || 100) / 100).toFixed(2));
-  const pin = $('v-pinned');
-  pin.hidden = !st.pinned;
-  setText('v-pinned-text', st.pinned || '');
+  if (OUTPUT) {
+    fit();
+    document.documentElement.style.setProperty('--pinned-h', `${settings.pinnedHeight}px`);
+    layoutGrid($('v-dash-main'), $('v-dash-tops'), settings, f);
+    const p = $('v-pinned-text');
+    const text = st.pinned || settings.pinnedEmpty || '';
+    p.classList.toggle('empty', !st.pinned);
+    if (p.textContent !== text) p.textContent = text;
+    fitPinnedText(p, $('v-pinned'), settings);
+  } else {
+    document.documentElement.style.setProperty('--ts', ((settings.textScale || 100) / 100).toFixed(2));
+    const pin = $('v-pinned');
+    pin.hidden = !st.pinned;
+    setText('v-pinned-text', st.pinned || '');
+  }
   renderQueue(st);
   setRich('v-likes-title', settings.likesTitle || 'Top Likes');
   setRich('v-gifters-title', settings.giftersTitle || 'Top Gifters');
   setRich('v-board-title', settings.boardTitle || '');
+  if (OUTPUT) { setRich('v-univ-title', settings.univTitle || ''); }
   renderTop('v-likes', 'v-likes-total', st.likes, '');
   renderTop('v-gifters', 'v-gifters-total', st.gifters, COIN);
   renderBoard(st.board);
   renderEndLive(!!st.endLive && f.board !== false);
+  if (OUTPUT) renderOutput(st);
+}
+
+// ---------- Broadcast : bandeau, et ce que la tablette affiche par-dessus ----------
+
+const ticker = OUTPUT ? new Ticker($('v-ticker'), $('v-ticker-track')) : null;
+const saver = OUTPUT ? new Ticker($('v-saver'), $('v-ss-track'), { speedFactor: 2.4 }) : null;
+const OUT_BOXES = { pinned: 'v-pinned', list: 'v-queue-col', board: 'v-board-box', likes: 'v-likes-box', gifters: 'v-gifters-box', univ: 'v-donut-box' };
+const tour = OUTPUT ? new Tour($('v-tour'), {
+  getSettings: () => settings,
+  render: (t) => rich(t),
+  elementOf: (key) => (OUT_BOXES[key] ? $(OUT_BOXES[key]) : null),
+  scale: () => oz,
+}) : null;
+if (saver) saver.setEnabled(true);
+let tickerKey = '';
+let fullKey = '';
+
+function renderOutput(st) {
+  const t = st.ticker || { on: false, messages: [] };
+  const key = JSON.stringify([t.messages, t.speed, settings.fontTicker]);
+  if (key !== tickerKey) {
+    tickerKey = key;
+    ticker.setData(t.messages || [], t.speed || 30);
+    saver.setData(t.messages || [], t.speed || 30);
+  }
+  ticker.setEnabled(!!t.on);
+  body.classList.toggle('ticker-on', !!t.on && (t.messages || []).length > 0);
+
+  const view = st.game ? '' : st.view || '';
+  $('v-saver').hidden = view !== 'saver';
+  body.classList.toggle('saver', view === 'saver');
+  // Case centrale en plein écran (ou le message de fin, s'il est affiché).
+  const full = $('v-board-full');
+  const fk = view === 'board' ? JSON.stringify([st.endLive, st.board, settings.endMessages, settings.boardMode, settings.endMode]) : '';
+  if (fk !== fullKey) {
+    fullKey = fk;
+    full.hidden = !fk;
+    full.classList.toggle('end', !!st.endLive);
+    if (fk) {
+      requestAnimationFrame(() => {
+        if (st.endLive) drawBoard($('v-board-full-track'), endMessages(settings), { speed: settings.endSpeed * 1.8, mode: settings.endMode, seconds: settings.endSeconds });
+        else drawBoard($('v-board-full-track'), (st.board && st.board.messages) || [], { speed: ((st.board && st.board.speed) || 30) * 1.8, mode: settings.boardMode, seconds: settings.boardSeconds });
+      });
+    } else drawBoard($('v-board-full-track'), []);
+  }
+  $('v-likes-full').hidden = view !== 'likes';
+  if (view === 'likes') {
+    const d = st.likesFull || st.likes || {};
+    setRich('v-likes-full-title', settings.likesTitle || 'Top Likes');
+    setText('v-likes-full-total', Math.round(d.total || 0).toLocaleString('fr-FR'));
+    const html = bigRanking(d.top || []);
+    const el = $('v-likes-full-list');
+    if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }
+  }
+  // Présentation ⭐ : l'étoile suit la tablette, case par case.
+  if (st.tour && !st.game && st.tour.list) requestAnimationFrame(() => tour.follow(st.tour.list, st.tour.i));
+  else if (tour.active) tour.close();
 }
 
 // Fichiers attendus (manifeste de la tablette) : ceux qui manquent sont redemandés,

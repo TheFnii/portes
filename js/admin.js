@@ -452,6 +452,9 @@ async function showCastLink(renew = false) {
     const link = viewerLink(key.pub);
     $('cast-link').value = link;
     $('cast-open').href = link;
+    const out = viewerLink(key.pub, 'output.html');
+    $('output-link').value = out;
+    $('output-open').href = out;
   } catch (e) {
     $('cast-link').value = 'Ce navigateur ne permet pas de créer le lien (page à ouvrir en https).';
   }
@@ -482,6 +485,16 @@ $('cast-copy').addEventListener('click', async () => {
     document.execCommand('copy');
   }
   status($('cast-status-text'), 'Lien copié ✓', 'live');
+});
+
+$('output-copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('output-link').value);
+  } catch (e) {
+    $('output-link').select();
+    document.execCommand('copy');
+  }
+  status($('cast-status-text'), 'Lien Broadcast copié ✓', 'live');
 });
 
 $('cast-renew').addEventListener('click', async () => {

@@ -131,7 +131,15 @@
         <button class="btn btn-ghost" id="cast-renew" type="button">Changer de lien</button>
       </div>
       <p class="form-status" id="cast-status-text" role="status"></p>
-      <p class="hint">Le lien reste le même d’un live à l’autre. Activez la diffusion sur <strong>la tablette du live</strong> : c’est elle qui envoie tout en direct (le petit voyant 📡 Viewers apparaît en bas du tableau de bord). Les viewers peuvent ajouter la page à leur écran d’accueil.</p>
+      <h3 class="sub-title">🖥️ Version Broadcast (TikTok LIVE Studio)</h3>
+      <p class="hint">Sur l’ordinateur du live, ouvrez ce lien : tout le tableau de bord de la tablette, en paysage, sans aucun bouton, synchronisé en direct (animations, jeu, écran de veille, plein écran, présentation ⭐). Dans TikTok LIVE Studio, ajoutez une source « Capture de fenêtre » sur cette fenêtre. Ce lien est privé : ne le partagez pas, il sert seulement à votre ordinateur.</p>
+      <label class="field"><span>Lien Broadcast</span>
+        <input id="output-link" type="text" readonly value="Préparation du lien…"></label>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="output-copy" type="button">Copier le lien Broadcast</button>
+        <a class="btn" id="output-open" href="output.html" target="_blank" rel="noopener">Ouvrir la version Broadcast</a>
+      </div>
+      <p class="hint">Le lien reste le même d’un live à l’autre. Activez la diffusion sur <strong>la tablette du live</strong> : c’est elle qui envoie tout en direct (une petite pastille verte apparaît sur le bouton ⚙ du tableau de bord). Les viewers peuvent ajouter la page à leur écran d’accueil.</p>
       <p class="hint">Les images et les sons déposés ci-dessous sont aussi envoyés aux viewers, tels quels, à chaque changement (images jusqu’à 3 Mo, sons jusqu’à 1,5 Mo) : ils voient et entendent exactement les mêmes que vous. Sur leur téléphone, le son démarre coupé ; un bouton 🔇 permet de l’activer.</p>
     </details>
 

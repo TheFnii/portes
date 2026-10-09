@@ -44,6 +44,59 @@ export function entryDetail(e) {
 
 export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
 
+// Calcule les colonnes et les zones de la grille selon les modules affichés
+// (tableau de bord de la tablette et page Broadcast).
+export function layoutGrid(main, topsEl, s, f) {
+  const tops = f.likes || f.gifters;
+  const list = f.list;
+  const board = f.board;
+  topsEl.classList.toggle('feature-off', !tops);
+  topsEl.classList.toggle('single', !(f.likes && f.gifters));
+
+  // Colonnes (de gauche à droite pour une liste à droite)
+  let cols = [];
+  if (tops) cols.push(['tops', `${s.sideWidth}%`]);
+  if (board) cols.push(['board', 'minmax(0, 1fr)']);
+  if (list) cols.push(['list', `${s.listWidth}%`]);
+  if (!board && cols.length) cols[cols.length - 1][1] = 'minmax(0, 1fr)';
+  if (!board && tops && list) cols = [['tops', 'minmax(0, 1fr)'], ['list', `${Math.max(s.listWidth, 40)}%`]];
+  if (s.listSide === 'left') cols.reverse();
+  if (!cols.length) cols = [['board', 'minmax(0, 1fr)']];
+
+  // Rangée du haut : message épinglé, et la case des enveloppes au-dessus de la liste.
+  const names = cols.map((c) => c[0]);
+  const univCol = list ? names.indexOf('list') : names.length - 1;
+  const top = names.map((n, i) => {
+    if (f.donuts && i === univCol && names.length > 1) return 'univ';
+    return f.pinned ? 'pin' : (f.donuts ? 'univ' : 'pin');
+  });
+  const showTop = f.pinned || f.donuts;
+  main.style.gridTemplateColumns = cols.map((c) => c[1]).join(' ');
+  main.style.gridTemplateRows = showTop ? 'var(--pinned-h, 150px) minmax(0, 1fr)' : 'minmax(0, 1fr)';
+  main.style.gridTemplateAreas = (showTop ? `"${top.join(' ')}" ` : '') + `"${names.join(' ')}"`;
+}
+
+// Le texte prend la plus grande taille possible qui tient dans la case.
+export function fitPinnedText(p, box, s) {
+  if (!p || !box || !box.clientHeight) return;
+  const maxH = box.clientHeight - 24;
+  let size = Math.round(64 * ((Number(s.sizePinned) || 100) / 100));
+  p.style.fontSize = `${size}px`;
+  while (size > 16 && (p.scrollHeight > maxH || p.scrollWidth > p.clientWidth + 1)) {
+    size -= 2;
+    p.style.fontSize = `${size}px`;
+  }
+}
+
+// Classement en grand (Top Likes plein écran).
+export function bigRanking(list, unit = '') {
+  const medals = ['🥇', '🥈', '🥉'];
+  return list.length
+    ? list.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span><span class="name">${esc(u.name)}</span>
+        <span class="value">${Math.round(u.value).toLocaleString('fr-FR')}${unit}</span></li>`).join('')
+    : '<li class="empty">Personne pour l’instant</li>';
+}
+
 export class Dashboard {
   constructor({ onRemove, onOpenLetter, onBoardFull }) {
     this.seen = new Set();
@@ -83,36 +136,8 @@ export class Dashboard {
     this.fitPinned();
   }
 
-  // Calcule les colonnes et les zones de la grille selon les modules affichés.
   layout(s, f) {
-    const main = $('dash-main');
-    const tops = f.likes || f.gifters;
-    const list = f.list;
-    const board = f.board;
-    $('dash-tops').classList.toggle('feature-off', !tops);
-    $('dash-tops').classList.toggle('single', !(f.likes && f.gifters));
-
-    // Colonnes (de gauche à droite pour une liste à droite)
-    let cols = [];
-    if (tops) cols.push(['tops', `${s.sideWidth}%`]);
-    if (board) cols.push(['board', 'minmax(0, 1fr)']);
-    if (list) cols.push(['list', `${s.listWidth}%`]);
-    if (!board && cols.length) cols[cols.length - 1][1] = 'minmax(0, 1fr)';
-    if (!board && tops && list) cols = [['tops', 'minmax(0, 1fr)'], ['list', `${Math.max(s.listWidth, 40)}%`]];
-    if (s.listSide === 'left') cols.reverse();
-    if (!cols.length) cols = [['board', 'minmax(0, 1fr)']];
-
-    // Rangée du haut : message épinglé, et la case des enveloppes au-dessus de la liste.
-    const names = cols.map((c) => c[0]);
-    const univCol = list ? names.indexOf('list') : names.length - 1;
-    const top = names.map((n, i) => {
-      if (f.donuts && i === univCol && names.length > 1) return 'univ';
-      return f.pinned ? 'pin' : (f.donuts ? 'univ' : 'pin');
-    });
-    const showTop = f.pinned || f.donuts;
-    main.style.gridTemplateColumns = cols.map((c) => c[1]).join(' ');
-    main.style.gridTemplateRows = showTop ? 'var(--pinned-h, 150px) minmax(0, 1fr)' : 'minmax(0, 1fr)';
-    main.style.gridTemplateAreas = (showTop ? `"${top.join(' ')}" ` : '') + `"${names.join(' ')}"`;
+    layoutGrid($('dash-main'), $('dash-tops'), s, f);
   }
 
   // ---------- Liste à traiter ----------
@@ -204,6 +229,13 @@ export class Dashboard {
 
   renderLikes(likes) {
     this.renderTop('likes-list', 'likes-total', likes, '');
+    if (!$('likes-full').hidden) this.renderLikesFull(likes);
+  }
+
+  // Top Likes en plein écran (plus de monde que dans la case).
+  renderLikesFull(likes) {
+    $('likes-full-total').textContent = Math.round(likes.total).toLocaleString('fr-FR');
+    $('likes-full-list').innerHTML = bigRanking(likes.top(10).map((u) => ({ name: u.name || u.handle, value: u.value })));
   }
 
   renderGifters(gifters) {
@@ -226,16 +258,7 @@ export class Dashboard {
 
   // Le texte prend la plus grande taille possible qui tient dans la case.
   fitPinned() {
-    const p = $('pinned-text');
-    const box = $('pinned');
-    if (!p || !box.clientHeight) return;
-    const maxH = box.clientHeight - 24;
-    let size = Math.round(64 * ((Number(this.s.sizePinned) || 100) / 100));
-    p.style.fontSize = `${size}px`;
-    while (size > 16 && (p.scrollHeight > maxH || p.scrollWidth > p.clientWidth + 1)) {
-      size -= 2;
-      p.style.fontSize = `${size}px`;
-    }
+    fitPinnedText($('pinned-text'), $('pinned'), this.s);
   }
 
   flashPinned() {

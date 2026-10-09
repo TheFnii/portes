@@ -89,6 +89,7 @@
         <section class="panel likers" id="likes-box" data-feature="likes">
           <header class="panel-head"><h3>❤ <span data-text="likesTitle">Top Likes</span></h3><span class="count" id="likes-total">0</span></header>
           <ol class="side-list" id="likes-list"></ol>
+          <button class="icon-btn box-full-btn" id="likes-full-btn" type="button" title="Top Likes en plein écran" aria-label="Top Likes en plein écran">⛶</button>
         </section>
         <section class="panel gifters" id="gifters-box" data-feature="gifters">
           <header class="panel-head"><h3>🎁 <span data-text="giftersTitle">Top Gifters</span></h3><span class="count" id="gifters-total">0</span></header>
@@ -127,7 +128,7 @@
         <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
         <button class="icon-btn tour-btn" data-action="tour" type="button" title="Présentation des cases" aria-label="Présentation des cases">⭐</button>
         <button class="icon-btn end-btn" id="end-btn" data-action="endlive" type="button" title="Fin du live" aria-label="Fin du live" aria-pressed="false">🏁</button>
-        <a class="icon-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙</a>
+        <a class="icon-btn settings-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙<span class="cast-status" id="cast-status" hidden title="Diffusé aux viewers" aria-hidden="true"></span></a>
         <button class="icon-btn fullscreen-btn" data-action="fullscreen" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
       </div>
       <button class="btn corner-game" id="btn-open-game" data-feature="game" type="button">
@@ -168,7 +169,6 @@
   <button class="live-status" id="live-status" type="button">
     <span class="dot"></span><span class="label">Non connecté</span>
   </button>
-  <span class="cast-status" id="cast-status" hidden title="Diffusé aux viewers">📡 <span>Viewers</span></span>
   <aside class="drawer" id="drawer" hidden>
     <h2>Menu du jeu</h2>
     <button class="btn btn-menu" data-action="close-game" type="button">
@@ -217,6 +217,16 @@
   <!-- Case centrale en plein écran : seulement les messages -->
   <div class="board-full" id="board-full" hidden>
     <div class="board-full-window"><div class="board-track" id="board-full-track"></div></div>
+    <p class="ss-hint">Touchez l’écran pour revenir</p>
+  </div>
+
+  <!-- Top Likes en plein écran -->
+  <div class="rank-full" id="likes-full" hidden>
+    <div class="rank-full-card">
+      <h2>❤ <span data-text="likesTitle">Top Likes</span></h2>
+      <p class="rank-full-total"><span id="likes-full-total">0</span> likes</p>
+      <ol class="rank-full-list" id="likes-full-list"></ol>
+    </div>
     <p class="ss-hint">Touchez l’écran pour revenir</p>
   </div>
 

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Les Portes du Destin · Broadcast</title>
+  <meta name="description" content="Sortie Broadcast du live : tout le tableau de bord, en paysage, pour la capture dans TikTok LIVE Studio.">
+  <meta name="theme-color" content="#07100b">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="preload" href="fonts/cinzel-0.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/scene.css">
+  <link rel="stylesheet" href="css/doors.css">
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/dash.css">
+  <link rel="stylesheet" href="css/celebrate.css">
+  <link rel="stylesheet" href="css/live.css">
+  <link rel="stylesheet" href="css/output.css">
+</head>
+<body class="viewer output at-home">
+  <svg class="defs" aria-hidden="true" width="0" height="0"><defs id="flower-defs"></defs></svg>
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- Jeu des Portes (en plein écran, seulement quand il est lancé sur la tablette) -->
+  <div class="stage-veil" aria-hidden="true"></div>
+  <div class="stage-wrap" id="stage-wrap">
+    <div class="stage" id="stage">
+      <svg class="plaza" id="plaza" viewBox="0 0 1500 1000"></svg>
+      <div class="doors" id="doors"></div>
+      <div class="stage-title">
+        <h2 id="stage-heading"></h2>
+        <div class="flourish" aria-hidden="true"></div>
+        <p id="stage-tagline"></p>
+      </div>
+      <canvas class="dice-canvas" id="dice"></canvas>
+      <div class="dice-number" id="dice-number"></div>
+    </div>
+  </div>
+  <p class="v-game-info" id="v-game-info"></p>
+
+  <div class="focus" id="focus" hidden>
+    <div class="focus-veil"></div>
+    <div class="focus-door" id="focus-door"></div>
+    <section class="result" id="result" hidden>
+      <div class="result-inner" id="result-inner"></div>
+    </section>
+  </div>
+  <div class="countdown" id="countdown" hidden><span id="countdown-num"></span></div>
+
+  <canvas class="fx" id="fx" aria-hidden="true"></canvas>
+
+  <!-- Le tableau de bord, comme sur la tablette (sans les boutons) -->
+  <section class="dash" id="dash">
+    <div class="dash-main" id="v-dash-main">
+      <section class="panel pinned" id="v-pinned" data-feature="pinned">
+        <span class="pinned-icon" aria-hidden="true">📌</span>
+        <p id="v-pinned-text" class="empty"></p>
+      </section>
+
+      <section class="panel donuts" id="v-donut-box" data-feature="donuts">
+        <header class="panel-head"><h3><span class="env-mini gift-icon" id="v-donut-icon" aria-hidden="true">✉️</span> <span id="v-univ-title"></span></h3><span class="count" id="v-donut-count">0</span></header>
+        <ul class="side-list" id="v-donut-list"></ul>
+      </section>
+
+      <aside class="dash-tops" id="v-dash-tops">
+        <section class="panel likers" id="v-likes-box" data-feature="likes">
+          <header class="panel-head"><h3>❤ <span id="v-likes-title">Top Likes</span></h3><span class="count" id="v-likes-total">0</span></header>
+          <ol class="side-list" id="v-likes"></ol>
+        </section>
+        <section class="panel gifters" id="v-gifters-box" data-feature="gifters">
+          <header class="panel-head"><h3>🎁 <span id="v-gifters-title">Top Gifters</span></h3><span class="count" id="v-gifters-total">0</span></header>
+          <ol class="side-list" id="v-gifters"></ol>
+        </section>
+      </aside>
+
+      <section class="panel board" id="v-board-box" data-feature="board">
+        <h2 class="board-title" id="v-board-title"></h2>
+        <div class="board-window"><div class="board-track" id="v-board"></div></div>
+        <div class="end-live" id="v-end-live" hidden>
+          <h2 class="end-live-title" id="v-end-title"></h2>
+          <div class="board-window"><div class="board-track" id="v-end-track"></div></div>
+        </div>
+      </section>
+
+      <section class="queue-col" id="v-queue-col" data-feature="list">
+        <section class="panel queue">
+          <header class="panel-head">
+            <h2 id="v-queue-title"></h2>
+            <span class="milestone-chip" id="v-chip" hidden></span>
+          </header>
+          <div class="queue-current empty" id="v-current"></div>
+          <ol class="queue-list" id="v-list"></ol>
+        </section>
+      </section>
+    </div>
+  </section>
+
+  <!-- Bandeau des messages défilants -->
+  <div class="ticker off" id="v-ticker"><div class="ticker-track" id="v-ticker-track"></div></div>
+
+  <!-- Ce que la tablette affiche par-dessus : écran de veille, plein écran, présentation -->
+  <div class="screensaver" id="v-saver" hidden><div class="ss-band"><div class="ticker-track" id="v-ss-track"></div></div></div>
+  <div class="board-full" id="v-board-full" hidden>
+    <div class="board-full-window"><div class="board-track" id="v-board-full-track"></div></div>
+  </div>
+  <div class="rank-full" id="v-likes-full" hidden>
+    <div class="rank-full-card">
+      <h2>❤ <span id="v-likes-full-title">Top Likes</span></h2>
+      <p class="rank-full-total"><span id="v-likes-full-total">0</span> likes</p>
+      <ol class="rank-full-list" id="v-likes-full-list"></ol>
+    </div>
+  </div>
+  <div class="tour" id="v-tour" hidden></div>
+
+  <div class="celebrate" id="celebrate" hidden></div>
+
+  <!-- En attente : lien incomplet, ou live pas encore commencé -->
+  <div class="v-wait" id="v-wait">
+    <div class="v-wait-card">
+      <p class="home-kicker">✦ Les Portes du Destin ✦</p>
+      <h1 id="v-wait-title">Connexion au live…</h1>
+      <div class="flourish" aria-hidden="true"></div>
+      <p id="v-wait-text">Un instant, les portes s’ouvrent.</p>
+    </div>
+  </div>
+
+  <!-- Le navigateur exige un clic avant de jouer des sons -->
+  <p class="o-sound-hint" id="o-sound-hint" hidden>🔊 Cliquez une fois dans cette fenêtre pour activer le son</p>
+
+  <noscript>Cette page a besoin de JavaScript.</noscript>
+  <script type="module" src="js/viewer.js"></script>
+</body>
+</html>

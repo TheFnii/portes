@@ -138,9 +138,23 @@ Quand une personne atteint un palier avec ses propres likes (10 000 par défaut)
 
 ## Case centrale en plein écran
 
-Le petit bouton ⛶ en bas à gauche de la case centrale affiche ses messages en plein écran ; touchez l’écran pour revenir.
+Le petit bouton ⛶ en bas à gauche de la case centrale affiche ses messages en plein écran ; touchez l’écran pour revenir. La case Top Likes a le même bouton (en bas à droite) : le classement s’affiche en grand, avec les 10 premiers, et se met à jour en direct.
+
+Sur le tableau de bord, le fond est neutre : le Jeu des Portes n’apparaît plus du tout derrière les cases. Il s’affiche en plein écran seulement quand vous le lancez. La petite pastille sur le bouton ⚙ indique la diffusion aux viewers (verte : diffusé, orange : connexion en cours).
 
 ---
+
+## Version Broadcast (TikTok LIVE Studio)
+
+Une page à ouvrir sur **l’ordinateur du live** : elle affiche tout le tableau de bord de la tablette, en paysage, sans aucun bouton ni curseur, synchronisé en temps réel. Elle montre le message épinglé, la liste, les tops, la case centrale, la case des enveloppes, le bandeau, le message de fin, le Jeu des Portes en plein écran, toutes les animations, et aussi ce que vous affichez par-dessus : écran de veille 🌙, case centrale ou Top Likes en plein écran, présentation ⭐.
+
+1. Sur la tablette, activez la diffusion (**Réglages → Page des viewers**).
+2. Dans cette même section, copiez le **lien Broadcast** et ouvrez-le sur l’ordinateur. Ce lien est privé : ne le partagez pas.
+3. Mettez la fenêtre en grand (F11 pour le plein écran). Tout s’adapte à sa taille et reste net en 1080p, en 1440p et en 4K.
+4. Dans TikTok LIVE Studio, ajoutez une source **Capture de fenêtre** sur cette fenêtre.
+5. Cliquez une fois dans la fenêtre pour autoriser le son des animations. Pour que le live l’entende, capturez aussi l’audio de l’ordinateur. La radio, elle, reste jouée par la tablette.
+
+Pour une 4K très nette sur un écran plus petit, vous pouvez aussi zoomer dans le navigateur (Ctrl +) : la mise en page reste la même.
 
 ## La page des viewers (téléphones)
 

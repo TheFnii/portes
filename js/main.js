@@ -97,6 +97,7 @@ function applyLetterEdit() {
 function openBoardFull() {
   const box = $('board-full');
   box.hidden = false;
+  castState();
   box.classList.toggle('end', endLive);
   requestAnimationFrame(() => {
     if (endLive) {
@@ -109,6 +110,20 @@ $('board-full').addEventListener('pointerdown', (e) => {
   $('board-full').hidden = true;
   stopBoard($('board-full-track'));
   $('board-full-track').textContent = '';
+  castState();
+});
+
+// ---------- Top Likes en plein écran (on en sort en touchant l'écran) ----------
+
+$('likes-full-btn').addEventListener('click', () => {
+  $('likes-full').hidden = false;
+  dash.renderLikesFull(likes);
+  castState();
+});
+$('likes-full').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  $('likes-full').hidden = true;
+  castState();
 });
 
 // ---------- Fin du live : message spécial par-dessus la case centrale ----------
@@ -211,6 +226,7 @@ function changed() {
 // ---------- Diffusion vers la page des viewers (live.html) ----------
 
 let cast = null;
+let tour = null; // présentation ⭐ (créée plus bas)
 let lastResult = null; // résultat affiché (les viewers qui l'ont manqué le retrouvent dans l'état)
 let boardData = { messages: [], speed: 30 };
 let gameCounts = null;
@@ -241,10 +257,17 @@ function castEvent(kind, data) {
   if (cast) cast.event(kind, data);
 }
 
-const pickTop = (r) => ({
+const pickTop = (r, n = settings.topCount || 6) => ({
   total: Math.round(r.total),
-  top: r.top(settings.topCount || 6).map((u) => ({ name: u.name || u.handle, value: Math.round(u.value) })),
+  top: r.top(n).map((u) => ({ name: u.name || u.handle, value: Math.round(u.value) })),
 });
+
+function currentView() {
+  if (!$('screensaver').hidden) return 'saver';
+  if (!$('board-full').hidden) return 'board';
+  if (!$('likes-full').hidden) return 'likes';
+  return '';
+}
 
 // Tout ce que les viewers voient (rien de privé : ni clé, ni réglages de connexion).
 function snapshot() {
@@ -256,6 +279,11 @@ function snapshot() {
       board: features.board, list: features.list, game: features.game, donuts: features.donuts,
     },
     pinned: features.pinned && pinned ? pinned.text : '',
+    // Pour la page Broadcast : ce qui est affiché en ce moment par-dessus le tableau de bord.
+    view: currentView(),
+    tour: tour && tour.active && tour.list ? { list: tour.list, i: tour.index } : null,
+    ticker: { on: ticker.enabled, messages: ticker.messages, speed: ticker.speed },
+    likesFull: pickTop(likes, 10),
     endLive: endLive && features.board,
     theme: themeKey,
     title: dash.title(queue),
@@ -930,6 +958,7 @@ function setTicker(on) {
   ticker.setEnabled(on);
   syncToggles();
   fit();
+  castState();
 }
 
 function setSound(on) {
@@ -972,11 +1001,16 @@ function openScreensaver() {
   }
   saver.setData(ticker.messages, ticker.speed);
   $('screensaver').hidden = false;
+  castState();
   body.classList.add('saver');
   enterFullscreen(false);
 }
 // Écran de veille « présentation » : l'étoile fait le tour des cases.
-const tour = new Tour($('tour'), { getSettings: () => settings, render: (t) => rich(t) });
+tour = new Tour($('tour'), {
+  getSettings: () => settings,
+  render: (t) => rich(t),
+  onStep: () => castState(),
+});
 function openTour() {
   $('drawer').hidden = true;
   if (state.screen !== 'dash') { toast('La présentation se lance depuis le tableau de bord.'); return; }
@@ -986,10 +1020,13 @@ function openTour() {
 $('tour').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   tour.close();
+  castState();
 });
 
 function closeScreensaver() {
+  if ($('screensaver').hidden) return;
   $('screensaver').hidden = true;
+  castState();
   body.classList.remove('saver');
 }
 $('screensaver').addEventListener('pointerdown', (e) => {
@@ -1018,7 +1055,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
   if (tour.active) {
-    if (e.key === 'Escape') tour.close();
+    if (e.key === 'Escape') { tour.close(); castState(); }
     return;
   }
   if (!$('notice').hidden || !$('screensaver').hidden) {
@@ -1049,6 +1086,7 @@ function loadBoard() {
 function loadTicker() {
   return ticker.load().then(() => {
     fit();
+    castState();
     if (ticker.error) toast('Le fichier messages.json contient une erreur : le bandeau est masqué.', 6000);
   });
 }
