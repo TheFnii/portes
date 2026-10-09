@@ -322,7 +322,11 @@ function renderDash(st) {
   setRich('v-likes-title', settings.likesTitle || 'Top Likes');
   setRich('v-gifters-title', settings.giftersTitle || 'Top Gifters');
   setRich('v-board-title', settings.boardTitle || '');
-  if (OUTPUT) { setRich('v-univ-title', settings.univTitle || ''); }
+  if (OUTPUT) {
+    setRich('v-univ-title', settings.univTitle || '');
+    setRich('v-game-label', settings.gameButton || 'Jeu des Portes');
+    body.classList.toggle('no-game-btn', f.game === false);
+  }
   renderTop('v-likes', 'v-likes-total', st.likes, '');
   renderTop('v-gifters', 'v-gifters-total', st.gifters, COIN);
   renderBoard(st.board);
@@ -334,7 +338,7 @@ function renderDash(st) {
 
 const ticker = OUTPUT ? new Ticker($('v-ticker'), $('v-ticker-track')) : null;
 const saver = OUTPUT ? new Ticker($('v-saver'), $('v-ss-track'), { speedFactor: 2.4 }) : null;
-const OUT_BOXES = { pinned: 'v-pinned', list: 'v-queue-col', board: 'v-board-box', likes: 'v-likes-box', gifters: 'v-gifters-box', univ: 'v-donut-box' };
+const OUT_BOXES = { game: 'v-game-btn', pinned: 'v-pinned', list: 'v-queue-col', board: 'v-board-box', likes: 'v-likes-box', gifters: 'v-gifters-box', univ: 'v-donut-box' };
 const tour = OUTPUT ? new Tour($('v-tour'), {
   getSettings: () => settings,
   render: (t) => rich(t),

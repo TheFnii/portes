@@ -146,7 +146,7 @@ Sur le tableau de bord, le fond est neutre : le Jeu des Portes n’apparaît plu
 
 ## Version Broadcast (TikTok LIVE Studio)
 
-Une page à ouvrir sur **l’ordinateur du live** : elle affiche tout le tableau de bord de la tablette, en paysage, sans aucun bouton ni curseur, synchronisé en temps réel. Elle montre le message épinglé, la liste, les tops, la case centrale, la case des enveloppes, le bandeau, le message de fin, le Jeu des Portes en plein écran, toutes les animations, et aussi ce que vous affichez par-dessus : écran de veille 🌙, case centrale ou Top Likes en plein écran, présentation ⭐.
+Une page à ouvrir sur **l’ordinateur du live** : elle affiche tout le tableau de bord de la tablette, en paysage, sans curseur et sans autres boutons que celui du Jeu des Portes (juste pour l’image, et pour que l’étoile le présente), synchronisé en temps réel. Elle montre le message épinglé, la liste, les tops, la case centrale, la case des enveloppes, le bandeau, le message de fin, le Jeu des Portes en plein écran, toutes les animations, et aussi ce que vous affichez par-dessus : écran de veille 🌙, case centrale ou Top Likes en plein écran, présentation ⭐.
 
 1. Sur la tablette, activez la diffusion (**Réglages → Page des viewers**).
 2. Dans cette même section, copiez le **lien Broadcast** et ouvrez-le sur l’ordinateur. Ce lien est privé : ne le partagez pas.

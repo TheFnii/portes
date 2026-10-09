@@ -7,14 +7,13 @@ html, body.output { background: rgb(var(--veil-deep-rgb)); }
 body.output { cursor: none; --oz: 1; }
 body.output * { cursor: none !important; }
 
-/* Le tableau de bord occupe tout l'écran (pas de barre de boutons en bas). */
-body.output .dash {
-  --dash-bottom-h: 18px;
-  padding: 18px 22px 0;
-}
+/* Le tableau de bord : en bas, seulement le bouton du jeu (pour l'image et la présentation ⭐). */
+body.output { --dash-bottom-h: 92px; }
+body.output.no-game-btn { --dash-bottom-h: 18px; }
+body.output .dash { padding: 18px 22px 0; }
+body.output .dash-bottom { grid-template-columns: 1fr auto 1fr; }
 body.output.ticker-on .dash { --dash-ticker-space: calc(58px * max(1, var(--fs-ticker, 1))); }
 body.output .ticker { zoom: var(--oz); }
-body.output.at-home .ticker { bottom: 14px; }
 
 /* Les cases du tableau de bord ne réagissent à rien. */
 body.output .dash, body.output .ticker { pointer-events: none; }
@@ -43,7 +42,7 @@ body.output .v-wait-card p { font-size: 3vh; }
   position: fixed;
   z-index: 200;
   left: 50%;
-  bottom: 24px;
+  top: 24px;
   transform: translateX(-50%);
   margin: 0;
   padding: 10px 20px;
