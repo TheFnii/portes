@@ -176,7 +176,7 @@ function settingField(item, value) {
 }
 
 function renderSettings(values = loadSettings()) {
-  $('custom-groups').innerHTML = SETTINGS.map((g, i) => `
+  $('custom-groups').innerHTML = SETTINGS.filter((g) => !g.hidden).map((g, i) => `
     <details class="set-group"${i === 0 ? ' open' : ''}>
       <summary>${esc(g.group)}</summary>
       <div class="set-items">${g.items.map((it) => settingField(it, values[it.key])).join('')}</div>
@@ -671,6 +671,18 @@ $('tier-save').addEventListener('click', () => {
   status($('tier-status'), '✓ Paliers enregistrés.', 'live');
 });
 renderTiers();
+
+// ---------- Page des viewers : textes de la course aux likes ----------
+
+const VIEWER_KEYS = ['raceVTitle', 'raceVText', 'raceVHint'];
+const viewerItems = SETTINGS.flatMap((g) => g.items).filter((it) => VIEWER_KEYS.includes(it.key));
+$('viewer-texts').innerHTML = viewerItems.map((it) => settingField(it, loadSettings()[it.key])).join('');
+$('viewer-texts-save').addEventListener('click', () => {
+  const s = loadSettings();
+  VIEWER_KEYS.forEach((k) => { s[k] = $(`set-${k}`).value.trim(); });
+  saveSettings(s);
+  status($('viewer-texts-status'), '✓ Textes enregistrés : les viewers les voient tout de suite.', 'live');
+});
 
 // ---------- Course aux likes : paliers (total du live) et leurs textes ----------
 

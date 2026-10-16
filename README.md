@@ -156,7 +156,7 @@ Sur le tableau de bord, le fond est neutre : le Jeu des Portes n’apparaît plu
 
 ## Diaporama 🌙
 
-Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. On en sort **seulement avec le bouton 🌙** (il reste visible en bas à gauche). À côté : **◀** écran précédent ; en bas à droite : **▶** écran suivant ; en haut à droite : **🔍** chercher un pseudo dans la course aux likes, pour montrer à quelqu’un où il en est (sa photo est mise en avant, aussi dans la version Broadcast). Dans **Réglages → Diaporama** :
+Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. On en sort **seulement avec le bouton 🌙** (il reste visible en bas à gauche). À côté : **◀** écran précédent ; en bas à droite : **▶** écran suivant ; en haut à droite, seulement sur l’écran de la course aux likes : **🔍** la liste de tous les participants, avec cases à cocher et recherche ; les pseudos cochés sont mis en avant sur la course (aussi dans la version Broadcast) et remontent en haut de la liste. Dans **Réglages → Diaporama** :
 - cochez les écrans à montrer, parmi Top Likes, Course aux likes, message central, Top Gifters, messages défilants, message épinglé, liste à traiter, messages de l’univers et message de fin de live ;
 - choisissez leur ordre et leur durée ;
 - ajoutez une phrase sous chaque écran ;
@@ -172,7 +172,7 @@ Un chemin (sans chiffres qui encombrent) : les photos de profil sont les curseur
 - **Taille des photos, taille des textes, texte sous le chemin, titre** : Personnalisation → Course aux likes. **Police** : Personnalisation → Polices d’écriture. **Image de fond** : Réglages → Course aux likes.
 - **Sur la tablette** : bouton 🏃 en bas de la case Top Likes (plein écran), et dans le diaporama.
 - **Dans la version Broadcast** : comme sur la tablette.
-- **Pour les viewers** : un bouton 🏃 en haut de leur page. Avec 🔍, chacun coche son pseudo (et ceux de ses amis ou concurrents) pour suivre leur progression, même hors du top ; « Tout décocher » revient au top.
+- **Pour les viewers** : un bouton 🏃 en haut de leur page. Avec 🔍, la liste complète des participants (avec recherche) : chacun coche son pseudo et ceux de ses amis ou concurrents pour suivre leur progression, même hors du top ; les pseudos cochés sont en haut de la liste ; « Tout décocher » revient au top. Les phrases de la course chez les viewers se règlent dans **Réglages → Page des viewers**.
 
 ## Version Broadcast (TikTok LIVE Studio)
 

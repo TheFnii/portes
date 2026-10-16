@@ -1047,7 +1047,7 @@ async function slideMedia(key) {
 function forgetSlideMedia() {
   Object.keys(mediaUrls).forEach((k) => { if (mediaUrls[k]) URL.revokeObjectURL(mediaUrls[k]); delete mediaUrls[k]; });
 }
-slideshow = new Slideshow($('slideshow'), { data: snapshot, mediaUrl: slideMedia, onStep: () => castState() });
+slideshow = new Slideshow($('slideshow'), { data: snapshot, mediaUrl: slideMedia, onStep: () => { syncSearchBtn(); castState(); } });
 
 // Commandes du diaporama (seulement sur la tablette) : 🌙 pour sortir, ◀ ▶ pour changer
 // d'écran, 🔍 pour chercher un pseudo dans la course aux likes.
@@ -1060,34 +1060,39 @@ $('ss-search-btn').addEventListener('click', () => {
   if (!box.hidden) { $('ss-search-input').value = ''; renderRaceSearch(); $('ss-search-input').focus(); }
 });
 const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+// Liste complète des participants, cases à cocher ; les pseudos cochés en haut.
 function renderRaceSearch() {
   const q = norm($('ss-search-input').value.trim());
-  const all = likes.top(300);
-  const found = (q ? all.filter((u) => norm(u.name).includes(q) || norm(u.handle).includes(q)) : all).slice(0, 8);
-  $('ss-search-list').innerHTML = found.length
-    ? found.map((u) => `<li><button type="button" data-racer="${esc(u.handle || u.name)}"><span>${esc(u.name || u.handle)}</span><b>${Math.round(u.value).toLocaleString('fr-FR')}</b></button></li>`).join('')
+  const all = likes.top(300).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: u.value }));
+  const list = all.filter((u) => raceFocus.includes(u.id) || !q || norm(u.name).includes(q) || norm(u.id).includes(q));
+  list.sort((a, b) => (raceFocus.includes(b.id) - raceFocus.includes(a.id)) || b.value - a.value);
+  $('ss-search-list').innerHTML = list.length
+    ? list.map((u) => `<li><label><input type="checkbox" data-racer="${esc(u.id)}"${raceFocus.includes(u.id) ? ' checked' : ''}><span>${esc(u.name)}</span><b>${Math.round(u.value).toLocaleString('fr-FR')}</b></label></li>`).join('')
     : '<li class="empty">Personne avec ce pseudo pour l’instant</li>';
   $('ss-search-clear').hidden = !raceFocus.length;
 }
 $('ss-search-input').addEventListener('input', renderRaceSearch);
-$('ss-search-list').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-racer]');
-  if (!b) return;
-  raceFocus = [b.dataset.racer];
-  $('ss-search').hidden = true;
-  // On va sur l'écran de la course pour le montrer.
-  const i = slideshow.list.findIndex((it) => it.kind === 'race');
-  if (i < 0) toast('Ajoutez la « Course aux likes » au diaporama (Réglages → Diaporama).');
-  else if (slideshow.index !== i) slideshow.show(i);
-  else slideshow.refresh();
+$('ss-search-list').addEventListener('change', (e) => {
+  const c = e.target.closest('[data-racer]');
+  if (!c) return;
+  const id = c.dataset.racer;
+  raceFocus = c.checked ? [...new Set([...raceFocus, id])] : raceFocus.filter((x) => x !== id);
+  renderRaceSearch();
+  slideshow.refresh();
   castState();
 });
 $('ss-search-clear').addEventListener('click', () => {
   raceFocus = [];
-  $('ss-search').hidden = true;
+  renderRaceSearch();
   slideshow.refresh();
   castState();
 });
+// La loupe n'apparaît que sur l'écran de la course aux likes.
+function syncSearchBtn() {
+  const onRace = slideshow.active && slideshow.list[slideshow.index] && slideshow.list[slideshow.index].kind === 'race';
+  $('ss-search-btn').hidden = !onRace;
+  if (!onRace) $('ss-search').hidden = true;
+}
 
 function openScreensaver() {
   $('drawer').hidden = true;

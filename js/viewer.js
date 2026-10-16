@@ -374,14 +374,17 @@ function raceView(r) {
 }
 function renderRace(st) {
   if ($('v-race-full').hidden || !st.race) return;
-  race.update(raceView(st.race), raceOpts(settings, image('fondCourse'), OUTPUT ? st.race.focus || [] : []));
+  // Téléphones : les phrases choisies pour les viewers (sinon celles de la tablette).
+  const s = OUTPUT ? settings : { ...settings, raceTitle: settings.raceVTitle || settings.raceTitle, raceText: settings.raceVText || settings.raceText };
+  if (!OUTPUT && $('v-race-hint')) setRich('v-race-hint', settings.raceVHint || '');
+  race.update(raceView(st.race), raceOpts(s, image('fondCourse'), OUTPUT ? st.race.focus || [] : []));
 }
 const normName = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 function renderPicker() {
   const all = (last && last.race && last.race.all) || [];
   const q = normName($('v-race-q').value.trim());
   // Les pseudos cochés d'abord, puis ceux qui correspondent à la recherche.
-  const list = all.filter(([id, name]) => picked.includes(String(id)) || !q || normName(name).includes(q) || normName(id).includes(q)).slice(0, 80);
+  const list = all.filter(([id, name]) => picked.includes(String(id)) || !q || normName(name).includes(q) || normName(id).includes(q));
   list.sort((a, b) => (picked.includes(String(b[0])) - picked.includes(String(a[0]))) || b[2] - a[2]);
   $('v-race-list').innerHTML = list.length
     ? list.map(([id, name, value]) => `<li><label><input type="checkbox" data-pick="${esc(id)}"${picked.includes(String(id)) ? ' checked' : ''}><span>${esc(name)}</span><b>${Math.round(value).toLocaleString('fr-FR')}</b></label></li>`).join('')

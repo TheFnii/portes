@@ -68,6 +68,15 @@ export const SETTINGS = [
     ],
   },
   {
+    // Réglés dans Réglages → Page des viewers (pas dans Personnalisation).
+    group: 'Course aux likes chez les viewers', hidden: true,
+    items: [
+      { key: 'raceVTitle', label: 'Titre de la course (vide = comme sur la tablette)', type: 'text', def: '' },
+      { key: 'raceVText', label: 'Texte sous le chemin (vide = comme sur la tablette)', type: 'textarea', def: '' },
+      { key: 'raceVHint', label: 'Phrase au-dessus de la liste des pseudos', type: 'text', def: 'Cochez votre pseudo (et ceux de vos amis) pour suivre leur progression.' },
+    ],
+  },
+  {
     group: 'Fin du live 🏁',
     items: [
       { key: 'endTitle', label: 'Titre du message de fin (laisser vide pour aucun)', type: 'text', def: 'Merci d’avoir été là ✨' },
