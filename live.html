@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/ui.css">
   <link rel="stylesheet" href="css/dash.css">
   <link rel="stylesheet" href="css/celebrate.css">
+  <link rel="stylesheet" href="css/race.css">
   <link rel="stylesheet" href="css/live.css">
 </head>
 <body class="viewer at-home">
@@ -60,6 +61,7 @@
     <header class="v-head">
       <span class="v-status" id="v-status"><span class="dot"></span><span class="label">Connexion…</span></span>
       <span class="v-head-tools">
+        <button class="icon-btn v-race" id="v-race-btn" type="button" aria-label="Course aux likes" title="Course aux likes" hidden>🏃</button>
         <button class="icon-btn v-letters" id="v-letters" type="button" aria-label="Messages de l’univers" hidden><span class="v-env" id="v-letters-icon" aria-hidden="true">✉️</span><span class="badge" id="v-letters-count">0</span></button>
         <button class="icon-btn v-sound" id="v-sound" type="button" aria-label="Activer le son">🔇</button>
       </span>
@@ -122,6 +124,12 @@
       <p class="vlp-hint">Touchez un pseudo pour relire son message.</p>
       <ol class="vlp-list" id="v-letters-list"></ol>
     </div>
+  </div>
+
+  <!-- Course aux likes : toucher pour fermer -->
+  <div class="race-full v-race-full" id="v-race-full" hidden>
+    <div class="race-box" id="v-race-box"></div>
+    <p class="ss-hint v-race-close">Touchez l’écran pour revenir</p>
   </div>
 
   <div class="celebrate" id="celebrate" hidden></div>

@@ -102,6 +102,23 @@
       <p class="form-status" id="tier-status" role="status"></p>
     </details>
 
+    <!-- Diaporama 🌙 -->
+    <details class="card fold" id="diaporama">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🌙</span>Diaporama (bouton 🌙)</h2></summary>
+      <p class="hint">Le bouton 🌙 lance un diaporama en plein écran : les écrans cochés passent l’un après l’autre, chacun pendant sa durée, puis ça recommence. Touchez l’écran pour revenir. Il passe sur la tablette et dans la version Broadcast (pas sur les téléphones des viewers). Sous chaque écran, vous pouvez ajouter une phrase. Ajoutez aussi vos propres textes (avec autocollants), images et vidéos (sans son, 8 Mo au plus pour qu’elles passent dans la version Broadcast).</p>
+      <div class="tour-rows" id="slide-rows"></div>
+      <div class="form-actions">
+        <button class="btn" id="slide-add-text" type="button">＋ Texte</button>
+        <button class="btn" id="slide-add-image" type="button">＋ Image</button>
+        <button class="btn" id="slide-add-video" type="button">＋ Vidéo</button>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="slide-save" type="button">Enregistrer le diaporama</button>
+        <button class="btn btn-ghost" id="slide-reset" type="button">Écrans par défaut</button>
+      </div>
+      <p class="form-status" id="slide-status" role="status"></p>
+    </details>
+
     <!-- Écran de veille « présentation » -->
     <details class="card fold" id="presentation">
       <summary><h2><span class="fold-icon" aria-hidden="true">⭐</span>Présentation des cases (écran de veille ⭐)</h2></summary>

@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/ui.css">
   <link rel="stylesheet" href="css/dash.css">
   <link rel="stylesheet" href="css/celebrate.css">
+  <link rel="stylesheet" href="css/race.css">
 </head>
 <body class="at-home">
   <svg class="defs" aria-hidden="true" width="0" height="0"><defs id="flower-defs"></defs></svg>
@@ -89,7 +90,7 @@
         <section class="panel likers" id="likes-box" data-feature="likes">
           <header class="panel-head"><h3>❤ <span data-text="likesTitle">Top Likes</span></h3><span class="count" id="likes-total">0</span></header>
           <ol class="side-list" id="likes-list"></ol>
-          <button class="icon-btn box-full-btn" id="likes-full-btn" type="button" title="Top Likes en plein écran" aria-label="Top Likes en plein écran">⛶</button>
+          <div class="box-foot"><button class="icon-btn" id="race-btn" type="button" title="Course aux likes" aria-label="Course aux likes">🏃</button><button class="icon-btn" id="likes-full-btn" type="button" title="Top Likes en plein écran" aria-label="Top Likes en plein écran">⛶</button></div>
         </section>
         <section class="panel gifters" id="gifters-box" data-feature="gifters">
           <header class="panel-head"><h3>🎁 <span data-text="giftersTitle">Top Gifters</span></h3><span class="count" id="gifters-total">0</span></header>
@@ -125,7 +126,7 @@
 
     <footer class="dash-bottom">
       <div class="dash-tools">
-        <button class="icon-btn" data-action="screensaver" type="button" title="Écran de veille" aria-label="Écran de veille">🌙</button>
+        <button class="icon-btn" data-action="screensaver" type="button" title="Diaporama" aria-label="Diaporama">🌙</button>
         <button class="icon-btn tour-btn" data-action="tour" type="button" title="Présentation des cases" aria-label="Présentation des cases">⭐</button>
         <button class="icon-btn end-btn" id="end-btn" data-action="endlive" type="button" title="Fin du live" aria-label="Fin du live" aria-pressed="false">🏁</button>
         <a class="icon-btn settings-btn" href="admin.html" title="Réglages" aria-label="Réglages">⚙<span class="cast-status" id="cast-status" hidden title="Diffusé aux viewers" aria-hidden="true"></span></a>
@@ -203,11 +204,12 @@
     <div class="ticker-track" id="ticker-track"></div>
   </div>
 
-  <!-- Écran de veille : seulement les messages, en plein écran -->
-  <div class="screensaver" id="screensaver" hidden>
-    <div class="ss-band">
-      <div class="ticker-track" id="ss-track"></div>
-    </div>
+  <!-- Diaporama 🌙 : les écrans choisis dans les Réglages, en plein écran -->
+  <div class="slideshow" id="slideshow" hidden></div>
+
+  <!-- Course aux likes en plein écran -->
+  <div class="race-full" id="race-full" hidden>
+    <div class="race-box" id="race-box"></div>
     <p class="ss-hint">Touchez l’écran pour revenir</p>
   </div>
 

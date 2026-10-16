@@ -47,7 +47,7 @@ export const LIVE_BROKERS = [
 export const LIVE_TOPIC = 'portes-du-destin/v1';
 // Taille maximale des fichiers envoyés aux viewers : une image plus lourde part réduite,
 // un son plus lourd n'est pas envoyé (les viewers entendent le son d'origine).
-export const CAST_MAX = { image: 3 * 1024 * 1024, sound: 1.5 * 1024 * 1024 };
+export const CAST_MAX = { image: 3 * 1024 * 1024, sound: 1.5 * 1024 * 1024, video: 8 * 1024 * 1024 };
 
 // Euler Stream (lecture du chat TikTok LIVE).
 export const EULER_WS_URL = 'wss://ws.eulerstream.com';
@@ -83,6 +83,7 @@ export const STORAGE = {
   likeTiers: 'portes.liketiers',   // paliers de likes par personne
   likeTiersReached: 'portes.liketiers.reached',
   tour: 'portes.tour',            // écran de veille « présentation » (étoile)
+  slides: 'portes.slides',        // diaporama 🌙 : écrans, durées, textes, images, vidéos
   radioMine: 'portes.radio.mine',  // musiques ajoutées à la radio
   radioGrimoire: 'portes.radio.grimoire', // garder la playlist du Grimoire
 };

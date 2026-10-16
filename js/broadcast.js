@@ -8,6 +8,7 @@ import { LIVE_BROKERS, LIVE_TOPIC, STORAGE, IMAGES, SOUND_FILES, CAST_MAX } from
 import { MqttClient } from './mqtt.js';
 import { getMedia, smallDataUrl } from './media.js';
 import { loadStickers } from './stickers.js';
+import { loadSlides } from './slideshow.js';
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
 const CHUNK = 48000; // caractères par morceau de fichier
@@ -37,7 +38,8 @@ async function channelOf(rawPublicKey) {
 
 export function topics(channel) {
   const base = `${LIVE_TOPIC}/${channel}`;
-  return { state: `${base}/state`, event: `${base}/event`, media: `${base}/media/`, need: `${base}/need` };
+  // slides/ : images et vidéos du diaporama, lues seulement par la page Broadcast.
+  return { state: `${base}/state`, event: `${base}/event`, media: `${base}/media/`, slides: `${base}/slides/`, need: `${base}/need` };
 }
 
 // Relais utilisés. Pour essayer un autre relais (tests, relais privé), on peut enregistrer
@@ -99,7 +101,7 @@ export class Broadcaster {
       onMessage: (topic, text) => {
         if (topic !== this.t.need || !this.onNeed) return;
         try {
-          const ids = (JSON.parse(text).ids || []).filter((id) => typeof id === 'string' && /^(img|snd|stk)-\w+$/.test(id));
+          const ids = (JSON.parse(text).ids || []).filter((id) => typeof id === 'string' && /^(img|snd|stk|sld)-\w+$/.test(id));
           if (ids.length) this.onNeed(ids.slice(0, 20));
         } catch (e) { /* demande illisible */ }
       },
@@ -168,7 +170,7 @@ export class Broadcaster {
   // taille des messages : le fichier part en morceaux signés. buffer null : on l'efface.
   async setFile(id, buffer, type = '', v = newVersion()) {
     await this.ready;
-    const base = `${this.t.media}${id}`;
+    const base = `${id.startsWith('sld-') ? this.t.slides : this.t.media}${id}`;
     if (!buffer) return this.send(base, { file: id, v, parts: 0 }, true);
     const data = b64url(buffer);
     const parts = Math.ceil(data.length / CHUNK);
@@ -212,11 +214,12 @@ function readSent(channel) {
 
 // Liste des fichiers que les viewers doivent avoir (id → version), jointe à l'état du live :
 // un téléphone qui en manque un le redemande.
-export function castManifest(b) {
+// slides : true pour les fichiers du diaporama (page Broadcast seulement).
+export function castManifest(b, slides = false) {
   if (!b || !b.key) return null;
   const out = {};
   Object.entries(readSent(b.key.channel).items).forEach(([key, it]) => {
-    if (it.sig && it.v) out[key.replace(':', '-')] = it.v;
+    if (it.sig && it.v && key.startsWith('sld:') === slides) out[key.replace(':', '-')] = it.v;
   });
   return out;
 }
@@ -238,6 +241,7 @@ export async function castMedia(b, { only, force = [] } = {}) {
     ...Object.keys(IMAGES).map((k) => `img:${k}`),
     ...Object.keys(SOUND_FILES).map((k) => `snd:${k}`),
     ...Object.keys(loadStickers()).map((k) => `stk:${k}`),
+    ...loadSlides().filter((it) => it.media).map((it) => it.media),
   ];
   for (const key of list) {
     if (only && only !== key) continue;
@@ -263,6 +267,19 @@ export async function castMedia(b, { only, force = [] } = {}) {
         const url = await smallDataUrl(blob, 1400, CAST_MAX.image * 1.3);
         if (url) ({ buffer, type } = dataUrlBytes(url));
       }
+    } else if (blob && key.startsWith('sld:') && /^image/.test(blob.type)) {
+      if (blob.size <= CAST_MAX.image) {
+        buffer = await blob.arrayBuffer();
+        type = blob.type;
+      } else {
+        const url = await smallDataUrl(blob, 1920, CAST_MAX.image * 1.3);
+        if (url) ({ buffer, type } = dataUrlBytes(url));
+      }
+    } else if (blob && key.startsWith('sld:')) {
+      if (blob.size <= CAST_MAX.video) {
+        buffer = await blob.arrayBuffer();
+        type = blob.type;
+      }
     } else if (blob && blob.size <= CAST_MAX.sound) {
       buffer = await blob.arrayBuffer();
       type = blob.type;
@@ -273,6 +290,15 @@ export async function castMedia(b, { only, force = [] } = {}) {
     const now = readSent(b.key.channel);
     now.items[key] = { sig: buffer ? sig : '', v, at: Date.now() };
     try { localStorage.setItem(SENT_KEY, JSON.stringify(now)); } catch (e) { /* ignore */ }
+  }
+  // Écrans du diaporama supprimés : leurs fichiers sont retirés du relais.
+  if (!only && !force.length) {
+    const sent = readSent(b.key.channel);
+    for (const key of Object.keys(sent.items).filter((k) => k.startsWith('sld:') && !list.includes(k))) {
+      if (sent.items[key].sig) await b.setFile(key.replace(':', '-'), null);
+      delete sent.items[key];
+    }
+    try { localStorage.setItem(SENT_KEY, JSON.stringify(sent)); } catch (e) { /* ignore */ }
   }
   return true;
 }
@@ -315,9 +341,11 @@ function fileAssembler(onFile) {
 
 export class Receiver {
   // pub : clé publique (dans le lien) ; handlers : onState(state), onEvent(kind, data),
-  // onFile(id, buffer, type) pour les images et sons, onStatus(up)
-  constructor(pub, handlers) {
+  // onFile(id, buffer, type) pour les images et sons, onStatus(up) ;
+  // slides : aussi les images et vidéos du diaporama (page Broadcast).
+  constructor(pub, handlers, { slides = false } = {}) {
     this.h = handlers;
+    this.withSlides = slides;
     this.files = {}; // id → version reçue
     this.receiveFile = fileAssembler((id, buf, type, v) => {
       this.files[id] = v;
@@ -353,6 +381,7 @@ export class Receiver {
     this.client.subscribe(this.t.state);
     this.client.subscribe(this.t.event);
     this.client.subscribe(`${this.t.media}#`);
+    if (this.withSlides) this.client.subscribe(`${this.t.slides}#`);
     clearTimeout(this.giveUp);
     this.giveUp = setTimeout(() => { if (!up) this.failover(); }, 8000);
   }
@@ -399,7 +428,7 @@ export class Receiver {
       // Un vieux message rejoué ne déclenche rien.
       if (this.stateT && msg.t < this.stateT - 60000) return;
       this.h.onEvent(msg.kind, msg.data || {});
-    } else if (topic.startsWith(this.t.media)) {
+    } else if (topic.startsWith(this.t.media) || topic.startsWith(this.t.slides)) {
       if (msg.file) this.receiveFile(msg);
     }
   }

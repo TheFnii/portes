@@ -38,6 +38,12 @@ L’application demande à la tablette de garder l’écran allumé, si le navig
 Tout est sauvegardé sur l’appareil : un rechargement de page en plein live ne fait rien perdre. Au début d’un nouveau live : **⚙ Réglages → Nouveau live**.
 
 ### L’ordre de la liste
+
+- **La personne en cours ne bouge plus** : un cadeau qui arrive pendant son tirage ne la coupe pas, il passe juste après elle. Elle reste en cours jusqu’à « Personne suivante ».
+- **Ensuite, les priorités, dans l’ordre d’arrivée** : Chat porte-bonheur, Galaxie, paliers de likes du live (100k…) et paliers par personne (10 000 likes…). Un palier atteint pendant le Jeu des Portes passe donc avant les gagnants du jeu.
+- **Puis les gagnants du Jeu des Portes.**
+- **Bouton ↑** : touchez un nom de la liste, une flèche ↑ apparaît ; elle met cette personne en cours tout de suite. Celle qui était en cours (qui ne répond pas, par exemple) repart en bas de la liste, dans « En attente de leur retour », sans être perdue.
+
 1. **Priorités** : 🐱 Chat porte-bonheur (1 question) et 🌌 Galaxie (3 questions), dans l’ordre exact d’envoi des cadeaux. Chaque cadeau compte : 3 chats = 3 questions.
 2. **Gagnants du Jeu des Portes**, ajoutés quand le jeu se ferme.
 3. **🏅 Paliers de likes** (100k, 150k, 200k…), tout en bas.
@@ -61,8 +67,8 @@ Règles strictes, un seul gagnant par palier (100k, puis tous les 50k, réglable
 ### La radio
 Elle lit la playlist de la radio du Grimoire. Quand elle joue, le titre du morceau s’affiche. **Touchez le lecteur** : un petit menu s’ouvre avec le **volume** et la **playlist** (touchez un titre pour le jouer) ; touchez en dehors ou la flèche ← pour le fermer. Pendant le Jeu des Portes, le volume baisse.
 
-### Écran de veille
-🌙 : seulement les messages du ruban, en très grand, sur fond sombre. Touchez l’écran pour revenir.
+### Diaporama
+🌙 : les écrans choisis dans les Réglages passent en plein écran l’un après l’autre (voir « Diaporama 🌙 » plus bas). Touchez l’écran pour revenir.
 
 ---
 
@@ -143,6 +149,23 @@ Le petit bouton ⛶ en bas à gauche de la case centrale affiche ses messages en
 Sur le tableau de bord, le fond est neutre : le Jeu des Portes n’apparaît plus du tout derrière les cases. Il s’affiche en plein écran seulement quand vous le lancez. La petite pastille sur le bouton ⚙ indique la diffusion aux viewers (verte : diffusé, orange : connexion en cours).
 
 ---
+
+## Diaporama 🌙
+
+Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. Touchez l’écran pour revenir. Dans **Réglages → Diaporama** :
+- cochez les écrans à montrer, parmi Top Likes, Course aux likes, message central, Top Gifters, messages défilants, message épinglé, liste à traiter, messages de l’univers et message de fin de live ;
+- choisissez leur ordre et leur durée ;
+- ajoutez une phrase sous chaque écran ;
+- ajoutez vos propres écrans : **texte** (avec autocollants), **image**, **vidéo** (sans son, 8 Mo au plus ; durée 0 = toute la vidéo).
+
+Le diaporama passe aussi dans la version Broadcast, écran par écran, mais pas sur les téléphones des viewers.
+
+## Course aux likes 🏃
+
+Un chemin gradué, un peu courbé, avec les objectifs bien visibles : les photos de profil des premiers du Top Likes (nombre réglable) avancent dessus, avec le nombre de likes de chacun. Le premier objectif est 10 000 (vos paliers par personne) : tant que personne ne l’a atteint, l’écran s’arrête là et le chemin continue hors de l’écran. Dès qu’il est atteint, la vue recule et l’objectif suivant apparaît (vos paliers suivants, puis 20 000, 50 000, 100 000…).
+- **Sur la tablette** : bouton 🏃 en bas de la case Top Likes (plein écran), et dans le diaporama.
+- **Dans la version Broadcast** : comme sur la tablette.
+- **Pour les viewers** : un bouton 🏃 en haut de leur page, pour voir leur place.
 
 ## Version Broadcast (TikTok LIVE Studio)
 
@@ -344,6 +367,8 @@ js/
   fonts.js            polices de l’app
   theme.js            thèmes, couleurs, tailles des textes
   board.js            case centrale : défilement ou un message à la fois
+  race.js             course aux likes (chemin, objectifs, bulles)
+  slideshow.js        diaporama 🌙
   stickers.js         autocollants dans les textes
   broadcast.js        diffusion signée tablette → viewers
   mqtt.js             petit client du relais (MQTT sur WebSocket)

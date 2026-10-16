@@ -1,13 +1,18 @@
 // Liste des personnes à traiter pendant le live.
 //
 // Ordre d'affichage :
-//   1. Priorités (Chat porte-bonheur, Galaxie), dans l'ordre d'envoi des cadeaux
+//   0. La personne en cours : elle reste en place jusqu'à « Personne suivante » (un nouveau
+//      cadeau ne la coupe jamais). Le bouton ↑ en met une autre en cours.
+//   1. Priorités, dans l'ordre d'arrivée : cadeaux (Chat porte-bonheur, Galaxie), paliers de
+//      likes du live (100k…) et paliers par personne (10 000 likes…)
 //   2. Gagnants du Jeu des Portes
-//   3. Paliers de likes (100k, 150k…)
+//   3. Les personnes remises en attente avec le bouton ↑ (en bas, en attendant leur retour)
 // Les Donuts (messages de l'univers) vont dans une liste à part.
 
 let seq = 0;
 const newId = () => `${Date.now().toString(36)}-${(seq++).toString(36)}`;
+let arrival = 0; // ordre d'arrivée (plusieurs entrées peuvent arriver dans la même milliseconde)
+const byArrival = (a, b) => (a.at - b.at) || ((a.n || 0) - (b.n || 0));
 
 export class LiveQueue {
   constructor(data = null) {
@@ -16,24 +21,53 @@ export class LiveQueue {
     this.milestones = [];
     this.donuts = [];
     this.history = [];
+    this.currentId = null;
     if (data) {
       ['priorities', 'winners', 'milestones', 'donuts', 'history'].forEach((k) => {
         if (Array.isArray(data[k])) this[k] = JSON.parse(JSON.stringify(data[k]));
       });
+      if (typeof data.currentId === 'string') this.currentId = data.currentId;
     }
   }
 
   toJSON() {
-    const { priorities, winners, milestones, donuts, history } = this;
-    return { priorities, winners, milestones, donuts, history: history.slice(-20) };
+    this.list(); // fixe la personne en cours
+    const { priorities, winners, milestones, donuts, history, currentId } = this;
+    return { priorities, winners, milestones, donuts, history: history.slice(-20), currentId };
   }
 
+  // File d'attente, sans la notion de personne en cours.
+  waiting() {
+    const all = [...[...this.priorities, ...this.milestones].sort(byArrival), ...this.winners];
+    const later = all.filter((e) => e.later).sort((a, b) => a.later - b.later);
+    return [...all.filter((e) => !e.later), ...later];
+  }
+
+  // La personne en cours d'abord : une fois affichée, elle garde sa place.
   list() {
-    return [...this.priorities, ...this.winners, ...this.milestones];
+    const all = this.waiting();
+    let cur = this.currentId && all.find((e) => e.id === this.currentId);
+    if (!cur) {
+      cur = all[0] || null;
+      this.currentId = cur ? cur.id : null;
+    }
+    return cur ? [cur, ...all.filter((e) => e !== cur)] : [];
   }
 
   get current() {
     return this.list()[0] || null;
+  }
+
+  // Bouton ↑ : cette personne passe en cours ; celle qui y était repart en bas de la liste
+  // (elle n'a peut-être pas répondu : on la garde en attendant son retour).
+  promote(id) {
+    const cur = this.current;
+    const e = this.waiting().find((x) => x.id === id);
+    if (!e || e === cur) return null;
+    if (cur) cur.later = Date.now() + (arrival++) / 1e6;
+    delete e.later;
+    this.currentId = e.id;
+    return e;
   }
 
   // Nombre de tirages en attente : une question prioritaire = un tirage,
@@ -91,6 +125,7 @@ export class LiveQueue {
       gift,
       count,
       at: Date.now(),
+      n: ++arrival,
     };
   }
 
@@ -117,16 +152,21 @@ export class LiveQueue {
   next() {
     const e = this.current;
     if (!e) return null;
-    this.listOf(e).shift();
+    const list = this.listOf(e);
+    list.splice(list.indexOf(e), 1);
     this.history.push(e);
+    this.currentId = null;
     return e;
   }
 
-  // « Retour en arrière » : annule le dernier « Personne suivante » (ou la dernière suppression).
+  // « Retour en arrière » : annule le dernier « Personne suivante » (ou la dernière suppression) ;
+  // la personne revient en cours.
   undo() {
     const e = this.history.pop();
     if (!e) return null;
     this.listOf(e).unshift(e);
+    delete e.later;
+    this.currentId = e.id;
     return e;
   }
 
@@ -136,6 +176,7 @@ export class LiveQueue {
       if (i >= 0) {
         const [e] = list.splice(i, 1);
         this.history.push(e);
+        if (this.currentId === id) this.currentId = null;
         return e;
       }
     }
@@ -148,6 +189,7 @@ export class LiveQueue {
   }
 
   clear() {
+    this.currentId = null;
     this.priorities = [];
     this.winners = [];
     this.milestones = [];

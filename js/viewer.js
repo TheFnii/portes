@@ -12,9 +12,11 @@ import { FX } from './fx.js';
 import { Sound } from './sound.js';
 import { Celebrate } from './celebrate.js';
 import { Receiver } from './broadcast.js';
-import { entryIcon, entryDetail, SECTIONS, COIN, layoutGrid, fitPinnedText, bigRanking } from './dashboard.js';
+import { entryIcon, entryDetail, SECTIONS, sectionOf, COIN, layoutGrid, fitPinnedText, bigRanking } from './dashboard.js';
 import { Ticker } from './ticker.js';
 import { Tour } from './tour.js';
+import { Slideshow } from './slideshow.js';
+import { Race } from './race.js';
 import { DEFAULTS } from './settings.js';
 import { applyFonts } from './fonts.js';
 import { applyTheme } from './theme.js';
@@ -83,7 +85,7 @@ function stageToScreen(x, y) {
 // Broadcast : les animations, la présentation et les grandes vues sont dessinées pour l'iPad.
 // On recopie leurs règles CSS avec chaque taille en px multipliée par --oz : tout grandit avec
 // la fenêtre (net en 1440p / 4K), sans toucher aux positions calculées en JavaScript.
-const SCALED = /^\.(cel|env|letter|l-|has-paper|celebrate|tour|board-full|rank-full|screensaver|ss-|result|winners|countdown|focus)/;
+const SCALED = /^\.(cel|env|letter|l-|has-paper|celebrate|tour|board-full|rank-full|screensaver|ss-|result|winners|countdown|focus|race-title|race-sub|slide-caption)/;
 function scaleOutputCss() {
   const out = [];
   [...document.styleSheets].forEach((sheet) => {
@@ -203,11 +205,11 @@ function renderQueue(st) {
   }
   lastCurrent = cur ? cur.id : null;
   let html = '';
-  let section = cur ? cur.type : null;
+  let section = cur ? sectionOf(cur) : null;
   list.slice(1).forEach((e, i) => {
-    if (e.type !== section) {
-      section = e.type;
-      html += `<li class="sep">${SECTIONS[e.type] || ''}</li>`;
+    if (sectionOf(e) !== section) {
+      section = sectionOf(e);
+      html += `<li class="sep">${SECTIONS[section] || ''}</li>`;
     }
     html += `<li${seen.has(e.id) ? '' : ' class="new"'}><span class="rank">${i + 2}</span>${entryIcon(e)}
       <span class="who"><span class="name">${esc(e.name)}</span><small>${esc(entryDetail(e))}</small></span></li>`;
@@ -331,7 +333,9 @@ function renderDash(st) {
   renderTop('v-gifters', 'v-gifters-total', st.gifters, COIN);
   renderBoard(st.board);
   renderEndLive(!!st.endLive && f.board !== false);
+  if (!OUTPUT && $('v-race-btn')) $('v-race-btn').hidden = !(st.race && (st.race.top || []).length) || f.likes === false;
   if (OUTPUT) renderOutput(st);
+  renderRace(st);
 }
 
 // ---------- Broadcast : bandeau, et ce que la tablette affiche par-dessus ----------
@@ -346,6 +350,24 @@ const tour = OUTPUT ? new Tour($('v-tour'), {
   scale: () => oz,
 }) : null;
 if (saver) saver.setEnabled(true);
+const slideshow = OUTPUT ? new Slideshow($('v-slideshow'), {
+  data: () => last || {},
+  mediaUrl: async (key) => slideUrls[String(key).replace(/^sld-/, '')] || null,
+}) : null;
+// Course aux likes : en plein écran sur la page Broadcast (comme la tablette), et à la demande
+// sur les téléphones (bouton 🏃).
+const race = new Race($('v-race-box'));
+function renderRace(st) {
+  if ($('v-race-full').hidden || !st.race) return;
+  race.update(st.race, { title: settings.raceTitle });
+}
+if (!OUTPUT) {
+  $('v-race-btn').addEventListener('click', () => {
+    $('v-race-full').hidden = false;
+    requestAnimationFrame(() => { if (last) renderRace(last); });
+  });
+  $('v-race-full').addEventListener('click', () => { $('v-race-full').hidden = true; });
+}
 let tickerKey = '';
 let fullKey = '';
 
@@ -378,6 +400,17 @@ function renderOutput(st) {
     } else drawBoard($('v-board-full-track'), []);
   }
   $('v-likes-full').hidden = view !== 'likes';
+  const raceWas = $('v-race-full').hidden;
+  $('v-race-full').hidden = view !== 'race';
+  if (raceWas && view === 'race') requestAnimationFrame(() => renderRace(st));
+  // Diaporama 🌙 : écran par écran, comme la tablette.
+  if (st.slides && !st.game) {
+    slideshow.follow(st.slides.list, st.slides.i);
+    body.classList.add('saver');
+  } else if (slideshow.active) {
+    slideshow.close();
+    body.classList.remove('saver');
+  }
   if (view === 'likes') {
     const d = st.likesFull || st.likes || {};
     setRich('v-likes-full-title', settings.likesTitle || 'Top Likes');
@@ -404,7 +437,7 @@ function checkFiles(manifest) {
   if (!receiver.missing(manifest).length) return;
   // On laisse le temps aux fichiers gardés par le relais d'arriver, puis on redemande.
   needTimer = setTimeout(() => {
-    const ids = receiver.missing(last && last.files);
+    const ids = receiver.missing(OUTPUT && last ? { ...last.files, ...last.slideFiles } : last && last.files);
     if (!ids.length || Date.now() - lastNeed < 20000) return;
     lastNeed = Date.now();
     receiver.need(ids);
@@ -420,7 +453,7 @@ function onState(st) {
     return;
   }
   last = st;
-  checkFiles(st.files);
+  checkFiles(OUTPUT ? { ...st.files, ...st.slideFiles } : st.files);
   if (st.settings) {
     settings = { ...DEFAULTS, ...st.settings };
     applyFonts(settings);
@@ -637,6 +670,7 @@ function onEvent(kind, data) {
 
 // Images et sons reçus de la tablette (les mêmes que ceux déposés dans ses Réglages).
 const fileUrls = {};
+const slideUrls = {};
 function onFile(id, buffer, type) {
   const [kind, name] = id.split('-');
   if (kind === 'snd') {
@@ -649,6 +683,12 @@ function onFile(id, buffer, type) {
     endKey = '';
     if (last) renderDash(last);
     if (last && last.game) renderGame(last.game);
+    return;
+  }
+  if (kind === 'sld') {
+    // Image ou vidéo du diaporama (page Broadcast).
+    if (slideUrls[name]) URL.revokeObjectURL(slideUrls[name]);
+    slideUrls[name] = buffer ? URL.createObjectURL(new Blob([buffer], { type: type || 'application/octet-stream' })) : null;
     return;
   }
   if (kind !== 'img') return;
@@ -685,7 +725,7 @@ if (!pub || !window.crypto || !crypto.subtle) {
     onEvent,
     onFile,
     onStatus: (up) => { connected = up; renderStatus(); },
-  });
+  }, { slides: OUTPUT });
   receiver.ready.catch(() => {
     $('v-wait-title').textContent = 'Lien incomplet';
     $('v-wait-text').textContent = 'Ce lien ne correspond à aucun live. Demandez le bon lien pendant le live.';

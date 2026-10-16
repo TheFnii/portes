@@ -15,6 +15,7 @@ import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
 import { grimoireMessages, loadEdits, saveEdits, buildDeck, messageId } from './universe.js';
 import { TOUR_TARGETS, TOUR_SIDES, STAR_POSES, starImage, loadTour, saveTour, defaultTour } from './tour.js';
+import { SLIDE_KINDS, loadSlides, saveSlides, defaultSlides, newSlide } from './slideshow.js';
 import { loadMyTracks, addFileTrack, addUrlTrack, removeTrack, moveTrack, renameTrack } from './playlist.js';
 
 const $ = (id) => document.getElementById(id);
@@ -800,6 +801,113 @@ $('tour-reset').addEventListener('click', () => {
   status($('tour-status'), 'Présentation remise par défaut.', 'live');
 });
 renderTourRows();
+
+// ---------- Diaporama 🌙 ----------
+
+let slides = loadSlides();
+function slideRow(it, i, n) {
+  const custom = ['text', 'image', 'video'].includes(it.kind);
+  const media = it.kind === 'image' || it.kind === 'video';
+  return `<div class="tour-row slide-row" data-id="${esc(it.id)}">
+    <div class="tour-row-head">
+      <label class="check"><input type="checkbox" data-s="on"${it.on ? ' checked' : ''}> <strong>${esc(SLIDE_KINDS[it.kind].label)}</strong></label>
+      <span class="tour-move">
+        <button class="x-btn" data-s-move="-1" type="button" aria-label="Monter"${i ? '' : ' disabled'}>↑</button>
+        <button class="x-btn" data-s-move="1" type="button" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button>
+        ${custom ? '<button class="x-btn" data-s-del type="button" aria-label="Supprimer">✕</button>' : ''}
+      </span>
+    </div>
+    ${it.kind === 'text' ? `<label class="field"><span>Titre</span><input type="text" data-rich data-s="title" value="${esc(it.title || '')}"></label>
+    <label class="field"><span>Texte</span><textarea rows="3" data-rich data-s="text">${esc(it.text || '')}</textarea></label>` : ''}
+    ${media ? `<div class="slide-media-row"><span class="slide-thumb" data-thumb></span>
+      <label class="btn">${it.kind === 'image' ? 'Choisir une image' : 'Choisir une vidéo (8 Mo max.)'}<input type="file" accept="${it.kind}/*" data-s-file hidden></label>
+      <span class="form-status" data-s-info></span></div>` : ''}
+    <div class="tour-row-opts slide-opts">
+      <label class="field"><span>Phrase affichée en bas (facultatif)</span><input type="text" data-rich data-s="caption" value="${esc(it.caption || '')}"></label>
+      <label class="field"><span>${it.kind === 'video' ? 'Durée (s) — 0 = toute la vidéo' : 'Durée (secondes)'}</span><input type="number" min="0" max="600" data-s="seconds" value="${Number(it.seconds) || 0}"></label>
+    </div>
+  </div>`;
+}
+function collectSlides() {
+  return slides.map((it) => {
+    const row = $('slide-rows').querySelector(`[data-id="${CSS.escape(it.id)}"]`);
+    if (!row) return it;
+    const v = (k) => { const el = row.querySelector(`[data-s="${k}"]`); return el ? el.value.trim() : it[k]; };
+    const secs = Number(v('seconds')) || 0;
+    return { ...it, on: row.querySelector('[data-s="on"]').checked, caption: v('caption'), title: v('title') || '', text: v('text') || '', seconds: it.kind === 'video' ? Math.max(0, secs) : Math.max(3, secs || SLIDE_KINDS[it.kind].seconds) };
+  });
+}
+function renderSlides() {
+  $('slide-rows').innerHTML = slides.map((it, i) => slideRow(it, i, slides.length)).join('');
+  slides.filter((it) => it.media).forEach(async (it) => {
+    const row = $('slide-rows').querySelector(`[data-id="${CSS.escape(it.id)}"]`);
+    const blob = await getMedia(it.media);
+    if (!row) return;
+    const thumb = row.querySelector('[data-thumb]');
+    const info = row.querySelector('[data-s-info]');
+    if (!blob) { thumb.textContent = it.kind === 'image' ? '🖼️' : '🎬'; info.textContent = 'Aucun fichier'; return; }
+    const url = URL.createObjectURL(blob);
+    thumb.innerHTML = it.kind === 'image' ? `<img src="${url}" alt="">` : `<video src="${url}" muted playsinline></video>`;
+    info.textContent = `${(blob.size / 1048576).toFixed(1)} Mo`;
+  });
+}
+$('slide-rows').addEventListener('click', async (e) => {
+  const mv = e.target.closest('[data-s-move]');
+  const del = e.target.closest('[data-s-del]');
+  if (!mv && !del) return;
+  slides = collectSlides();
+  const i = slides.findIndex((s) => s.id === e.target.closest('.slide-row').dataset.id);
+  if (del) {
+    if (!window.confirm('Supprimer cet écran du diaporama ?')) return;
+    const [it] = slides.splice(i, 1);
+    if (it.media) await deleteMedia(it.media).catch(() => {});
+    saveSlides(slides);
+    try { localStorage.setItem(STORAGE.media, String(Date.now())); } catch (er) { /* ignore */ }
+  } else {
+    const j = i + Number(mv.dataset.sMove);
+    if (j < 0 || j >= slides.length) return;
+    [slides[i], slides[j]] = [slides[j], slides[i]];
+  }
+  renderSlides();
+});
+$('slide-rows').addEventListener('change', async (e) => {
+  const input = e.target.closest('[data-s-file]');
+  if (!input || !input.files[0]) return;
+  slides = collectSlides();
+  const it = slides.find((s) => s.id === input.closest('.slide-row').dataset.id);
+  const info = input.closest('.slide-row').querySelector('[data-s-info]');
+  let file = input.files[0];
+  input.value = '';
+  if (it.kind === 'video' && file.size > CAST_MAX.video) {
+    window.alert(`Cette vidéo fait ${(file.size / 1048576).toFixed(1)} Mo : 8 Mo au plus pour qu’elle passe aussi dans la version Broadcast. Raccourcissez-la ou réduisez sa qualité.`);
+    return;
+  }
+  if (it.kind === 'image') file = await shrinkImage(file, 2400);
+  await putMedia(it.media, file);
+  saveSlides(slides);
+  renderSlides();
+  mediaChanged(it.media, info, '✓ Fichier enregistré');
+});
+['text', 'image', 'video'].forEach((kind) => $(`slide-add-${kind}`).addEventListener('click', () => {
+  slides = collectSlides();
+  slides.push(newSlide(kind));
+  renderSlides();
+  status($('slide-status'), kind === 'text' ? 'Écrivez le texte puis enregistrez.' : 'Choisissez le fichier : il est enregistré tout de suite.', 'live');
+}));
+$('slide-save').addEventListener('click', () => {
+  slides = collectSlides();
+  saveSlides(slides);
+  status($('slide-status'), '✓ Diaporama enregistré.', 'live');
+});
+$('slide-reset').addEventListener('click', async () => {
+  if (!window.confirm('Remettre les écrans par défaut ? Vos textes, images et vidéos ajoutés seront supprimés.')) return;
+  for (const it of slides) if (it.media) await deleteMedia(it.media).catch(() => {});
+  slides = defaultSlides();
+  saveSlides(slides);
+  renderSlides();
+  status($('slide-status'), 'Diaporama remis par défaut.', 'live');
+});
+renderSlides();
 
 // ---------- Messages de l'univers reçus pendant le live ----------
 

@@ -573,18 +573,9 @@ body.focusing .session-bar { opacity: 0; pointer-events: none; }
 
 /* Case centrale : bouton plein écran (en bas à gauche) */
 .board { position: relative; }
-.likers { position: relative; }
-.box-full-btn {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  z-index: 3;
-  width: 36px;
-  height: 36px;
-  font-size: 16px;
-  opacity: .7;
-}
-.box-full-btn:hover { opacity: 1; }
+.box-foot { flex: none; display: flex; justify-content: flex-end; gap: 6px; padding-top: 6px; }
+.box-foot .icon-btn { width: 34px; height: 34px; font-size: 15px; opacity: .75; }
+.box-foot .icon-btn:hover { opacity: 1; }
 .board-full-btn {
   position: absolute;
   left: 10px;
@@ -807,3 +798,22 @@ body.focusing .session-bar { opacity: 0; pointer-events: none; }
 .rank-full-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rank-full-list .value { flex: none; font-family: var(--font-title); color: #ffb3c4; }
 .rank-full-list .empty { justify-content: center; font-style: italic; opacity: .6; border: 0; }
+
+/* Liste : toucher un nom fait apparaître ↑ (prendre cette personne tout de suite) */
+.queue-list li[data-id] { cursor: pointer; }
+.queue-list li.picked { background: rgba(var(--accent-rgb), .12); border-radius: 12px; }
+.up-btn {
+  flex: none;
+  display: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 220, 150, .85);
+  background: linear-gradient(180deg, #f3d687, #c9963c);
+  color: #2a1606;
+  font: 700 24px/1 var(--font-title);
+  box-shadow: 0 0 14px rgba(255, 210, 120, .6);
+  animation: current-pop .35s cubic-bezier(.2, 1.4, .4, 1);
+}
+.queue-list li.picked .up-btn { display: grid; place-items: center; }
+.up-btn:active { transform: scale(.93); }

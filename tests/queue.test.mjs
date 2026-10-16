@@ -9,13 +9,43 @@ import { Round } from '../js/game.js';
 const u = (key) => ({ key, name: key.toUpperCase(), handle: key });
 const names = (q) => q.list().map((e) => `${e.name}:${e.type}:${e.count}`);
 
-test('ordre : priorités, puis gagnants, puis paliers', () => {
+test('ordre : priorités et paliers par ordre d’arrivée, puis gagnants', () => {
   const q = new LiveQueue();
-  q.addMilestone(u('max'), '100k likes');
   q.addPriority(u('ana'), 'cat', 1);
+  q.addMilestone(u('max'), '100k likes');
   q.closeGame([{ ...u('zoe'), door: 3 }]);
   q.addPriority(u('bob'), 'galaxy', 3);
-  assert.deepEqual(names(q), ['ANA:priority:1', 'BOB:priority:3', 'ZOE:winner:1', 'MAX:milestone:1']);
+  assert.deepEqual(names(q), ['ANA:priority:1', 'MAX:milestone:1', 'BOB:priority:3', 'ZOE:winner:1']);
+});
+
+test('la personne en cours n’est jamais coupée par un nouveau cadeau', () => {
+  const q = new LiveQueue();
+  q.closeGame([{ ...u('zoe'), door: 3 }]);
+  assert.equal(q.current.key, 'zoe');
+  q.addPriority(u('ana'), 'cat', 1);
+  q.addMilestone(u('max'), '10 000 likes');
+  assert.deepEqual(names(q), ['ZOE:winner:1', 'ANA:priority:1', 'MAX:milestone:1']);
+  // Rechargée, la liste garde la même personne en cours.
+  assert.equal(new LiveQueue(JSON.parse(JSON.stringify(q))).current.key, 'zoe');
+  q.next();
+  assert.equal(q.current.key, 'ana');
+});
+
+test('bouton ↑ : la personne choisie passe en cours, l’ancienne repart en bas', () => {
+  const q = new LiveQueue();
+  q.addPriority(u('ana'), 'cat', 1);
+  q.addPriority(u('bob'), 'cat', 1);
+  q.closeGame([{ ...u('zoe'), door: 3 }]);
+  const zoe = q.list()[2];
+  q.promote(zoe.id);
+  assert.deepEqual(names(q), ['ZOE:winner:1', 'BOB:priority:1', 'ANA:priority:1']);
+  // Un nouveau cadeau passe avant les personnes remises en attente.
+  q.addPriority(u('cid'), 'cat', 1);
+  assert.deepEqual(names(q), ['ZOE:winner:1', 'BOB:priority:1', 'CID:priority:1', 'ANA:priority:1']);
+  q.next();
+  assert.equal(q.current.key, 'bob');
+  q.undo();
+  assert.equal(q.current.key, 'zoe');
 });
 
 test('nombre de tirages en attente', () => {

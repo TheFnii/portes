@@ -42,7 +42,9 @@ export function entryDetail(e) {
   return `${e.count} question${e.count > 1 ? 's' : ''} en priorité`;
 }
 
-export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', milestone: 'Paliers de likes' };
+export const SECTIONS = { priority: 'Priorités', winner: 'Gagnants du jeu', later: 'En attente de leur retour' };
+// Les paliers de likes sont des priorités comme les cadeaux (même section).
+export const sectionOf = (e) => (e.later ? 'later' : e.type === 'winner' ? 'winner' : 'priority');
 
 // Calcule les colonnes et les zones de la grille selon les modules affichés
 // (tableau de bord de la tablette et page Broadcast).
@@ -98,13 +100,21 @@ export function bigRanking(list, unit = '') {
 }
 
 export class Dashboard {
-  constructor({ onRemove, onOpenLetter, onBoardFull }) {
+  constructor({ onRemove, onPromote, onOpenLetter, onBoardFull }) {
     this.seen = new Set();
     this.lastCurrent = null;
+    this.picked = null;
     this.s = {};
     $('queue-list').addEventListener('click', (e) => {
       const b = e.target.closest('[data-remove]');
-      if (b) onRemove(b.dataset.remove);
+      if (b) { onRemove(b.dataset.remove); return; }
+      const up = e.target.closest('[data-promote]');
+      if (up) { this.picked = null; onPromote(up.dataset.promote); return; }
+      // Toucher un nom fait apparaître le bouton ↑ (le prendre tout de suite).
+      const li = e.target.closest('li[data-id]');
+      if (!li) return;
+      this.picked = this.picked === li.dataset.id ? null : li.dataset.id;
+      $('queue-list').querySelectorAll('li[data-id]').forEach((x) => x.classList.toggle('picked', x.dataset.id === this.picked));
     });
     // Toucher un pseudo rouvre sa lettre de l'univers.
     $('donut-list').addEventListener('click', (e) => {
@@ -173,14 +183,17 @@ export class Dashboard {
     this.lastCurrent = cur ? cur.id : null;
 
     let html = '';
-    let section = cur ? cur.type : null;
+    let section = cur ? sectionOf(cur) : null;
+    if (!list.some((e) => e.id === this.picked) || (cur && cur.id === this.picked)) this.picked = null;
     list.slice(1).forEach((e, i) => {
-      if (e.type !== section) {
-        section = e.type;
-        html += `<li class="sep">${SECTIONS[e.type]}</li>`;
+      if (sectionOf(e) !== section) {
+        section = sectionOf(e);
+        html += `<li class="sep">${SECTIONS[section]}</li>`;
       }
-      html += `<li${this.seen.has(e.id) ? '' : ' class="new"'}><span class="rank">${i + 2}</span>${this.icon(e)}
+      const cls = [this.seen.has(e.id) ? '' : 'new', e.id === this.picked ? 'picked' : ''].filter(Boolean).join(' ');
+      html += `<li data-id="${esc(e.id)}"${cls ? ` class="${cls}"` : ''}><span class="rank">${i + 2}</span>${this.icon(e)}
         <span class="who"><span class="name">${esc(e.name)}</span><small>${esc(this.detail(e))}</small></span>
+        <button class="up-btn" data-promote="${esc(e.id)}" type="button" aria-label="Prendre ${esc(e.name)} maintenant" title="Prendre maintenant">↑</button>
         <button class="x-btn" data-remove="${esc(e.id)}" type="button" aria-label="Retirer ${esc(e.name)}">✕</button></li>`;
     });
     this.seen = new Set(list.map((e) => e.id));

@@ -18,6 +18,9 @@ import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard, endMessages } from './dashboard.js';
 import { renderBoard, stopBoard } from './board.js';
 import { applyTheme, currentTheme } from './theme.js';
+import { Slideshow } from './slideshow.js';
+import { Race } from './race.js';
+import { getMedia } from './media.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
 import { imagesReady, refreshImages } from './images.js';
@@ -73,6 +76,11 @@ function play(kind, data) {
 
 const dash = new Dashboard({
   onRemove: (id) => { queue.remove(id); changed(); },
+  onPromote: (id) => {
+    if (!queue.promote(id)) return;
+    sound.tink();
+    changed();
+  },
   onOpenLetter: (id) => {
     const e = queue.letter(id);
     if (e) play('letter', { name: e.name, message: e.message || '' });
@@ -219,14 +227,32 @@ function changed() {
     dash.renderDonuts(queue);
     dash.renderLikes(likes);
     dash.renderGifters(gifters);
+    refreshLive();
     castState();
   });
+}
+
+// Les grands écrans ouverts (diaporama, course aux likes) suivent le live.
+function refreshLive() {
+  if (slideshow) slideshow.refresh();
+  if (!$('race-full').hidden) race.update(raceData(), { title: settings.raceTitle });
 }
 
 // ---------- Diffusion vers la page des viewers (live.html) ----------
 
 let cast = null;
 let tour = null; // présentation ⭐ (créée plus bas)
+let slideshow = null; // diaporama 🌙 (créé plus bas)
+
+// Course aux likes : les premiers du Top Likes et les objectifs (paliers par personne).
+function raceData() {
+  return {
+    top: likes.top(settings.raceCount || 10).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' })),
+    goals: tiers.map((t) => Number(t.likes)).filter((n) => n > 0),
+  };
+}
+// Ce que la page Broadcast doit savoir d'un écran du diaporama.
+const slidePublic = (it) => ({ id: it.id, kind: it.kind, seconds: it.seconds, caption: it.caption || '', title: it.title || '', text: it.text || '', media: it.media ? it.media.replace(':', '-') : '' });
 let lastResult = null; // résultat affiché (les viewers qui l'ont manqué le retrouvent dans l'état)
 let boardData = { messages: [], speed: 30 };
 let gameCounts = null;
@@ -263,7 +289,7 @@ const pickTop = (r, n = settings.topCount || 6) => ({
 });
 
 function currentView() {
-  if (!$('screensaver').hidden) return 'saver';
+  if (!$('race-full').hidden) return 'race';
   if (!$('board-full').hidden) return 'board';
   if (!$('likes-full').hidden) return 'likes';
   return '';
@@ -284,12 +310,16 @@ function snapshot() {
     tour: tour && tour.active && tour.list ? { list: tour.list, i: tour.index } : null,
     ticker: { on: ticker.enabled, messages: ticker.messages, speed: ticker.speed },
     likesFull: pickTop(likes, 10),
+    giftersFull: pickTop(gifters, 10),
+    race: raceData(),
+    slides: slideshow && slideshow.active ? { list: slideshow.list.map(slidePublic), i: slideshow.index } : null,
+    slideFiles: castManifest(cast, true),
     endLive: endLive && features.board,
     theme: themeKey,
     title: dash.title(queue),
     chip: chip.hidden ? '' : chip.textContent,
     list: queue.list().map((e) => ({
-      id: e.id, type: e.type, name: e.name, gift: e.gift, count: e.count, label: e.label, door: e.door, giftImage: e.giftImage,
+      id: e.id, type: e.type, name: e.name, gift: e.gift, count: e.count, label: e.label, door: e.door, giftImage: e.giftImage, later: e.later ? 1 : 0,
     })),
     letters: features.donuts ? queue.donuts.map((e) => ({ id: e.id, name: e.name, message: e.message || '', count: e.count })) : [],
     likes: pickTop(likes),
@@ -439,7 +469,7 @@ function onLike({ user, likeCount, totalLikeCount, t }) {
   checkMilestone();
   if (likesDirty) return;
   likesDirty = true;
-  setTimeout(() => { likesDirty = false; dash.renderLikes(likes); }, 500);
+  setTimeout(() => { likesDirty = false; dash.renderLikes(likes); refreshLive(); castState(); }, 500);
 }
 
 // Une personne atteint un palier de likes (10 000…) : animation et/ou ajout à la liste.
@@ -989,22 +1019,44 @@ document.addEventListener('pointerdown', (e) => {
   if (!$('drawer').hidden && !e.target.closest('#drawer, #btn-game-menu')) $('drawer').hidden = true;
 });
 
-// Écran de veille : seulement les messages.
-const saver = new Ticker($('screensaver'), $('ss-track'), { speedFactor: 2.4 });
-saver.setEnabled(true);
+// Diaporama 🌙 : les écrans choisis dans les Réglages, l'un après l'autre.
+const mediaUrls = {};
+async function slideMedia(key) {
+  if (!key) return null;
+  if (mediaUrls[key] === undefined) {
+    const blob = await getMedia(key);
+    mediaUrls[key] = blob ? URL.createObjectURL(blob) : null;
+  }
+  return mediaUrls[key];
+}
+function forgetSlideMedia() {
+  Object.keys(mediaUrls).forEach((k) => { if (mediaUrls[k]) URL.revokeObjectURL(mediaUrls[k]); delete mediaUrls[k]; });
+}
+slideshow = new Slideshow($('slideshow'), { data: snapshot, mediaUrl: slideMedia, onStep: () => castState() });
 
 function openScreensaver() {
   $('drawer').hidden = true;
-  if (!ticker.messages.length) {
-    toast('Aucun message à afficher : ajoutez-en dans les réglages.');
+  if (!slideshow.open()) {
+    toast('Aucun écran à montrer : choisissez-les dans Réglages → Diaporama.');
     return;
   }
-  saver.setData(ticker.messages, ticker.speed);
-  $('screensaver').hidden = false;
   castState();
   body.classList.add('saver');
   enterFullscreen(false);
 }
+
+// Course aux likes en plein écran (on en sort en touchant l'écran).
+const race = new Race($('race-box'));
+$('race-btn').addEventListener('click', () => {
+  $('race-full').hidden = false;
+  requestAnimationFrame(() => race.update(raceData(), { title: settings.raceTitle }));
+  castState();
+});
+$('race-full').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  $('race-full').hidden = true;
+  castState();
+});
 // Écran de veille « présentation » : l'étoile fait le tour des cases.
 tour = new Tour($('tour'), {
   getSettings: () => settings,
@@ -1024,12 +1076,12 @@ $('tour').addEventListener('pointerdown', (e) => {
 });
 
 function closeScreensaver() {
-  if ($('screensaver').hidden) return;
-  $('screensaver').hidden = true;
+  if (!slideshow.active) return;
+  slideshow.close();
   castState();
   body.classList.remove('saver');
 }
-$('screensaver').addEventListener('pointerdown', (e) => {
+$('slideshow').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   closeScreensaver();
 });
@@ -1058,7 +1110,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { tour.close(); castState(); }
     return;
   }
-  if (!$('notice').hidden || !$('screensaver').hidden) {
+  if (!$('notice').hidden || slideshow.active) {
     if (e.key === 'Escape') { closeNotice(); closeScreensaver(); }
     return;
   }
@@ -1150,8 +1202,10 @@ window.addEventListener('storage', (e) => {
   }
   else if (e.key === STORAGE.likeTiers) tiers = loadTiers();
   else if (e.key === STORAGE.radioMine || e.key === STORAGE.radioGrimoire) radio.rebuild();
+  else if (e.key === STORAGE.slides) { forgetSlideMedia(); sendMedia(); }
   else if (e.key === STORAGE.media) {
     // Image ou son déposé dans les Réglages : on le prend tout de suite.
+    forgetSlideMedia();
     refreshImages().then(() => changed());
     sound.loadFiles();
     sendMedia();

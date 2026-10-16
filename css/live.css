@@ -263,3 +263,6 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
 .v-board .end-live { padding: 10px 12px; }
 .v-board .end-live-title { font-size: calc(21px * var(--fs-end, 1)); }
 .v-board .end-live .board-item { font-size: calc(clamp(20px, 5.6vw, 28px) * var(--fs-end, 1)); }
+.v-race { width: 48px; height: 48px; font-size: 22px; }
+.v-race-full { z-index: 75; padding: max(14px, env(safe-area-inset-top)) 10px max(40px, env(safe-area-inset-bottom)); }
+.v-race-full .ss-hint { display: none; }

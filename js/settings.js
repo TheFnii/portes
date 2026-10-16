@@ -44,6 +44,13 @@ export const SETTINGS = [
     ],
   },
   {
+    group: 'Course aux likes 🏃',
+    items: [
+      { key: 'raceTitle', label: 'Titre de l’écran', type: 'text', def: 'Course aux likes' },
+      { key: 'raceCount', label: 'Nombre de personnes sur le chemin', type: 'range', def: 10, min: 3, max: 20, unit: '' },
+    ],
+  },
+  {
     group: 'Fin du live 🏁',
     items: [
       { key: 'endTitle', label: 'Titre du message de fin (laisser vide pour aucun)', type: 'text', def: 'Merci d’avoir été là ✨' },
