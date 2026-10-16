@@ -8,27 +8,25 @@
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (n) => Math.round(n).toLocaleString('fr-FR');
 
-// Limite de la vue : le premier palier que le total des likes du live n'a pas encore atteint.
-// Après les paliers réglés, la course continue : 200 000, 500 000, 1 000 000…
-export function raceScale(total, goals) {
+// Fin de la ligne. follow : le premier palier que le total des likes du live n'a pas encore
+// atteint (une fois le dernier dépassé, on reste sur le dernier) ; sinon toujours le dernier
+// palier réglé. Jamais d'autres paliers que ceux des Réglages.
+export function raceScale(total, goals, follow = true) {
   const list = [...new Set((goals || []).map(Number).filter((g) => g > 0))].sort((a, b) => a - b);
   if (!list.length) list.push(10000);
-  while (list[list.length - 1] <= total) list.push(nextRound(list[list.length - 1]));
-  const target = list.find((g) => g > total);
-  return { max: target, goals: list.filter((g) => g <= target) };
-}
-
-// Objectif rond suivant : 1, 2, 5, 10, 20, 50…
-function nextRound(v) {
-  const p = 10 ** Math.floor(Math.log10(v));
-  return [1, 2, 5, 10, 20].map((k) => k * p).find((k) => k > v);
+  const last = list[list.length - 1];
+  const max = follow ? (list.find((g) => g > total) || last) : last;
+  return { max, goals: list.filter((g) => g <= max) };
 }
 
 // Paliers par défaut de la course (total des likes du live).
 export const DEFAULT_RACE_GOALS = [{ likes: 10000, text: '' }, { likes: 50000, text: '' }, { likes: 100000, text: '' }];
 
 // Réglages d'affichage (titre, étiquettes, texte sous la ligne) + image de fond.
-export const raceOpts = (s = {}, bg = null) => ({ title: s.raceTitle, label: s.raceLabel, text: s.raceText, bg });
+export const raceOpts = (s = {}, bg = null) => ({
+  title: s.raceTitle, label: s.raceLabel, text: s.raceText, bg,
+  follow: s.raceView !== 'fixed', photo: s.racePhoto, size: s.raceTextSize,
+});
 
 export class Race {
   // render(texte) → HTML (autocollants) ; par défaut, texte simple.
@@ -56,12 +54,20 @@ export class Race {
     const total = Number(data.total) || (top.length ? top[0].value : 0);
     const given = (data.goals || []).map((g) => (typeof g === 'object' ? g : { likes: g }));
     const texts = new Map(given.map((g) => [Number(g.likes), g.text || '']));
-    const sc = raceScale(total, given.map((g) => g.likes));
+    const sc = raceScale(total, given.map((g) => g.likes), opts.follow !== false);
+    this.root.style.setProperty('--race-ph', ((Number(opts.photo) || 100) / 100).toFixed(2));
+    this.root.style.setProperty('--race-tx', ((Number(opts.size) || 100) / 100).toFixed(2));
     // Le palier visé tout à droite ; le chemin continue un peu au-delà.
     const END = 92;
     const at = (v) => Math.min(1, Math.max(0, v / sc.max)) * END;
     this.root.querySelector('.race-title').textContent = opts.title || 'Course aux likes';
-    this.root.querySelector('.race-sub').innerHTML = `<strong>${fmt(total)}</strong> likes · prochain palier : <strong>${fmt(sc.max)}</strong>`;
+    // Ligne fixe (objectif de chacun) : la barre dorée et les ✓ suivent le premier de la course ;
+    // sinon, le total du live.
+    const follow = opts.follow !== false;
+    const prog = follow ? total : (top.length ? top[0].value : 0);
+    this.root.querySelector('.race-sub').innerHTML = !follow
+      ? `Objectif : <strong>${fmt(sc.max)}</strong> likes`
+      : total >= sc.max ? `<strong>${fmt(total)}</strong> likes` : `<strong>${fmt(total)}</strong> likes · prochain palier : <strong>${fmt(sc.max)}</strong>`;
     this.root.style.backgroundImage = opts.bg ? `linear-gradient(rgba(0, 0, 0, .35), rgba(0, 0, 0, .35)), url("${opts.bg}")` : '';
     this.root.classList.toggle('race-has-bg', !!opts.bg);
     if (this.lastMax && sc.max > this.lastMax) {
@@ -71,11 +77,11 @@ export class Race {
       this.stage.classList.add('dezoom');
     }
     this.lastMax = sc.max;
-    this.wrap.style.setProperty('--lead', `${at(total)}%`);
+    this.wrap.style.setProperty('--lead', `${at(prog)}%`);
 
     // Les paliers sur la ligne, avec leur texte juste en dessous.
     this.wrap.querySelector('.race-flags').innerHTML = sc.goals.map((g) => {
-      const reached = total >= g;
+      const reached = prog >= g;
       const text = texts.get(g) || '';
       return `<div class="race-flag${g === sc.max ? ' final' : ''}${reached ? ' reached' : ''}${at(g) > 75 ? ' at-end' : ''}" style="--x:${at(g)}%">
         <span class="race-flag-dot">${reached ? '✓' : '🏁'}</span>

@@ -18,6 +18,7 @@ export const SETTINGS = [
       { key: 'fontPinned', label: 'Police du message épinglé', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontBoard', label: 'Police de la case centrale (et du message de fin de live)', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontTicker', label: 'Police du bandeau déroulant', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
+      { key: 'fontRace', label: 'Police de la course aux likes', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontStar', label: 'Police de la bulle de l’étoile (présentation)', type: 'select', def: 'lora', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
     ],
   },
@@ -47,6 +48,9 @@ export const SETTINGS = [
     group: 'Course aux likes 🏃',
     items: [
       { key: 'raceTitle', label: 'Titre de l’écran', type: 'text', def: 'Course aux likes' },
+      { key: 'raceView', label: 'Fin de la ligne', type: 'select', def: 'follow', options: [['follow', 'Le prochain palier selon le total du live (puis le suivant…)'], ['fixed', 'Toujours le dernier palier réglé (ex. seulement 0 → 10 000)']] },
+      { key: 'racePhoto', label: 'Taille des photos', type: 'range', def: 100, min: 50, max: 200, unit: '%' },
+      { key: 'raceTextSize', label: 'Taille des textes (titre, paliers, likes, texte sous le chemin)', type: 'range', def: 100, min: 50, max: 200, unit: '%' },
       { key: 'raceLabel', label: 'Au-dessus de chaque photo', type: 'select', def: 'both', options: [['both', 'Nombre de likes et pseudo'], ['likes', 'Nombre de likes'], ['name', 'Pseudo'], ['none', 'Rien (seulement la photo)']] },
       { key: 'raceCount', label: 'Nombre de personnes sur le chemin (0 = tout le monde)', type: 'range', def: 0, min: 0, max: 100, unit: '' },
       { key: 'raceText', label: 'Texte sous le chemin', type: 'textarea', def: 'Envoyez des likes pour avancer sur le chemin ❤️' },

@@ -39,7 +39,9 @@ export function applyFonts(s) {
   const board = own(s.fontBoard, text);
   const ticker = own(s.fontTicker, text);
   const pinned = own(s.fontPinned, text);
-  [text, title, star, board, ticker, pinned].forEach(load);
+  const race = own(s.fontRace, text);
+  [text, title, star, board, ticker, pinned, race].forEach(load);
+  root.setProperty('--font-race', FONTS[race].css);
   root.setProperty('--font-text', FONTS[text].css);
   root.setProperty('--font-title', FONTS[title].css);
   root.setProperty('--font-star', FONTS[star].css);

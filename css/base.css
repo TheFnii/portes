@@ -6,6 +6,7 @@
   --font-board: var(--font-text);
   --font-ticker: var(--font-text);
   --font-pinned: var(--font-text);
+  --font-race: var(--font-text);
   /* Couleurs du thème (réglables : Réglages → Personnalisation → Thème et couleurs, voir theme.js) */
   --accent-rgb: 232, 199, 122;
   --accent-light-rgb: 246, 227, 168;

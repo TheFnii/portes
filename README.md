@@ -162,7 +162,10 @@ Le diaporama passe aussi dans la version Broadcast, écran par écran, mais pas 
 
 ## Course aux likes 🏃
 
-Un chemin (sans chiffres qui encombrent) : les photos de profil sont les curseurs, toutes au même niveau sur le chemin (elles se chevauchent quand elles se dépassent), avec au-dessus le nombre de likes et le pseudo (réglable). Tout le monde qui envoie des likes peut y être (Personnalisation → Course aux likes : 0 = tout le monde). L’affichage suit le **total des likes du live** : tant qu’il n’a pas atteint le premier palier (10 000), ce palier est tout à droite ; une fois franchi, le palier suivant (50 000…) passe tout à droite et les paliers franchis restent à leur place, en proportion. Les paliers et leur texte (affiché sous chaque palier) se règlent dans **Réglages → Course aux likes**, avec l’**image de fond** ; le **texte sous le chemin** dans **Personnalisation → Course aux likes**.
+Un chemin (sans chiffres qui encombrent) : les photos de profil sont les curseurs, toutes au même niveau sur le chemin (elles se chevauchent quand elles se dépassent), placées selon les likes de chacun, avec au-dessus le nombre de likes et le pseudo (réglable). Tout le monde qui envoie des likes peut y être (0 = tout le monde).
+- **Les paliers** (Réglages → Course aux likes) : leur valeur et leur texte (affiché sous le palier). Seuls vos paliers apparaissent. Pour ne montrer que 0 → 10 000 (chacun voit s’il approche de sa question gratuite), gardez un seul palier : 10 000.
+- **Fin de la ligne** (Personnalisation → Course aux likes) : « le prochain palier selon le total du live » (10 000 tout à droite, puis 50 000 une fois 10 000 likes atteints au total… et on reste sur le dernier palier) ou « toujours le dernier palier réglé ».
+- **Taille des photos, taille des textes, texte sous le chemin, titre** : Personnalisation → Course aux likes. **Police** : Personnalisation → Polices d’écriture. **Image de fond** : Réglages → Course aux likes.
 - **Sur la tablette** : bouton 🏃 en bas de la case Top Likes (plein écran), et dans le diaporama.
 - **Dans la version Broadcast** : comme sur la tablette.
 - **Pour les viewers** : un bouton 🏃 en haut de leur page, pour voir leur place.
