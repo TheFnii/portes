@@ -1,12 +1,11 @@
-// Écran « Course aux likes » : une course en couloirs. Chaque personne a sa ligne (classées du
-// premier au dernier) ; sa photo avance vers la ligne d'arrivée, l'objectif (paliers par
-// personne : 10 000 likes, puis les suivants), avec son nombre de likes. Graduations discrètes
-// en haut. Tant que personne n'a atteint l'objectif, l'écran s'arrête là (la piste continue un
-// peu au-delà) ; dès qu'il est atteint, la vue recule et l'objectif suivant apparaît.
-// Utilisé sur la tablette, la page Broadcast et les téléphones des viewers.
+// Écran « Course aux likes » : une ligne de course ; les photos de profil sont les curseurs
+// (elles peuvent se chevaucher) et avancent avec les likes de chacun. Sous la ligne, les
+// paliers (10 000 likes, puis les suivants) avec le bonus expliqué (texte modifiable dans
+// Réglages → Paliers de likes par personne). Tant que personne n'a atteint le palier, l'écran
+// s'arrête là (la ligne continue un peu au-delà) ; dès qu'il est atteint, la vue recule et le
+// palier suivant apparaît. Tablette, page Broadcast, téléphones des viewers.
 
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
 const fmt = (n) => Math.round(n).toLocaleString('fr-FR');
 
 // Limite de la vue : le premier objectif que le premier n'a pas encore atteint. Après les
@@ -32,87 +31,107 @@ function niceStep(max) {
 }
 
 export class Race {
-  constructor(root) {
+  // render(texte) → HTML (autocollants) ; par défaut, texte simple.
+  constructor(root, { render } = {}) {
     this.root = root;
+    this.render = render || ((t) => esc(t).replace(/\n/g, '<br>'));
     root.classList.add('race');
     root.innerHTML = `<header class="race-head"><h2 class="race-title"></h2><p class="race-sub"></p></header>
-      <div class="race-board"><div class="race-scale"></div><div class="race-lanes"><div class="race-marks"></div></div></div>`;
-    this.board = root.querySelector('.race-board');
-    this.scale = root.querySelector('.race-scale');
-    this.lanes = root.querySelector('.race-lanes');
-    this.marks = root.querySelector('.race-marks');
-    this.rows = new Map();
+      <div class="race-stage"><div class="race-wrap">
+        <div class="race-line"></div><div class="race-fill"></div>
+        <div class="race-ticks"></div><div class="race-flags"></div><div class="race-cursors"></div>
+      </div><div class="race-goals"></div></div>`;
+    this.stage = root.querySelector('.race-stage');
+    this.wrap = root.querySelector('.race-wrap');
+    this.cursors = new Map();
     this.lastMax = 0;
     window.addEventListener('resize', () => { if (this.data && root.offsetParent) this.update(this.data, this.opts); });
   }
 
-  // data : { top: [{ id, name, value, avatar }], goals: [10000…] } ; opts : { title }
+  // data : { top: [{ id, name, value, avatar }], goals: [{ likes, text }] } ; opts : { title }
   update(data, opts = {}) {
     this.data = data;
     this.opts = opts;
     const top = (data.top || []).filter((u) => u.value > 0);
     const leader = top.length ? top[0].value : 0;
-    const sc = raceScale(leader, data.goals);
-    // La piste va jusqu'à 90 % de la largeur : l'objectif, puis un bout de piste au-delà.
-    const END = 90;
-    const pos = (v) => (Math.min(1, Math.max(0, v / sc.max)) * END).toFixed(2);
+    const given = (data.goals || []).map((g) => (typeof g === 'object' ? g : { likes: g }));
+    const texts = new Map(given.map((g) => [Number(g.likes), g.text || '']));
+    const sc = raceScale(leader, given.map((g) => g.likes));
+    // La ligne : de 0 à 88 % de la largeur pour le palier visé, puis elle continue.
+    const END = 88;
+    const at = (v) => Math.min(1, Math.max(0, v / sc.max)) * END;
     this.root.querySelector('.race-title').textContent = opts.title || 'Course aux likes';
-    this.root.querySelector('.race-sub').innerHTML = `Objectif : <strong>${fmt(sc.max)}</strong> likes`;
+    this.root.querySelector('.race-sub').innerHTML = `Prochain palier : <strong>${fmt(sc.max)}</strong> likes`;
     if (this.lastMax && sc.max > this.lastMax) {
-      // La vue recule : l'objectif suivant apparaît.
-      this.board.classList.remove('dezoom');
-      void this.board.offsetWidth;
-      this.board.classList.add('dezoom');
+      this.stage.classList.remove('dezoom');
+      void this.stage.offsetWidth;
+      this.stage.classList.add('dezoom');
     }
     this.lastMax = sc.max;
+    this.wrap.style.setProperty('--lead', `${at(leader)}%`);
 
-    // Graduations (en haut) et lignes des objectifs (sur toute la hauteur).
+    // Graduations discrètes sur la ligne (des nombres espacés d'au moins 90 px).
+    const wrapW = this.wrap.clientWidth || 1000;
     const step = niceStep(sc.max);
-    let scale = '';
-    let marks = '';
-    // Assez de place entre deux nombres : un sur deux (un sur quatre sur téléphone), et jamais
-    // collé à un objectif.
-    const every = this.scale.clientWidth && this.scale.clientWidth < 600 ? 4 : 2;
-    const nearGoal = (v) => sc.goals.some((g) => Math.abs(v - g) / sc.max < (every === 4 ? 0.2 : 0.12));
+    const every = Math.max(1, Math.ceil(90 / ((step / sc.max) * (END / 100) * wrapW)));
+    let ticks = '';
     for (let v = step; v < sc.max - step / 2; v += step) {
-      const major = Math.round(v / step) % 2 === 0;
-      if (Math.round(v / step) % every === 0 && !nearGoal(v)) scale += `<span class="race-tick" style="--x:${pos(v)}%">${fmt(v)}</span>`;
-      marks += `<span class="race-grid${major ? ' major' : ''}" style="--x:${pos(v)}%"></span>`;
+      const near = sc.goals.some((g) => Math.abs(v - g) / sc.max < 0.08);
+      const label = !near && Math.round(v / step) % every === 0;
+      ticks += `<span class="race-tick" style="--x:${at(v)}%">${label ? `<b>${fmt(v)}</b>` : ''}</span>`;
     }
-    sc.goals.forEach((g) => {
-      const final = g === sc.max;
-      scale += `<span class="race-goal-label${final ? ' final' : ''}" style="--x:${pos(g)}%">${final ? '🏁 ' : '✓ '}${fmt(g)}</span>`;
-      marks += `<span class="race-goal-line${final ? ' final' : ''}" style="--x:${pos(g)}%"></span>`;
-    });
-    this.scale.innerHTML = scale;
-    this.marks.innerHTML = marks;
+    this.wrap.querySelector('.race-ticks').innerHTML = ticks;
 
-    // Une ligne par personne, du premier au dernier ; elles glissent quand on se dépasse.
-    const n = Math.max(top.length, 1);
-    this.root.style.setProperty('--race-n', n);
+    // Les paliers : un repère sur la ligne, et en dessous le palier et son bonus.
+    const goals = sc.goals.map((g) => ({ v: g, x: at(g), reached: leader >= g, final: g === sc.max, text: texts.get(g) || '' }));
+    this.wrap.querySelector('.race-flags').innerHTML = goals.map((g) => `<span class="race-flag${g.final ? ' final' : ''}${g.reached ? ' reached' : ''}" style="--x:${g.x}%">${g.reached ? '✓' : '🏁'}</span>`).join('');
+    // Largeur de chaque carte : la place jusqu'au palier voisin ; trop serré → en liste.
+    const W = this.stage.clientWidth || 1000;
+    const widths = goals.map((g, i) => {
+      const prev = i ? g.x - goals[i - 1].x : g.x * 2;
+      const next = i < goals.length - 1 ? goals[i + 1].x - g.x : (100 - g.x) * 2;
+      return Math.min(30, prev, next) * 0.96;
+    });
+    const asList = W < 640 || widths.some((w) => (w / 100) * W < 150);
+    const box = this.root.querySelector('.race-goals');
+    box.classList.toggle('as-list', asList);
+    box.innerHTML = goals.map((g, i) => `<div class="race-goal${g.final ? ' final' : ''}${g.reached ? ' reached' : ''}" style="--x:${g.x}%;--w:${widths[i]}%">
+      <span class="race-goal-v">${g.reached ? '✓ ' : g.final ? '🏁 ' : ''}${fmt(g.v)} likes</span>
+      ${g.text ? `<span class="race-goal-t">${this.render(g.text)}</span>` : ''}</div>`).join('');
+
+    // Les curseurs : la photo de chacun sur la ligne. Ceux qui se touchent montent d'un cran
+    // (avec une tige jusqu'à la ligne) pour que les prénoms restent lisibles.
+    // Place d'un curseur (photo et étiquette) en % de la ligne.
+    const face = this.wrap.querySelector('.race-face');
+    const b = (face && face.offsetWidth) || Math.max(40, Math.min(110, Math.min(window.innerWidth, window.innerHeight) * 0.085));
+    const room = ((b * 1.75) / wrapW) * 100;
+    const levels = [];
     const seen = new Set();
-    top.forEach((u, i) => {
+    [...top].sort((a, b2) => b2.value - a.value).forEach((u, rank) => {
+      const x = at(u.value);
+      // Le premier rang libre ; au-delà de 3 rangs, les photos se chevauchent.
+      let level = levels.findIndex((xs) => xs.every((o) => Math.abs(o - x) >= room));
+      if (level < 0) level = levels.length < 4 ? levels.length : levels.reduce((best, xs, k) => (Math.min(...xs.map((o) => Math.abs(o - x))) > Math.min(...levels[best].map((o) => Math.abs(o - x))) ? k : best), 0);
+      (levels[level] = levels[level] || []).push(x);
       const id = String(u.id || u.name);
       seen.add(id);
-      let row = this.rows.get(id);
-      if (!row) {
-        row = document.createElement('div');
-        row.className = 'race-row';
-        row.innerHTML = `<span class="race-rank"></span><span class="race-name"></span>
-          <span class="race-track"><span class="race-fill"></span><span class="race-runner"><span class="race-face"></span><span class="race-likes"></span></span></span>`;
-        row.style.setProperty('--i', i);
-        row.style.setProperty('--p', '0%');
-        this.lanes.appendChild(row);
-        this.rows.set(id, row);
-        void row.offsetWidth;
+      let el = this.cursors.get(id);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'race-c';
+        el.innerHTML = '<span class="race-c-label"><span class="race-c-name"></span><span class="race-c-likes"></span></span><span class="race-face"></span><span class="race-c-stem"></span>';
+        el.style.setProperty('--x', '0%');
+        this.wrap.querySelector('.race-cursors').appendChild(el);
+        this.cursors.set(id, el);
+        void el.offsetWidth;
       }
-      row.className = `race-row rank-${i < 3 ? i + 1 : 'n'}${u.value / sc.max > 0.72 ? ' flip' : ''}`;
-      row.style.setProperty('--i', i);
-      row.style.setProperty('--p', `${pos(u.value)}%`);
-      row.querySelector('.race-rank').textContent = ['🥇', '🥈', '🥉'][i] || String(i + 1);
-      row.querySelector('.race-name').textContent = u.name || '';
-      row.querySelector('.race-likes').textContent = fmt(u.value);
-      const face = row.querySelector('.race-face');
+      el.className = `race-c rank-${rank < 3 ? rank + 1 : 'n'}`;
+      el.style.setProperty('--x', `${x}%`);
+      el.style.setProperty('--lvl', level);
+      el.style.zIndex = String(50 - rank);
+      el.querySelector('.race-c-name').textContent = u.name || '';
+      el.querySelector('.race-c-likes').textContent = fmt(u.value);
+      const face = el.querySelector('.race-face');
       const key = u.avatar || u.name;
       if (face.dataset.src !== key) {
         face.dataset.src = key;
@@ -122,9 +141,8 @@ export class Race {
           : initial;
       }
     });
-    this.rows.forEach((row, id) => {
-      if (!seen.has(id)) { row.remove(); this.rows.delete(id); }
+    this.cursors.forEach((el, id) => {
+      if (!seen.has(id)) { el.remove(); this.cursors.delete(id); }
     });
-    this.root.classList.toggle('race-empty', !top.length);
   }
 }

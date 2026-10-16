@@ -356,7 +356,7 @@ const slideshow = OUTPUT ? new Slideshow($('v-slideshow'), {
 }) : null;
 // Course aux likes : en plein écran sur la page Broadcast (comme la tablette), et à la demande
 // sur les téléphones (bouton 🏃).
-const race = new Race($('v-race-box'));
+const race = new Race($('v-race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 function renderRace(st) {
   if ($('v-race-full').hidden || !st.race) return;
   race.update(st.race, { title: settings.raceTitle });

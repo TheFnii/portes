@@ -183,7 +183,7 @@ function drawMessage() {
 
 // ---------- Paliers de likes par personne ----------
 
-const DEFAULT_TIERS = [{ likes: 10000, anim: true, list: true }];
+const DEFAULT_TIERS = [{ likes: 10000, anim: true, list: true, text: 'Une question offerte en priorité ✨' }];
 function loadTiers() {
   const t = readJSON(STORAGE.likeTiers, null);
   return Array.isArray(t) ? t : DEFAULT_TIERS;
@@ -248,7 +248,7 @@ let slideshow = null; // diaporama 🌙 (créé plus bas)
 function raceData() {
   return {
     top: likes.top(settings.raceCount || 10).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' })),
-    goals: tiers.map((t) => Number(t.likes)).filter((n) => n > 0),
+    goals: tiers.filter((t) => Number(t.likes) > 0).map((t) => ({ likes: Number(t.likes), text: t.text || '' })),
   };
 }
 // Ce que la page Broadcast doit savoir d'un écran du diaporama.
@@ -1046,7 +1046,7 @@ function openScreensaver() {
 }
 
 // Course aux likes en plein écran (on en sort en touchant l'écran).
-const race = new Race($('race-box'));
+const race = new Race($('race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 $('race-btn').addEventListener('click', () => {
   $('race-full').hidden = false;
   requestAnimationFrame(() => race.update(raceData(), { title: settings.raceTitle }));

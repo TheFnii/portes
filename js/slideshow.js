@@ -230,7 +230,7 @@ export class Slideshow {
       const box = document.createElement('div');
       box.className = 'race-box';
       el.appendChild(box);
-      const race = new Race(box);
+      const race = new Race(box, { render: (t) => rich(t).replace(/\n/g, '<br>') });
       return { refresh: (d) => race.update(d.race || {}, { title: (d.settings || {}).raceTitle }) };
     }
     if (kind === 'board' || kind === 'end') {

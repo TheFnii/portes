@@ -630,7 +630,7 @@ function readTiers() {
     const t = JSON.parse(localStorage.getItem(STORAGE.likeTiers) || 'null');
     if (Array.isArray(t)) return t;
   } catch (e) { /* ignore */ }
-  return [{ likes: 10000, anim: true, list: true }];
+  return [{ likes: 10000, anim: true, list: true, text: 'Une question offerte en priorité ✨' }];
 }
 function tierRow(t) {
   return `<div class="tier-row">
@@ -638,6 +638,7 @@ function tierRow(t) {
     <label class="check"><input type="checkbox" data-tier="anim"${t.anim ? ' checked' : ''}> Animation de victoire</label>
     <label class="check"><input type="checkbox" data-tier="list"${t.list ? ' checked' : ''}> Ajout à la liste</label>
     <button class="x-btn" data-tier-del type="button" aria-label="Retirer ce palier">✕</button>
+    <label class="field tier-text"><span>Bonus expliqué sous ce palier (course aux likes)</span><textarea rows="2" data-rich data-tier="text">${esc(t.text || '')}</textarea></label>
   </div>`;
 }
 function renderTiers(list = readTiers()) {
@@ -648,6 +649,7 @@ function collectTiers() {
     likes: Math.round(Number(row.querySelector('[data-tier="likes"]').value) || 0),
     anim: row.querySelector('[data-tier="anim"]').checked,
     list: row.querySelector('[data-tier="list"]').checked,
+    text: row.querySelector('[data-tier="text"]').value.trim(),
   }));
 }
 $('tier-rows').addEventListener('click', (e) => {

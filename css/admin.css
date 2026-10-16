@@ -306,6 +306,7 @@ output { color: var(--gold-light); font-weight: 600; }
 .tier-row label.check { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; }
 .tier-row input[type='checkbox'] { width: 24px; height: 24px; accent-color: #d9a94a; }
 .tier-row .x-btn { margin-left: auto; }
+.tier-row .tier-text { flex-basis: 100%; margin: 0; }
 
 /* Radio : ma playlist */
 .music-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
