@@ -162,7 +162,7 @@ Le diaporama passe aussi dans la version Broadcast, écran par écran, mais pas 
 
 ## Course aux likes 🏃
 
-Un chemin gradué, un peu courbé, avec les objectifs bien visibles : les photos de profil des premiers du Top Likes (nombre réglable) avancent dessus, avec le nombre de likes de chacun. Le premier objectif est 10 000 (vos paliers par personne) : tant que personne ne l’a atteint, l’écran s’arrête là et le chemin continue hors de l’écran. Dès qu’il est atteint, la vue recule et l’objectif suivant apparaît (vos paliers suivants, puis 20 000, 50 000, 100 000…).
+Une course en couloirs, facile à lire : chaque personne du Top Likes (nombre réglable) a sa ligne, de la 1re à la dernière, avec son prénom, sa photo de profil qui avance vers la ligne d’arrivée 🏁 et son nombre de likes. Les graduations sont en haut. Le premier objectif est 10 000 (vos paliers par personne) : tant que personne ne l’a atteint, la ligne d’arrivée est là (la piste continue un peu au-delà). Dès qu’il est atteint, la vue recule : il reste marqué ✓ et l’objectif suivant devient la ligne d’arrivée (vos paliers suivants, puis 20 000, 50 000, 100 000…). Quand quelqu’un en dépasse un autre, les lignes glissent.
 - **Sur la tablette** : bouton 🏃 en bas de la case Top Likes (plein écran), et dans le diaporama.
 - **Dans la version Broadcast** : comme sur la tablette.
 - **Pour les viewers** : un bouton 🏃 en haut de leur page, pour voir leur place.
