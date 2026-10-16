@@ -19,11 +19,11 @@ import { Dashboard, endMessages } from './dashboard.js';
 import { renderBoard, stopBoard } from './board.js';
 import { applyTheme, currentTheme } from './theme.js';
 import { Slideshow } from './slideshow.js';
-import { Race } from './race.js';
+import { Race, raceOpts, DEFAULT_RACE_GOALS } from './race.js';
 import { getMedia } from './media.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
-import { imagesReady, refreshImages } from './images.js';
+import { imagesReady, refreshImages, image } from './images.js';
 import { Tour } from './tour.js';
 import { rich } from './stickers.js';
 import { Broadcaster, castMedia, castManifest } from './broadcast.js';
@@ -183,7 +183,7 @@ function drawMessage() {
 
 // ---------- Paliers de likes par personne ----------
 
-const DEFAULT_TIERS = [{ likes: 10000, anim: true, list: true, text: 'Une question offerte en priorité ✨' }];
+const DEFAULT_TIERS = [{ likes: 10000, anim: true, list: true }];
 function loadTiers() {
   const t = readJSON(STORAGE.likeTiers, null);
   return Array.isArray(t) ? t : DEFAULT_TIERS;
@@ -235,7 +235,7 @@ function changed() {
 // Les grands écrans ouverts (diaporama, course aux likes) suivent le live.
 function refreshLive() {
   if (slideshow) slideshow.refresh();
-  if (!$('race-full').hidden) race.update(raceData(), { title: settings.raceTitle, label: settings.raceLabel });
+  if (!$('race-full').hidden) race.update(raceData(), raceOpts(settings, image('fondCourse')));
 }
 
 // ---------- Diffusion vers la page des viewers (live.html) ----------
@@ -246,9 +246,11 @@ let slideshow = null; // diaporama 🌙 (créé plus bas)
 
 // Course aux likes : les premiers du Top Likes et les objectifs (paliers par personne).
 function raceData() {
+  const goals = readJSON(STORAGE.raceGoals, null);
   return {
-    top: likes.top(settings.raceCount || 10).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' })),
-    goals: tiers.filter((t) => Number(t.likes) > 0).map((t) => ({ likes: Number(t.likes), text: t.text || '' })),
+    total: Math.round(likes.total),
+    goals: Array.isArray(goals) ? goals : DEFAULT_RACE_GOALS,
+    top: likes.top(settings.raceCount || 100).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' })),
   };
 }
 // Ce que la page Broadcast doit savoir d'un écran du diaporama.
@@ -1049,7 +1051,7 @@ function openScreensaver() {
 const race = new Race($('race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 $('race-btn').addEventListener('click', () => {
   $('race-full').hidden = false;
-  requestAnimationFrame(() => race.update(raceData(), { title: settings.raceTitle, label: settings.raceLabel }));
+  requestAnimationFrame(() => race.update(raceData(), raceOpts(settings, image('fondCourse'))));
   castState();
 });
 $('race-full').addEventListener('pointerdown', (e) => {
@@ -1202,6 +1204,7 @@ window.addEventListener('storage', (e) => {
   }
   else if (e.key === STORAGE.likeTiers) tiers = loadTiers();
   else if (e.key === STORAGE.radioMine || e.key === STORAGE.radioGrimoire) radio.rebuild();
+  else if (e.key === STORAGE.raceGoals) { refreshLive(); castState(); }
   else if (e.key === STORAGE.slides) { forgetSlideMedia(); sendMedia(); }
   else if (e.key === STORAGE.media) {
     // Image ou son déposé dans les Réglages : on le prend tout de suite.

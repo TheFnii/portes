@@ -102,6 +102,21 @@
       <p class="form-status" id="tier-status" role="status"></p>
     </details>
 
+    <!-- Course aux likes -->
+    <details class="card fold" id="course">
+      <summary><h2><span class="fold-icon" aria-hidden="true">🏃</span>Course aux likes</h2></summary>
+      <p class="hint">L’affichage suit le <strong>total des likes du live</strong> : tant que le total n’a pas atteint le premier palier, ce palier est tout à droite du chemin. Dès qu’il est franchi, le palier suivant passe tout à droite (les paliers franchis restent à leur place, en proportion). Après vos paliers, la course continue toute seule (200 000, 500 000…). Le titre, ce qui s’affiche au-dessus des photos, le nombre de personnes et le <strong>texte sous le chemin</strong> se règlent dans <strong>Personnalisation → Course aux likes</strong>.</p>
+      <h3>Paliers et leur texte (affiché sous le palier)</h3>
+      <div class="tier-rows" id="race-rows"></div>
+      <div class="form-actions">
+        <button class="btn" id="race-add" type="button">＋ Ajouter un palier</button>
+        <button class="btn btn-primary" id="race-save" type="button">Enregistrer les paliers</button>
+      </div>
+      <p class="form-status" id="race-status" role="status"></p>
+      <h3>Image de fond</h3>
+      <div class="media-grid" id="media-race"></div>
+    </details>
+
     <!-- Diaporama 🌙 -->
     <details class="card fold" id="diaporama">
       <summary><h2><span class="fold-icon" aria-hidden="true">🌙</span>Diaporama (bouton 🌙)</h2></summary>

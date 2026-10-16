@@ -35,6 +35,7 @@ export const IMAGES = {
   animEnveloppe: 'images/animations/enveloppe', // enveloppe (Donut) : côté destinataire, le pseudo est écrit dessus
   animEnveloppeDos: 'images/animations/enveloppe-dos', // enveloppe (Donut) : côté du sceau de cire
   animLettre: 'images/animations/lettre',      // lettre ouverte vierge (le message est écrit dessus)
+  fondCourse: 'images/fond-course',            // image de fond de la course aux likes
 };
 export const IMAGE_EXTENSIONS = ['png', 'webp', 'jpg', 'jpeg', 'gif', 'svg'];
 
@@ -83,6 +84,7 @@ export const STORAGE = {
   likeTiers: 'portes.liketiers',   // paliers de likes par personne
   likeTiersReached: 'portes.liketiers.reached',
   tour: 'portes.tour',            // écran de veille « présentation » (étoile)
+  raceGoals: 'portes.race.goals', // course aux likes : paliers (total du live) et leurs textes
   slides: 'portes.slides',        // diaporama 🌙 : écrans, durées, textes, images, vidéos
   radioMine: 'portes.radio.mine',  // musiques ajoutées à la radio
   radioGrimoire: 'portes.radio.grimoire', // garder la playlist du Grimoire

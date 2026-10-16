@@ -48,7 +48,8 @@ export const SETTINGS = [
     items: [
       { key: 'raceTitle', label: 'Titre de l’écran', type: 'text', def: 'Course aux likes' },
       { key: 'raceLabel', label: 'Au-dessus de chaque photo', type: 'select', def: 'both', options: [['both', 'Nombre de likes et pseudo'], ['likes', 'Nombre de likes'], ['name', 'Pseudo'], ['none', 'Rien (seulement la photo)']] },
-      { key: 'raceCount', label: 'Nombre de personnes sur le chemin', type: 'range', def: 10, min: 3, max: 20, unit: '' },
+      { key: 'raceCount', label: 'Nombre de personnes sur le chemin (0 = tout le monde)', type: 'range', def: 0, min: 0, max: 100, unit: '' },
+      { key: 'raceText', label: 'Texte sous le chemin', type: 'textarea', def: 'Envoyez des likes pour avancer sur le chemin ❤️' },
     ],
   },
   {

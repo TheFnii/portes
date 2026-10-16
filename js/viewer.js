@@ -16,7 +16,7 @@ import { entryIcon, entryDetail, SECTIONS, sectionOf, COIN, layoutGrid, fitPinne
 import { Ticker } from './ticker.js';
 import { Tour } from './tour.js';
 import { Slideshow } from './slideshow.js';
-import { Race } from './race.js';
+import { Race, raceOpts } from './race.js';
 import { DEFAULTS } from './settings.js';
 import { applyFonts } from './fonts.js';
 import { applyTheme } from './theme.js';
@@ -359,7 +359,7 @@ const slideshow = OUTPUT ? new Slideshow($('v-slideshow'), {
 const race = new Race($('v-race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 function renderRace(st) {
   if ($('v-race-full').hidden || !st.race) return;
-  race.update(st.race, { title: settings.raceTitle, label: settings.raceLabel });
+  race.update(st.race, raceOpts(settings, image('fondCourse')));
 }
 if (!OUTPUT) {
   $('v-race-btn').addEventListener('click', () => {

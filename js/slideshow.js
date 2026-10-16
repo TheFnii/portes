@@ -8,7 +8,8 @@ import { rich } from './stickers.js';
 import { esc } from './shell.js';
 import { renderBoard, stopBoard } from './board.js';
 import { Ticker } from './ticker.js';
-import { Race } from './race.js';
+import { Race, raceOpts } from './race.js';
+import { image } from './images.js';
 import { bigRanking, endMessages, entryDetail, COIN } from './dashboard.js';
 
 export const SLIDE_KINDS = {
@@ -231,7 +232,7 @@ export class Slideshow {
       box.className = 'race-box';
       el.appendChild(box);
       const race = new Race(box, { render: (t) => rich(t).replace(/\n/g, '<br>') });
-      return { refresh: (d) => race.update(d.race || {}, { title: (d.settings || {}).raceTitle, label: (d.settings || {}).raceLabel }) };
+      return { refresh: (d) => race.update(d.race || {}, raceOpts(d.settings || {}, image('fondCourse'))) };
     }
     if (kind === 'board' || kind === 'end') {
       el.classList.add('board-full');
