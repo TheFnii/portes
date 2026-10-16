@@ -263,7 +263,7 @@ function raceData() {
     top,
     focus: raceFocus,
     // Tous les participants (sans photo) : les viewers cherchent leur pseudo dedans.
-    all: likes.top(300).map((u) => [u.handle || u.name, u.name || u.handle, Math.round(u.value)]),
+    all: likes.top(3000).map((u) => [u.handle || u.name, u.name || u.handle, Math.round(u.value)]),
   };
 }
 // Ce que la page Broadcast doit savoir d'un écran du diaporama.
@@ -1063,7 +1063,7 @@ const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0
 // Liste complète des participants, cases à cocher ; les pseudos cochés en haut.
 function renderRaceSearch() {
   const q = norm($('ss-search-input').value.trim());
-  const all = likes.top(300).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: u.value }));
+  const all = likes.top(3000).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: u.value }));
   const list = all.filter((u) => raceFocus.includes(u.id) || !q || norm(u.name).includes(q) || norm(u.id).includes(q));
   list.sort((a, b) => (raceFocus.includes(b.id) - raceFocus.includes(a.id)) || b.value - a.value);
   $('ss-search-list').innerHTML = list.length

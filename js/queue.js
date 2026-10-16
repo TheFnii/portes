@@ -224,9 +224,9 @@ export class Ranking {
   }
 
   toJSON() {
-    // On ne garde que les 300 premiers pour limiter la taille sauvegardée.
+    // On ne garde que les 3000 premiers pour limiter la taille sauvegardée.
     const users = {};
-    Object.entries(this.users).sort((a, b) => (b[1].value ?? 0) - (a[1].value ?? 0)).slice(0, 300)
+    Object.entries(this.users).sort((a, b) => (b[1].value ?? 0) - (a[1].value ?? 0)).slice(0, 3000)
       .forEach(([k, v]) => { users[k] = v; });
     return { total: this.total, users };
   }
