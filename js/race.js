@@ -23,7 +23,8 @@ export function raceScale(total, goals, follow = true) {
 export const DEFAULT_RACE_GOALS = [{ likes: 10000, text: '' }, { likes: 50000, text: '' }, { likes: 100000, text: '' }];
 
 // Réglages d'affichage (titre, étiquettes, texte sous la ligne) + image de fond.
-export const raceOpts = (s = {}, bg = null) => ({
+export const raceOpts = (s = {}, bg = null, focus = []) => ({
+  focus,
   title: s.raceTitle, label: s.raceLabel, text: s.raceText, bg,
   follow: s.raceView !== 'fixed', photo: s.racePhoto, size: s.raceTextSize,
 });
@@ -95,6 +96,13 @@ export class Race {
     const show = opts.label || 'both';
     this.root.classList.toggle('race-no-name', show === 'likes' || show === 'none');
     this.root.classList.toggle('race-no-likes', show === 'name' || show === 'none');
+    // En haut et en bas du chemin, une sur deux (dans l'ordre de la ligne) : elles se
+    // chevauchent moins. Le pseudo recherché est mis en avant, toujours en haut.
+    const focus = new Set((opts.focus || []).map(String));
+    const byPos = [...top].sort((a, b) => a.value - b.value);
+    const down = new Set();
+    let k = 0;
+    byPos.forEach((u) => { if (!focus.has(String(u.id || u.name)) && k++ % 2) down.add(u); });
     const seen = new Set();
     [...top].sort((a, b) => b.value - a.value).forEach((u, rank) => {
       const id = String(u.id || u.name);
@@ -109,9 +117,10 @@ export class Race {
         this.cursors.set(id, el);
         void el.offsetWidth;
       }
-      el.className = `race-c rank-${rank < 3 ? rank + 1 : 'n'}`;
+      const isFocus = focus.has(id);
+      el.className = `race-c rank-${rank < 3 ? rank + 1 : 'n'}${down.has(u) ? ' down' : ''}${isFocus ? ' focus' : ''}`;
       el.style.setProperty('--x', `${at(u.value)}%`);
-      el.style.zIndex = String(500 - rank);
+      el.style.zIndex = String(isFocus ? 900 : 500 - rank);
       el.querySelector('.race-c-name').textContent = u.name || '';
       el.querySelector('.race-c-likes').textContent = fmt(u.value);
       const face = el.querySelector('.race-face');

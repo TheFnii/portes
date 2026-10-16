@@ -790,10 +790,10 @@ body.focusing .session-bar { opacity: 0; pointer-events: none; }
   gap: 2vmin;
   padding: 1.1vmin 1vmin;
   border-bottom: 1px solid rgba(var(--accent-rgb), .18);
-  font: 600 calc(clamp(22px, 4.2vmin, 54px) * var(--fs-tops, 1))/1.2 var(--font-text);
+  font: 600 calc(min(clamp(22px, 4.2vmin, 54px), 52vh / var(--n, 10)) * var(--fs-tops, 1))/1.2 var(--font-text);
   animation: feed-in .45s ease both;
 }
-.rank-full-list li:nth-child(-n+3) { font-size: calc(clamp(26px, 5vmin, 64px) * var(--fs-tops, 1)); }
+.rank-full-list li:nth-child(-n+3) { font-size: calc(min(clamp(26px, 5vmin, 64px), 60vh / var(--n, 10)) * var(--fs-tops, 1)); }
 .rank-full-list .medal { flex: none; width: 2em; text-align: center; font-family: var(--font-title); color: rgba(var(--accent-light-rgb), .7); }
 .rank-full-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rank-full-list .value { flex: none; font-family: var(--font-title); color: #ffb3c4; }

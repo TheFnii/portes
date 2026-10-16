@@ -357,16 +357,58 @@ const slideshow = OUTPUT ? new Slideshow($('v-slideshow'), {
 // Course aux likes : en plein écran sur la page Broadcast (comme la tablette), et à la demande
 // sur les téléphones (bouton 🏃).
 const race = new Race($('v-race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
+
+// Téléphones : chacun peut cocher les pseudos à suivre (le sien, ses amis…), même hors du top.
+const PICK_KEY = 'portes.viewer.race';
+let picked = [];
+try { picked = JSON.parse(localStorage.getItem(PICK_KEY) || '[]') || []; } catch (e) { picked = []; }
+function savePicked() {
+  try { localStorage.setItem(PICK_KEY, JSON.stringify(picked)); } catch (e) { /* stockage indisponible */ }
+}
+function raceView(r) {
+  if (OUTPUT || !picked.length) return r;
+  const photos = new Map((r.top || []).map((u) => [String(u.id), u]));
+  const top = (r.all || []).filter(([id]) => picked.includes(String(id)))
+    .map(([id, name, value]) => ({ ...(photos.get(String(id)) || {}), id, name, value }));
+  return { ...r, top };
+}
 function renderRace(st) {
   if ($('v-race-full').hidden || !st.race) return;
-  race.update(st.race, raceOpts(settings, image('fondCourse')));
+  race.update(raceView(st.race), raceOpts(settings, image('fondCourse'), OUTPUT ? st.race.focus || [] : []));
+}
+const normName = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function renderPicker() {
+  const all = (last && last.race && last.race.all) || [];
+  const q = normName($('v-race-q').value.trim());
+  // Les pseudos cochés d'abord, puis ceux qui correspondent à la recherche.
+  const list = all.filter(([id, name]) => picked.includes(String(id)) || !q || normName(name).includes(q) || normName(id).includes(q)).slice(0, 80);
+  list.sort((a, b) => (picked.includes(String(b[0])) - picked.includes(String(a[0]))) || b[2] - a[2]);
+  $('v-race-list').innerHTML = list.length
+    ? list.map(([id, name, value]) => `<li><label><input type="checkbox" data-pick="${esc(id)}"${picked.includes(String(id)) ? ' checked' : ''}><span>${esc(name)}</span><b>${Math.round(value).toLocaleString('fr-FR')}</b></label></li>`).join('')
+    : '<li class="empty">Personne avec ce pseudo pour l’instant (envoyez des likes pour apparaître)</li>';
 }
 if (!OUTPUT) {
   $('v-race-btn').addEventListener('click', () => {
     $('v-race-full').hidden = false;
     requestAnimationFrame(() => { if (last) renderRace(last); });
   });
-  $('v-race-full').addEventListener('click', () => { $('v-race-full').hidden = true; });
+  $('v-race-close').addEventListener('click', () => { $('v-race-full').hidden = true; $('v-race-picker').hidden = true; });
+  $('v-race-pick').addEventListener('click', () => {
+    const p = $('v-race-picker');
+    p.hidden = !p.hidden;
+    if (!p.hidden) renderPicker();
+  });
+  $('v-race-q').addEventListener('input', renderPicker);
+  $('v-race-list').addEventListener('change', (e) => {
+    const c = e.target.closest('[data-pick]');
+    if (!c) return;
+    const id = c.dataset.pick;
+    picked = c.checked ? [...new Set([...picked, id])] : picked.filter((x) => x !== id);
+    savePicked();
+    if (last) renderRace(last);
+  });
+  $('v-race-none').addEventListener('click', () => { picked = []; savePicked(); renderPicker(); if (last) renderRace(last); });
+  $('v-race-ok').addEventListener('click', () => { $('v-race-picker').hidden = true; if (last) renderRace(last); });
 }
 let tickerKey = '';
 let fullKey = '';
@@ -417,6 +459,7 @@ function renderOutput(st) {
     setText('v-likes-full-total', Math.round(d.total || 0).toLocaleString('fr-FR'));
     const html = bigRanking(d.top || []);
     const el = $('v-likes-full-list');
+    el.style.setProperty('--n', Math.max(5, (d.top || []).length));
     if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }
   }
   // Présentation ⭐ : l'étoile suit la tablette, case par case.

@@ -126,10 +126,22 @@
     </div>
   </div>
 
-  <!-- Course aux likes : toucher pour fermer -->
+  <!-- Course aux likes : 🔍 pour choisir les pseudos à suivre, ✕ pour fermer -->
   <div class="race-full v-race-full" id="v-race-full" hidden>
     <div class="race-box" id="v-race-box"></div>
-    <p class="ss-hint v-race-close">Touchez l’écran pour revenir</p>
+    <div class="v-race-tools">
+      <button class="icon-btn" id="v-race-pick" type="button" aria-label="Choisir les pseudos à suivre" title="Choisir les pseudos à suivre">🔍</button>
+      <button class="icon-btn" id="v-race-close" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <div class="v-race-picker" id="v-race-picker" hidden>
+      <p class="v-race-hint">Cochez votre pseudo (et ceux de vos amis) pour suivre leur progression.</p>
+      <input id="v-race-q" type="search" placeholder="Chercher un pseudo…" autocomplete="off" aria-label="Chercher un pseudo">
+      <ul id="v-race-list"></ul>
+      <div class="v-race-actions">
+        <button class="btn btn-ghost" id="v-race-none" type="button">Tout décocher (voir le top)</button>
+        <button class="btn btn-primary" id="v-race-ok" type="button">Voir la course</button>
+      </div>
+    </div>
   </div>
 
   <div class="celebrate" id="celebrate" hidden></div>

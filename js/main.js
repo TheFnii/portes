@@ -235,7 +235,7 @@ function changed() {
 // Les grands écrans ouverts (diaporama, course aux likes) suivent le live.
 function refreshLive() {
   if (slideshow) slideshow.refresh();
-  if (!$('race-full').hidden) race.update(raceData(), raceOpts(settings, image('fondCourse')));
+  if (!$('race-full').hidden) race.update(raceData(), raceOpts(settings, image('fondCourse'), raceFocus));
 }
 
 // ---------- Diffusion vers la page des viewers (live.html) ----------
@@ -245,12 +245,25 @@ let tour = null; // présentation ⭐ (créée plus bas)
 let slideshow = null; // diaporama 🌙 (créé plus bas)
 
 // Course aux likes : les premiers du Top Likes et les objectifs (paliers par personne).
+// Pseudo(s) recherché(s) dans le diaporama (loupe) : mis en avant sur la course.
+let raceFocus = [];
+const racer = (u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' });
 function raceData() {
   const goals = readJSON(STORAGE.raceGoals, null);
+  // Les photos : les premiers (60 au plus, pour un envoi léger), plus le pseudo recherché.
+  const top = likes.top(Math.min(settings.raceCount || 60, 60)).map(racer);
+  raceFocus.forEach((id) => {
+    if (top.some((u) => u.id === id)) return;
+    const u = Object.values(likes.users).find((x) => (x.handle || x.name) === id);
+    if (u) top.push(racer({ ...u, value: u.value ?? u.likes ?? 0 }));
+  });
   return {
     total: Math.round(likes.total),
     goals: Array.isArray(goals) ? goals : DEFAULT_RACE_GOALS,
-    top: likes.top(settings.raceCount || 100).map((u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' })),
+    top,
+    focus: raceFocus,
+    // Tous les participants (sans photo) : les viewers cherchent leur pseudo dedans.
+    all: likes.top(300).map((u) => [u.handle || u.name, u.name || u.handle, Math.round(u.value)]),
   };
 }
 // Ce que la page Broadcast doit savoir d'un écran du diaporama.
@@ -311,8 +324,8 @@ function snapshot() {
     view: currentView(),
     tour: tour && tour.active && tour.list ? { list: tour.list, i: tour.index } : null,
     ticker: { on: ticker.enabled, messages: ticker.messages, speed: ticker.speed },
-    likesFull: pickTop(likes, 10),
-    giftersFull: pickTop(gifters, 10),
+    likesFull: pickTop(likes, settings.likesFullCount || 10),
+    giftersFull: pickTop(gifters, settings.giftersFullCount || 10),
     race: raceData(),
     slides: slideshow && slideshow.active ? { list: slideshow.list.map(slidePublic), i: slideshow.index } : null,
     slideFiles: castManifest(cast, true),
@@ -325,7 +338,7 @@ function snapshot() {
     })),
     letters: features.donuts ? queue.donuts.map((e) => ({ id: e.id, name: e.name, message: e.message || '', count: e.count })) : [],
     likes: pickTop(likes),
-    gifters: pickTop(gifters),
+    gifters: pickTop(gifters, settings.giftersCount || 6),
     board: boardData,
     files: castManifest(cast),
     game: state.screen === 'game' ? {
@@ -341,7 +354,7 @@ function snapshot() {
 }
 
 function castState() {
-  if (cast) cast.state(snapshot());
+  if (cast) cast.state(snapshot);
 }
 
 // Les images et les sons déposés dans les Réglages sont envoyés aux viewers
@@ -1036,12 +1049,53 @@ function forgetSlideMedia() {
 }
 slideshow = new Slideshow($('slideshow'), { data: snapshot, mediaUrl: slideMedia, onStep: () => castState() });
 
+// Commandes du diaporama (seulement sur la tablette) : 🌙 pour sortir, ◀ ▶ pour changer
+// d'écran, 🔍 pour chercher un pseudo dans la course aux likes.
+$('ss-close').addEventListener('click', () => closeScreensaver());
+$('ss-prev').addEventListener('click', () => slideshow.prev());
+$('ss-next').addEventListener('click', () => slideshow.next());
+$('ss-search-btn').addEventListener('click', () => {
+  const box = $('ss-search');
+  box.hidden = !box.hidden;
+  if (!box.hidden) { $('ss-search-input').value = ''; renderRaceSearch(); $('ss-search-input').focus(); }
+});
+const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function renderRaceSearch() {
+  const q = norm($('ss-search-input').value.trim());
+  const all = likes.top(300);
+  const found = (q ? all.filter((u) => norm(u.name).includes(q) || norm(u.handle).includes(q)) : all).slice(0, 8);
+  $('ss-search-list').innerHTML = found.length
+    ? found.map((u) => `<li><button type="button" data-racer="${esc(u.handle || u.name)}"><span>${esc(u.name || u.handle)}</span><b>${Math.round(u.value).toLocaleString('fr-FR')}</b></button></li>`).join('')
+    : '<li class="empty">Personne avec ce pseudo pour l’instant</li>';
+  $('ss-search-clear').hidden = !raceFocus.length;
+}
+$('ss-search-input').addEventListener('input', renderRaceSearch);
+$('ss-search-list').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-racer]');
+  if (!b) return;
+  raceFocus = [b.dataset.racer];
+  $('ss-search').hidden = true;
+  // On va sur l'écran de la course pour le montrer.
+  const i = slideshow.list.findIndex((it) => it.kind === 'race');
+  if (i < 0) toast('Ajoutez la « Course aux likes » au diaporama (Réglages → Diaporama).');
+  else if (slideshow.index !== i) slideshow.show(i);
+  else slideshow.refresh();
+  castState();
+});
+$('ss-search-clear').addEventListener('click', () => {
+  raceFocus = [];
+  $('ss-search').hidden = true;
+  slideshow.refresh();
+  castState();
+});
+
 function openScreensaver() {
   $('drawer').hidden = true;
   if (!slideshow.open()) {
     toast('Aucun écran à montrer : choisissez-les dans Réglages → Diaporama.');
     return;
   }
+  $('ss-controls').hidden = false;
   castState();
   body.classList.add('saver');
   enterFullscreen(false);
@@ -1051,7 +1105,7 @@ function openScreensaver() {
 const race = new Race($('race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 $('race-btn').addEventListener('click', () => {
   $('race-full').hidden = false;
-  requestAnimationFrame(() => race.update(raceData(), raceOpts(settings, image('fondCourse'))));
+  requestAnimationFrame(() => race.update(raceData(), raceOpts(settings, image('fondCourse'), raceFocus)));
   castState();
 });
 $('race-full').addEventListener('pointerdown', (e) => {
@@ -1080,13 +1134,12 @@ $('tour').addEventListener('pointerdown', (e) => {
 function closeScreensaver() {
   if (!slideshow.active) return;
   slideshow.close();
+  $('ss-controls').hidden = true;
+  $('ss-search').hidden = true;
+  raceFocus = [];
   castState();
   body.classList.remove('saver');
 }
-$('slideshow').addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  closeScreensaver();
-});
 
 // Délégation des clics
 document.addEventListener('click', (e) => {

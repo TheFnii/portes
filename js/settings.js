@@ -45,6 +45,17 @@ export const SETTINGS = [
     ],
   },
   {
+    group: 'Top Likes et Top Gifters ❤🎁',
+    items: [
+      { key: 'likesTitle', label: 'Titre du Top Likes', type: 'text', def: 'Top Likes' },
+      { key: 'topCount', label: 'Top Likes : nombre de personnes dans la case', type: 'range', def: 6, min: 3, max: 15, unit: '' },
+      { key: 'likesFullCount', label: 'Top Likes : nombre de personnes en plein écran et dans le diaporama', type: 'range', def: 10, min: 3, max: 20, unit: '' },
+      { key: 'giftersTitle', label: 'Titre du Top Gifters', type: 'text', def: 'Top Gifters' },
+      { key: 'giftersCount', label: 'Top Gifters : nombre de personnes dans la case', type: 'range', def: 6, min: 3, max: 15, unit: '' },
+      { key: 'giftersFullCount', label: 'Top Gifters : nombre de personnes en plein écran et dans le diaporama', type: 'range', def: 10, min: 3, max: 20, unit: '' },
+    ],
+  },
+  {
     group: 'Course aux likes 🏃',
     items: [
       { key: 'raceTitle', label: 'Titre de l’écran', type: 'text', def: 'Course aux likes' },
@@ -81,7 +92,6 @@ export const SETTINGS = [
       { key: 'sideWidth', label: 'Largeur de la colonne Top Likes / Top Gifters', type: 'range', def: 24, min: 16, max: 34, unit: '%' },
       { key: 'pinnedHeight', label: 'Hauteur de la case du message épinglé', type: 'range', def: 150, min: 90, max: 260, unit: 'px' },
       { key: 'textScale', label: 'Taille des textes', type: 'range', def: 100, min: 80, max: 130, unit: '%' },
-      { key: 'topCount', label: 'Nombre de personnes dans les tops', type: 'range', def: 6, min: 3, max: 12, unit: '' },
     ],
   },
   {
@@ -95,8 +105,6 @@ export const SETTINGS = [
       { key: 'nextButton', label: 'Bouton « Personne suivante »', type: 'text', def: 'Personne suivante' },
       { key: 'undoButton', label: 'Bouton « Retour en arrière »', type: 'text', def: 'Retour en arrière' },
       { key: 'gameButton', label: 'Bouton du jeu', type: 'text', def: 'Jeu des Portes' },
-      { key: 'likesTitle', label: 'Titre du top likes', type: 'text', def: 'Top Likes' },
-      { key: 'giftersTitle', label: 'Titre du top gifters', type: 'text', def: 'Top Gifters' },
       { key: 'univTitle', label: 'Titre de la case des Donuts', type: 'text', def: 'Message de l’univers' },
       { key: 'univEmpty', label: 'Case des Donuts vide', type: 'text', def: 'Aucune enveloppe pour l’instant' },
       { key: 'boardTitle', label: 'Titre de la case centrale (laisser vide pour aucun)', type: 'text', def: '' },

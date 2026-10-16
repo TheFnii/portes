@@ -152,11 +152,14 @@ export class Broadcaster {
 
   // État complet du tableau de bord (gardé par le relais pour les viewers qui arrivent).
   // Regroupé : au plus une publication toutes les 400 ms.
+  // obj peut être une fonction : l'état n'est alors calculé qu'au moment d'envoyer.
   state(obj) {
-    this.lastState = obj;
+    this.pending = obj;
     if (this.stateTimer) return;
     this.stateTimer = setTimeout(() => {
       this.stateTimer = null;
+      const p = this.pending;
+      this.lastState = typeof p === 'function' ? p() : p;
       this.send(this.t.state, this.lastState, true);
     }, 400);
   }

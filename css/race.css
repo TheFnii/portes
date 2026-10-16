@@ -218,3 +218,73 @@
   font: italic 600 clamp(18px, 3.4vmin, 42px)/1.25 var(--font-text);
   color: var(--gold-light);
 }
+
+/* Une photo sur deux sous le chemin ; le pseudo recherché en grand, qui brille */
+.race-c.down { bottom: auto; top: 52%; flex-direction: column-reverse; }
+.race-c.down .race-c-label { margin: 3px 0 0; }
+.race-c.focus .race-face { transform: scale(1.35); border-color: #fff; box-shadow: 0 0 0 4px #ffd76a, 0 0 34px rgba(255, 215, 106, 1); animation: race-focus 1.2s ease-in-out infinite; }
+.race-c.focus .race-c-label { transform: translateY(-14%); background: #ffd76a; }
+.race-c.focus .race-c-label * { color: #2a1606 !important; }
+.race-c.focus .race-c-name, .race-c.focus .race-c-likes { display: block !important; }
+@keyframes race-focus { 50% { box-shadow: 0 0 0 7px #ffd76a, 0 0 54px rgba(255, 215, 106, 1); } }
+.race-c.focus .race-c-label { display: flex !important; }
+
+/* Commandes du diaporama (tablette seulement) */
+.ss-controls { position: fixed; inset: 0; z-index: 97; pointer-events: none; }
+.ss-controls .icon-btn {
+  position: absolute;
+  pointer-events: auto;
+  width: 54px;
+  height: 54px;
+  font-size: 22px;
+  opacity: .55;
+  background: rgba(var(--veil-rgb), .75);
+  transition: opacity .3s;
+}
+.ss-controls .icon-btn:hover, .ss-controls .icon-btn:active { opacity: 1; }
+.ss-moon { left: max(16px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); opacity: .85 !important; }
+.ss-prev { left: calc(max(16px, env(safe-area-inset-left)) + 66px); bottom: max(16px, env(safe-area-inset-bottom)); }
+.ss-next { right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); }
+.ss-search-btn { right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); }
+.ss-search {
+  position: absolute;
+  pointer-events: auto;
+  right: max(16px, env(safe-area-inset-right));
+  top: calc(max(16px, env(safe-area-inset-top)) + 64px);
+  width: min(380px, 86vw);
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(var(--veil-rgb), .96);
+  border: 1px solid rgba(var(--accent-rgb), .55);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .6);
+}
+.ss-search input, .v-race-picker input {
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(var(--accent-rgb), .5);
+  background: rgba(0, 0, 0, .35);
+  color: var(--ink);
+  font: 500 19px/1.2 var(--font-text);
+}
+.ss-search ul, .v-race-picker ul { list-style: none; margin: 8px 0 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+.ss-search li button, .v-race-picker li label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(var(--accent-rgb), .15);
+  background: none;
+  color: var(--ink);
+  font: 500 18px/1.2 var(--font-text);
+  text-align: left;
+  cursor: pointer;
+}
+.ss-search li span, .v-race-picker li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-search li b, .v-race-picker li b { font: 700 15px/1 var(--font-title); color: #ffb3c4; }
+.ss-search .empty, .v-race-picker .empty { padding: 10px 6px; font-style: italic; opacity: .6; }
+.ss-search .btn { width: 100%; margin-top: 8px; }
+.race-wrap { isolation: isolate; }

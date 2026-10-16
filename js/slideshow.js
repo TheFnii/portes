@@ -141,6 +141,11 @@ export class Slideshow {
     this.show((this.index + 1) % this.list.length);
   }
 
+  prev() {
+    if (!this.list.length) return;
+    this.show((this.index - 1 + this.list.length) % this.list.length);
+  }
+
   dispose(el) {
     if (el._ticker) el._ticker.setEnabled(false);
     el.querySelectorAll('.board-track').forEach((t) => stopBoard(t));
@@ -222,6 +227,7 @@ export class Slideshow {
         el.querySelector('.rank-full-total').hidden = !total;
         const ol = el.querySelector('.rank-full-list');
         if (ol.dataset.html !== html) { ol.dataset.html = html; ol.innerHTML = html; }
+        ol.style.setProperty('--n', Math.max(5, ol.children.length));
       };
       refresh(st);
       return { refresh };
@@ -232,7 +238,7 @@ export class Slideshow {
       box.className = 'race-box';
       el.appendChild(box);
       const race = new Race(box, { render: (t) => rich(t).replace(/\n/g, '<br>') });
-      return { refresh: (d) => race.update(d.race || {}, raceOpts(d.settings || {}, image('fondCourse'))) };
+      return { refresh: (d) => race.update(d.race || {}, raceOpts(d.settings || {}, image('fondCourse'), (d.race && d.race.focus) || [])) };
     }
     if (kind === 'board' || kind === 'end') {
       el.classList.add('board-full');

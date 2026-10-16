@@ -266,3 +266,25 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
 .v-race { width: 48px; height: 48px; font-size: 22px; }
 .v-race-full { z-index: 75; padding: max(14px, env(safe-area-inset-top)) 10px max(40px, env(safe-area-inset-bottom)); }
 .v-race-full .ss-hint { display: none; }
+.v-race-tools { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 10px; display: flex; gap: 8px; z-index: 3; }
+.v-race-tools .icon-btn { width: 46px; height: 46px; font-size: 20px; background: rgba(var(--veil-rgb), .8); }
+.v-race-picker {
+  position: absolute;
+  z-index: 4;
+  left: 10px;
+  right: 10px;
+  top: calc(max(10px, env(safe-area-inset-top)) + 56px);
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(var(--veil-rgb), .97);
+  border: 1px solid rgba(var(--accent-rgb), .55);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .7);
+}
+.v-race-picker ul { flex: 1; min-height: 0; }
+.v-race-picker input[type=checkbox] { width: 24px; height: 24px; flex: none; accent-color: #d9a94a; min-height: 0; }
+.v-race-hint { margin: 0 0 8px; font-style: italic; color: rgba(243, 233, 210, .8); }
+.v-race-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.v-race-actions .btn { min-height: 46px; font-size: 15px; padding: 6px 10px; }

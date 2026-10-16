@@ -1011,8 +1011,11 @@ applyTheme(loadSettings());
 
 // ---------- Autocollants dans les champs de texte ----------
 // Chaque champ marqué data-rich accepte les autocollants de l'iPad (et les images collées).
+// Pour que la page s'ouvre vite, un champ n'est préparé que quand sa section est ouverte.
+const hiddenInFold = (el) => { const d = el.closest('details:not([open])'); return !!d; };
 function enhanceRich(root = document) {
-  root.querySelectorAll('[data-rich]').forEach(makeRich);
+  root.querySelectorAll('[data-rich]').forEach((f) => { if (!hiddenInFold(f)) makeRich(f); });
 }
 new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) enhanceRich(n.matches?.('[data-rich]') ? n.parentElement : n); }))).observe(document.body, { childList: true, subtree: true });
+document.addEventListener('toggle', (e) => { if (e.target.open) enhanceRich(e.target); }, true);
 enhanceRich();

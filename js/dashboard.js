@@ -229,8 +229,7 @@ export class Dashboard {
 
   // ---------- Tops ----------
 
-  renderTop(listId, totalId, ranking, unit) {
-    const n = this.s.topCount || 6;
+  renderTop(listId, totalId, ranking, unit, n = 6) {
     $(totalId).innerHTML = Math.round(ranking.total).toLocaleString('fr-FR') + unit;
     const medals = ['🥇', '🥈', '🥉'];
     const top = ranking.top(n);
@@ -241,18 +240,20 @@ export class Dashboard {
   }
 
   renderLikes(likes) {
-    this.renderTop('likes-list', 'likes-total', likes, '');
+    this.renderTop('likes-list', 'likes-total', likes, '', this.s.topCount || 6);
     if (!$('likes-full').hidden) this.renderLikesFull(likes);
   }
 
   // Top Likes en plein écran (plus de monde que dans la case).
   renderLikesFull(likes) {
     $('likes-full-total').textContent = Math.round(likes.total).toLocaleString('fr-FR');
-    $('likes-full-list').innerHTML = bigRanking(likes.top(10).map((u) => ({ name: u.name || u.handle, value: u.value })));
+    const n = this.s.likesFullCount || 10;
+    $('likes-full-list').style.setProperty('--n', n);
+    $('likes-full-list').innerHTML = bigRanking(likes.top(n).map((u) => ({ name: u.name || u.handle, value: u.value })));
   }
 
   renderGifters(gifters) {
-    this.renderTop('gifters-list', 'gifters-total', gifters, COIN);
+    this.renderTop('gifters-list', 'gifters-total', gifters, COIN, this.s.giftersCount || 6);
   }
 
   // ---------- Message épinglé ----------

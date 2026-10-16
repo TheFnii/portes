@@ -110,6 +110,10 @@ Dans la case, toucher **Relire** rouvre une lettre. Dans **Réglages → Message
 - **Polices** (Réglages → Personnalisation → Polices d’écriture) : une police pour les textes, une pour les titres, et des polices à part pour le message épinglé, la case centrale, le bandeau déroulant et la bulle de l’étoile (Lora, très lisible, par défaut). Elles s’appliquent aussi à la page des viewers.
 - **Autocollants** : dans les champs de texte des Réglages (ruban, case centrale, messages de l’univers, bulles de l’étoile, textes de la personnalisation), vos autocollants de l’iPad s’insèrent comme des emojis. Le bouton ✦ d’un champ ouvre « Mes autocollants » (réutiliser, ajouter une image, supprimer). Ils s’affichent partout, y compris chez les viewers.
 
+## Top Likes et Top Gifters
+
+**Personnalisation → Top Likes et Top Gifters** (à part de la course aux likes) : le titre de chaque top, le nombre de personnes dans la case, et le nombre en plein écran et dans le diaporama, pour chacun des deux.
+
 ## Thème, couleurs et tailles des textes
 
 - **Thème** (Réglages → Personnalisation → Thème et couleurs) : Nuit étoilée, Aube, Jour, Crépuscule, Forêt, Océan, Rose… ou **Selon l’heure** : aube à 6 h, jour à 10 h, crépuscule à 17 h, nuit à 21 h (l’heure de la tablette ; le thème change tout seul pendant le live).
@@ -152,7 +156,7 @@ Sur le tableau de bord, le fond est neutre : le Jeu des Portes n’apparaît plu
 
 ## Diaporama 🌙
 
-Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. Touchez l’écran pour revenir. Dans **Réglages → Diaporama** :
+Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. On en sort **seulement avec le bouton 🌙** (il reste visible en bas à gauche). À côté : **◀** écran précédent ; en bas à droite : **▶** écran suivant ; en haut à droite : **🔍** chercher un pseudo dans la course aux likes, pour montrer à quelqu’un où il en est (sa photo est mise en avant, aussi dans la version Broadcast). Dans **Réglages → Diaporama** :
 - cochez les écrans à montrer, parmi Top Likes, Course aux likes, message central, Top Gifters, messages défilants, message épinglé, liste à traiter, messages de l’univers et message de fin de live ;
 - choisissez leur ordre et leur durée ;
 - ajoutez une phrase sous chaque écran ;
@@ -162,13 +166,13 @@ Le diaporama passe aussi dans la version Broadcast, écran par écran, mais pas 
 
 ## Course aux likes 🏃
 
-Un chemin (sans chiffres qui encombrent) : les photos de profil sont les curseurs, toutes au même niveau sur le chemin (elles se chevauchent quand elles se dépassent), placées selon les likes de chacun, avec au-dessus le nombre de likes et le pseudo (réglable). Tout le monde qui envoie des likes peut y être (0 = tout le monde).
+Un chemin (sans chiffres qui encombrent) : les photos de profil sont les curseurs, une sur deux au-dessus et en dessous du chemin (elles se chevauchent moins), placées selon les likes de chacun, avec au-dessus le nombre de likes et le pseudo (réglable). Tout le monde qui envoie des likes peut y être (0 = tout le monde).
 - **Les paliers** (Réglages → Course aux likes) : leur valeur et leur texte (affiché sous le palier). Seuls vos paliers apparaissent. Pour ne montrer que 0 → 10 000 (chacun voit s’il approche de sa question gratuite), gardez un seul palier : 10 000.
 - **Fin de la ligne** (Personnalisation → Course aux likes) : « le prochain palier selon le total du live » (10 000 tout à droite, puis 50 000 une fois 10 000 likes atteints au total… et on reste sur le dernier palier) ou « toujours le dernier palier réglé ».
 - **Taille des photos, taille des textes, texte sous le chemin, titre** : Personnalisation → Course aux likes. **Police** : Personnalisation → Polices d’écriture. **Image de fond** : Réglages → Course aux likes.
 - **Sur la tablette** : bouton 🏃 en bas de la case Top Likes (plein écran), et dans le diaporama.
 - **Dans la version Broadcast** : comme sur la tablette.
-- **Pour les viewers** : un bouton 🏃 en haut de leur page, pour voir leur place.
+- **Pour les viewers** : un bouton 🏃 en haut de leur page. Avec 🔍, chacun coche son pseudo (et ceux de ses amis ou concurrents) pour suivre leur progression, même hors du top ; « Tout décocher » revient au top.
 
 ## Version Broadcast (TikTok LIVE Studio)
 
