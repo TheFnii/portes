@@ -235,7 +235,7 @@ function changed() {
 // Les grands écrans ouverts (diaporama, course aux likes) suivent le live.
 function refreshLive() {
   if (slideshow) slideshow.refresh();
-  if (!$('race-full').hidden) race.update(raceData(), { title: settings.raceTitle });
+  if (!$('race-full').hidden) race.update(raceData(), { title: settings.raceTitle, label: settings.raceLabel });
 }
 
 // ---------- Diffusion vers la page des viewers (live.html) ----------
@@ -1049,7 +1049,7 @@ function openScreensaver() {
 const race = new Race($('race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 $('race-btn').addEventListener('click', () => {
   $('race-full').hidden = false;
-  requestAnimationFrame(() => race.update(raceData(), { title: settings.raceTitle }));
+  requestAnimationFrame(() => race.update(raceData(), { title: settings.raceTitle, label: settings.raceLabel }));
   castState();
 });
 $('race-full').addEventListener('pointerdown', (e) => {

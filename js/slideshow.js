@@ -231,7 +231,7 @@ export class Slideshow {
       box.className = 'race-box';
       el.appendChild(box);
       const race = new Race(box, { render: (t) => rich(t).replace(/\n/g, '<br>') });
-      return { refresh: (d) => race.update(d.race || {}, { title: (d.settings || {}).raceTitle }) };
+      return { refresh: (d) => race.update(d.race || {}, { title: (d.settings || {}).raceTitle, label: (d.settings || {}).raceLabel }) };
     }
     if (kind === 'board' || kind === 'end') {
       el.classList.add('board-full');

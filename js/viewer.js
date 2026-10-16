@@ -359,7 +359,7 @@ const slideshow = OUTPUT ? new Slideshow($('v-slideshow'), {
 const race = new Race($('v-race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 function renderRace(st) {
   if ($('v-race-full').hidden || !st.race) return;
-  race.update(st.race, { title: settings.raceTitle });
+  race.update(st.race, { title: settings.raceTitle, label: settings.raceLabel });
 }
 if (!OUTPUT) {
   $('v-race-btn').addEventListener('click', () => {

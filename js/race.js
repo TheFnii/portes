@@ -99,27 +99,22 @@ export class Race {
       <span class="race-goal-v">${g.reached ? '✓ ' : g.final ? '🏁 ' : ''}${fmt(g.v)} likes</span>
       ${g.text ? `<span class="race-goal-t">${this.render(g.text)}</span>` : ''}</div>`).join('');
 
-    // Les curseurs : la photo de chacun sur la ligne. Ceux qui se touchent montent d'un cran
-    // (avec une tige jusqu'à la ligne) pour que les prénoms restent lisibles.
-    // Place d'un curseur (photo et étiquette) en % de la ligne.
-    const face = this.wrap.querySelector('.race-face');
-    const b = (face && face.offsetWidth) || Math.max(40, Math.min(110, Math.min(window.innerWidth, window.innerHeight) * 0.085));
-    const room = ((b * 1.75) / wrapW) * 100;
-    const levels = [];
+    // Les curseurs : la photo de chacun sur la ligne, likes et pseudo au-dessus (réglable).
+    // Tous sur la ligne, au même niveau : ils se chevauchent quand ils se dépassent
+    // (le mieux classé passe devant).
+    const show = opts.label || 'both';
+    this.root.classList.toggle('race-no-name', show === 'likes' || show === 'none');
+    this.root.classList.toggle('race-no-likes', show === 'name' || show === 'none');
     const seen = new Set();
     [...top].sort((a, b2) => b2.value - a.value).forEach((u, rank) => {
       const x = at(u.value);
-      // Le premier rang libre ; au-delà de 3 rangs, les photos se chevauchent.
-      let level = levels.findIndex((xs) => xs.every((o) => Math.abs(o - x) >= room));
-      if (level < 0) level = levels.length < 4 ? levels.length : levels.reduce((best, xs, k) => (Math.min(...xs.map((o) => Math.abs(o - x))) > Math.min(...levels[best].map((o) => Math.abs(o - x))) ? k : best), 0);
-      (levels[level] = levels[level] || []).push(x);
       const id = String(u.id || u.name);
       seen.add(id);
       let el = this.cursors.get(id);
       if (!el) {
         el = document.createElement('div');
         el.className = 'race-c';
-        el.innerHTML = '<span class="race-c-label"><span class="race-c-name"></span><span class="race-c-likes"></span></span><span class="race-face"></span><span class="race-c-stem"></span>';
+        el.innerHTML = '<span class="race-c-label"><span class="race-c-likes"></span><span class="race-c-name"></span></span><span class="race-face"></span><span class="race-c-stem"></span>';
         el.style.setProperty('--x', '0%');
         this.wrap.querySelector('.race-cursors').appendChild(el);
         this.cursors.set(id, el);
@@ -127,7 +122,6 @@ export class Race {
       }
       el.className = `race-c rank-${rank < 3 ? rank + 1 : 'n'}`;
       el.style.setProperty('--x', `${x}%`);
-      el.style.setProperty('--lvl', level);
       el.style.zIndex = String(50 - rank);
       el.querySelector('.race-c-name').textContent = u.name || '';
       el.querySelector('.race-c-likes').textContent = fmt(u.value);

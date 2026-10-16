@@ -16,7 +16,7 @@
 @keyframes race-dezoom { from { transform: scaleX(1.6); transform-origin: 0 50%; opacity: .3; } }
 
 /* La ligne de course */
-.race-wrap { position: relative; flex: 0 0 62%; margin: 0 5%; }
+.race-wrap { position: relative; flex: 0 0 52%; margin: 0 5%; }
 .race-line, .race-fill {
   position: absolute;
   left: 0;
@@ -85,7 +85,7 @@
   transform: translateX(-50%);
   transition: left 1.2s cubic-bezier(.3, .8, .3, 1);
 }
-.race-c-stem { width: 2px; height: calc(var(--b) * .15 + var(--lvl, 0) * var(--b) * 1.75); background: rgba(var(--accent-light-rgb), .7); transition: height .6s ease; }
+.race-c-stem { width: 2px; height: calc(var(--b) * .15); background: rgba(var(--accent-light-rgb), .7); transition: height .6s ease; }
 .race-face {
   flex: none;
   width: var(--b);
@@ -118,6 +118,8 @@
 .race-c-name { max-width: calc(var(--b) * 1.8); overflow: hidden; text-overflow: ellipsis; font: 600 calc(var(--b) * .22) var(--font-text); color: var(--c-tops, var(--ink)); }
 .race-c-likes { font: 700 calc(var(--b) * .24) var(--font-title); color: #ffb3c4; }
 .race-c.rank-1 .race-c-likes { color: #ffd76a; }
+.race-no-name .race-c-name, .race-no-likes .race-c-likes { display: none; }
+.race-no-name.race-no-likes .race-c-label { display: none; }
 
 /* Sous la ligne : les paliers et leur bonus */
 .race-goals { position: relative; flex: 1; min-height: 0; margin: 0 5%; }
