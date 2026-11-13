@@ -336,6 +336,7 @@ export class Celebrate {
     jar.set(0.9);
     jar.close({
       reset: false,
+      bravo: '',
       sound: () => { this.sound.jarClose(); this.confetti(this.seconds * 1000 + 1200); },
     });
     await this.finish(el, 2200);

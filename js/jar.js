@@ -30,16 +30,26 @@ export function gauge(value, goal) {
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Le bocal illustré : la couleur monte selon le remplissage, le bouchon attend à côté tant que
-// le bocal est ouvert ; close() le pose dessus (animation), puis le bocal se vide.
+// Le bocal illustré, en calques : le verre, le liquide (dans la forme intérieure du bocal,
+// jusqu'au goulot), les reflets du verre par-dessus, puis la ficelle et l'étiquette devant.
+// Le bouchon attend à côté tant que le bocal est ouvert ; close() le pose dessus : explosion
+// de cœurs, « Bravo… » et le bocal fermé et plein ; puis (reset) le bocal se vide.
+const IMG = 'images/bocal/';
+export const BRAVO = 'Bravo, question gratuite en priorité débloquée';
+
 export class Jar {
   constructor(root) {
     this.root = root;
     root.classList.add('jar');
     root.innerHTML = `<div class="jar-body">
+        <img class="jar-glass" src="${IMG}bocal.webp" alt="" draggable="false">
         <div class="jar-inside"><div class="jar-fill"><span></span><span></span><span></span><span></span><span></span></div></div>
-        <img class="jar-glass" src="images/bocal/bocal.webp" alt="" draggable="false">
-        <img class="jar-cork" src="images/bocal/bouchon.webp" alt="" draggable="false">
+        <img class="jar-shine" src="${IMG}bocal-reflets.webp" alt="" draggable="false">
+        <img class="jar-front" src="${IMG}bocal-devant.webp" alt="" draggable="false">
+        <img class="jar-sealed" src="${IMG}bocal-ferme-plein.webp" alt="" draggable="false">
+        <img class="jar-cork" src="${IMG}bouchon.webp" alt="" draggable="false">
+        <div class="jar-burst" aria-hidden="true"></div>
+        <p class="jar-bravo" role="status"></p>
       </div>`;
     this.p = 0;
     this.closing = false;
@@ -50,20 +60,34 @@ export class Jar {
     if (!this.closing) this.root.style.setProperty('--fill', this.p.toFixed(3));
   }
 
-  // Bocal plein : on le remplit jusqu'en haut, le bouchon se pose, puis on le vide.
-  async close({ sound, reset = true } = {}) {
+  // Explosion de petits cœurs autour du bocal.
+  burst(n = 28) {
+    const colors = ['#ff4f8b', '#ff8fb1', '#ffd0da', '#ffd76a', '#ff2d6f'];
+    this.root.querySelector('.jar-burst').innerHTML = Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+      const d = 55 + Math.random() * 70;
+      return `<span style="--dx:${(Math.cos(a) * d).toFixed(1)}%;--dy:${(Math.sin(a) * d).toFixed(1)}%;--s:${(0.7 + Math.random() * 0.9).toFixed(2)};--d:${Math.round(Math.random() * 180)}ms;color:${colors[i % colors.length]}">❤</span>`;
+    }).join('');
+  }
+
+  // Bocal plein : il se remplit jusqu'en haut, le bouchon se pose, explosion de cœurs et
+  // bocal fermé et plein ; puis (reset) il se vide et reprend le remplissage en cours.
+  async close({ sound, reset = true, bravo = BRAVO, hold = 3400 } = {}) {
     if (this.closing) return;
     this.closing = true;
     this.root.style.setProperty('--fill', '1');
-    await wait(700);
+    await wait(900);
     this.root.classList.add('closed');
-    await wait(650);
+    await wait(950);
+    this.root.querySelector('.jar-bravo').textContent = bravo || '';
+    this.root.classList.toggle('has-bravo', !!bravo);
+    this.burst();
+    this.root.classList.add('sealed');
     if (sound) sound();
-    this.root.classList.add('won');
-    await wait(2600);
+    await wait(hold);
     if (!reset) return;
-    this.root.classList.remove('closed', 'won');
-    await wait(500);
+    this.root.classList.remove('closed', 'sealed', 'has-bravo');
+    await wait(600);
     this.closing = false;
     this.root.style.setProperty('--fill', this.p.toFixed(3));
   }

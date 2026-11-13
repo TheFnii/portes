@@ -102,6 +102,7 @@ export class MyJarPanel {
     this.pick('demo');
     clearInterval(this.demoTimer);
     this.demoTimer = setInterval(() => {
+      if (document.hidden) return; // onglet caché : la démo attend (et reste silencieuse)
       likes += Math.round(this.getGoal() * (0.03 + Math.random() * 0.05));
       this.update();
     }, 500);
