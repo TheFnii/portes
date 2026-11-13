@@ -66,6 +66,18 @@ export class TikTokLive extends EventTarget {
     this.state = 'off';
     this.wanted = false;
     this.backoff = 2;
+    // Pseudo connu de chaque identifiant : certains messages de TikTok n'ont que l'identifiant,
+    // on retrouve ainsi la même personne (sinon ses likes seraient répartis sur deux lignes).
+    this.handleById = new Map();
+  }
+
+  // Personne d'un message, complétée par son pseudo déjà vu si le message ne le donne pas.
+  person(raw = {}) {
+    const id = String(raw.userId || raw.id || '');
+    const handle = raw.uniqueId || raw.displayId || '';
+    if (id && handle) this.handleById.set(id, handle);
+    else if (id && this.handleById.has(id)) raw = { ...raw, uniqueId: this.handleById.get(id) };
+    return userOf(raw);
   }
 
   get connected() {
@@ -172,6 +184,7 @@ export class TikTokLive extends EventTarget {
       const d = m.data || {};
       if (m.type === 'WebcastChatMessage') {
         const user = d.user || {};
+        this.person(user);
         this.emit('chat', {
           userId: user.userId || user.id || '',
           handle: user.uniqueId || user.displayId || '',
@@ -182,7 +195,7 @@ export class TikTokLive extends EventTarget {
         });
       } else if (m.type === 'WebcastGiftMessage') {
         const g = d.giftDetails || d.gift || {};
-        const user = userOf(d.user);
+        const user = this.person(d.user);
         this.emit('gift', {
           user,
           msgId: d.common?.msgId || d.msgId || '',
@@ -196,7 +209,7 @@ export class TikTokLive extends EventTarget {
           diamonds: Number(g.diamondCount) || 0,
         });
       } else if (m.type === 'WebcastLikeMessage') {
-        this.emit('like', { user: userOf(d.user), likeCount: Number(d.likeCount) || 0, totalLikeCount: Number(d.totalLikeCount) || 0, t: timeOf(d) });
+        this.emit('like', { user: this.person(d.user), likeCount: Number(d.likeCount) || 0, totalLikeCount: Number(d.totalLikeCount) || 0, t: timeOf(d) });
       } else if (m.type === 'WebcastRoomPinMessage') {
         // Message épinglé par l'animatrice. Un message sans contenu signale un retrait.
         const chat = d.chatMessage;
