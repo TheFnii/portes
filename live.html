@@ -129,21 +129,7 @@
   </div>
 
   <!-- Mon bocal de likes : chercher son pseudo, puis voir son bocal se remplir -->
-  <div class="v-jar-full" id="v-jar-full" hidden>
-    <button class="icon-btn v-jar-close" id="v-jar-close" type="button" aria-label="Fermer">✕</button>
-    <h2 class="v-jar-title">🫙 Mon bocal de likes</h2>
-    <div class="v-jar-search" id="v-jar-search">
-      <p class="v-race-hint" id="v-jar-hint">Cherchez votre pseudo pour voir votre bocal se remplir.</p>
-      <input id="v-jar-q" type="search" placeholder="Chercher mon pseudo…" autocomplete="off" aria-label="Chercher mon pseudo">
-      <ul id="v-jar-list"></ul>
-    </div>
-    <div class="v-jar-view" id="v-jar-view" hidden>
-      <p class="v-jar-name" id="v-jar-name"></p>
-      <div class="v-jar-box" id="v-jar-box"></div>
-      <p class="v-jar-text">Vos likes remplissent votre bocal. Bocal plein : une question gratuite en priorité, et il se remplit à nouveau !</p>
-      <button class="btn btn-ghost" id="v-jar-change" type="button">Changer de pseudo</button>
-    </div>
-  </div>
+  <div id="v-jar-full" hidden></div>
 
   <!-- Bocaux de likes : 🔍 pour choisir les pseudos à suivre, ✕ pour fermer -->
   <div class="race-full v-race-full" id="v-race-full" hidden>

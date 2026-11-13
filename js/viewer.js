@@ -13,7 +13,8 @@ import { Sound } from './sound.js';
 import { Celebrate } from './celebrate.js';
 import { Receiver } from './broadcast.js';
 import { entryIcon, entryDetail, SECTIONS, sectionOf, COIN, layoutGrid, fitPinnedText, bigRanking, rankName } from './dashboard.js';
-import { jarGoal, jarOf, Jar } from './jar.js';
+import { jarGoal } from './jar.js';
+import { MyJarPanel } from './myjar.js';
 import { Ticker } from './ticker.js';
 import { Tour } from './tour.js';
 import { Slideshow } from './slideshow.js';
@@ -151,6 +152,7 @@ function renderStatus() {
     el.querySelector('.label').textContent = !connected ? 'Connexion…' : fresh ? 'En direct' : 'Hors ligne';
   }
   const w = $('v-wait');
+  if (/[?&]demo=bocal/.test(location.search)) { w.classList.add('gone'); return; } // démo du bocal : pas de live
   if (last && !last.list) {
     w.classList.remove('gone');
     $('v-wait-title').textContent = 'Le live est terminé';
@@ -415,57 +417,22 @@ if (!OUTPUT) {
 }
 
 // ---------- Mon bocal de likes (téléphones) ----------
-// Chacun cherche son pseudo et voit son bocal se remplir (jamais de nombre). Bocal plein :
-// le bouchon se pose dessus avec un bruit de victoire, puis le bocal repart de zéro.
-const MYJAR_KEY = 'portes.viewer.jar';
-let myJar = null;
-try { myJar = localStorage.getItem(MYJAR_KEY) || null; } catch (e) { myJar = null; }
-let myJarSeen = null; // { id, n } : bocaux remplis déjà vus pour ce pseudo
-const jarView = !OUTPUT && $('v-jar-box') ? new Jar($('v-jar-box')) : null;
-function setMyJar(id) {
-  myJar = id;
-  myJarSeen = null;
-  try { if (id) localStorage.setItem(MYJAR_KEY, id); else localStorage.removeItem(MYJAR_KEY); } catch (e) { /* stockage indisponible */ }
+// live.html?demo=bocal : démonstration sans live (un bocal qui se remplit et se ferme).
+const DEMO = !OUTPUT && new URLSearchParams(location.search).get('demo') === 'bocal';
+const myJar = !OUTPUT && $('v-jar-full') ? new MyJarPanel($('v-jar-full'), {
+  getAll: () => (last && last.race && last.race.all) || [],
+  getGoal: () => jarGoal(settings),
+  sound,
+  storageKey: DEMO ? null : 'portes.viewer.jar',
+}) : null;
+function renderMyJar() {
+  if (myJar && !DEMO) myJar.update();
 }
-function renderMyJar(st) {
-  if (!jarView || $('v-jar-full').hidden) return;
-  const all = (st && st.race && st.race.all) || [];
-  $('v-jar-search').hidden = !!myJar;
-  $('v-jar-view').hidden = !myJar;
-  if (!myJar) { renderJarList(); return; }
-  const row = all.find(([id]) => String(id) === myJar);
-  setText('v-jar-name', row ? row[1] : myJar);
-  const { p, n } = jarOf(row ? row[2] : 0, jarGoal(settings));
-  jarView.set(p);
-  if (myJarSeen && myJarSeen.id === myJar && n > myJarSeen.n) {
-    jarView.close({ sound: () => { sound.unlock(); sound.jarClose(); } });
-  }
-  myJarSeen = { id: myJar, n };
-}
-function renderJarList() {
-  const all = (last && last.race && last.race.all) || [];
-  const q = normName($('v-jar-q').value.trim());
-  const list = all.filter(([id, name]) => !q || normName(name).includes(q) || normName(id).includes(q)).slice(0, 60);
-  $('v-jar-list').innerHTML = list.length
-    ? list.map(([id, name]) => `<li><button type="button" data-jar="${esc(id)}"><span>${esc(name)}</span><b>🫙</b></button></li>`).join('')
-    : `<li class="empty">${q ? 'Personne avec ce pseudo pour l’instant (envoyez des likes pour apparaître)' : 'Envoyez des likes pour apparaître ici'}</li>`;
-}
-if (jarView) {
+if (myJar) {
   $('v-jar-btn').addEventListener('click', () => {
-    $('v-jar-full').hidden = false;
-    $('v-jar-q').value = '';
-    if (settings.raceVHint) setRich('v-jar-hint', settings.raceVHint);
-    renderMyJar(last);
+    myJar.setHint(settings.raceVHint);
+    if (DEMO) myJar.demo(); else myJar.open();
   });
-  $('v-jar-close').addEventListener('click', () => { $('v-jar-full').hidden = true; });
-  $('v-jar-q').addEventListener('input', renderJarList);
-  $('v-jar-list').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-jar]');
-    if (!b) return;
-    setMyJar(b.dataset.jar);
-    renderMyJar(last);
-  });
-  $('v-jar-change').addEventListener('click', () => { setMyJar(null); renderMyJar(last); $('v-jar-q').focus(); });
 }
 
 let tickerKey = '';
@@ -813,7 +780,12 @@ fit();
 fx.setAmbient(18);
 dice.setActive(false);
 
-if (!pub || !window.crypto || !crypto.subtle) {
+if (DEMO) {
+  // Démonstration du bocal : pas de live, le bocal s'ouvre tout de suite.
+  $('v-wait').classList.add('gone');
+  sound.enabled = true; // le son de la démo (sans changer la préférence)
+  myJar.demo();
+} else if (!pub || !window.crypto || !crypto.subtle) {
   $('v-wait-title').textContent = !pub ? 'Lien incomplet' : 'Navigateur trop ancien';
   $('v-wait-text').textContent = !pub
     ? 'Ouvrez le lien partagé pendant le live (il contient la clé du live).'

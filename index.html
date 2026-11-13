@@ -91,7 +91,7 @@
         <section class="panel likers" id="likes-box" data-feature="likes">
           <header class="panel-head"><h3>❤ <span data-text="likesTitle">Top Likes</span></h3><span class="count" id="likes-total">0</span></header>
           <ol class="side-list" id="likes-list"></ol>
-          <div class="box-foot"><button class="icon-btn" id="race-btn" type="button" title="Bocaux de likes" aria-label="Bocaux de likes">🫙</button><button class="icon-btn" id="likes-full-btn" type="button" title="Top Likes en plein écran" aria-label="Top Likes en plein écran">⛶</button></div>
+          <div class="box-foot"><button class="icon-btn" id="jar-btn" type="button" title="Voir le bocal d’un pseudo" aria-label="Voir le bocal de likes d’un pseudo">🫙</button><button class="icon-btn" id="likes-full-btn" type="button" title="Top Likes en plein écran" aria-label="Top Likes en plein écran">⛶</button></div>
         </section>
         <section class="panel gifters" id="gifters-box" data-feature="gifters">
           <header class="panel-head"><h3>🎁 <span data-text="giftersTitle">Top Gifters</span></h3><span class="count" id="gifters-total">0</span></header>
@@ -220,7 +220,10 @@
     </div>
   </div>
 
-  <!-- Bocaux de likes en plein écran -->
+  <!-- Bocal de likes d’un pseudo (bouton 🫙 du Top Likes) -->
+  <div id="jar-full" hidden></div>
+
+  <!-- Bocaux de likes en plein écran (diaporama) -->
   <div class="race-full" id="race-full" hidden>
     <div class="race-box" id="race-box"></div>
     <p class="ss-hint">Touchez l’écran pour revenir</p>

@@ -288,30 +288,4 @@ body.viewer .winners .avatar { width: 34px; height: 34px; }
 .v-race-hint { margin: 0 0 8px; font-style: italic; color: rgba(243, 233, 210, .8); }
 .v-race-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .v-race-actions .btn { min-height: 46px; font-size: 15px; padding: 6px 10px; }
-
-/* ---------- Mon bocal de likes ---------- */
 .v-jar-btn { display: block; width: calc(100% - 8px); margin: 10px 4px 2px; font-size: 18px; }
-.v-jar-full {
-  position: fixed;
-  inset: 0;
-  z-index: 78;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: max(14px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
-  overflow-y: auto;
-  background: radial-gradient(ellipse at 50% 35%, var(--panel-a), transparent 70%), rgb(var(--veil-deep-rgb));
-  animation: fade-in .4s ease;
-}
-.v-jar-close { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 10px; width: 46px; height: 46px; font-size: 20px; background: rgba(var(--veil-rgb), .8); }
-.v-jar-title { margin: 6px 52px 12px; text-align: center; font: 700 clamp(24px, 7vw, 40px)/1.15 var(--font-title); color: var(--gold-light); }
-.v-jar-search { width: min(100%, 520px); display: flex; flex-direction: column; min-height: 0; }
-.v-jar-search input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(var(--accent-rgb), .5); background: rgba(0, 0, 0, .35); color: var(--ink); font: 500 18px var(--font-text); }
-.v-jar-search ul { list-style: none; margin: 8px 0 0; padding: 0; }
-.v-jar-search li button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 6px; border: 0; border-bottom: 1px solid rgba(var(--accent-rgb), .15); background: none; color: var(--ink); font: 500 18px/1.2 var(--font-text); text-align: left; cursor: pointer; }
-.v-jar-search li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.v-jar-search .empty { padding: 10px 6px; font-style: italic; opacity: .6; }
-.v-jar-view { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
-.v-jar-name { margin: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 clamp(22px, 6.4vw, 36px)/1.2 var(--font-title); color: #ffe08a; text-shadow: 0 0 18px rgba(255, 215, 106, .6); }
-.v-jar-box { --jar-w: min(62vw, 40vh, 320px); margin: 6px 0; }
-.v-jar-text { margin: 0; max-width: 520px; text-align: center; font: italic 600 18px/1.35 var(--font-text); color: var(--c-board, #fff4d8); }

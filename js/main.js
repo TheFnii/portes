@@ -14,6 +14,7 @@ import { Round } from './game.js';
 import { TikTokLive } from './tiktok.js';
 import { LiveQueue, Ranking, Milestones } from './queue.js';
 import { jarsFilled, jarGoal } from './jar.js';
+import { MyJarPanel } from './myjar.js';
 import { roleOf, GiftCounter } from './gifts.js';
 import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard, endMessages } from './dashboard.js';
@@ -224,7 +225,9 @@ function changed() {
 }
 
 // Les grands écrans ouverts (diaporama, bocaux de likes) suivent le live.
+let myJar = null; // bocal d'un pseudo (bouton 🫙), créé plus bas
 function refreshLive() {
+  if (myJar) myJar.update();
   if (slideshow) slideshow.refresh();
   if (!$('race-full').hidden) race.update(raceData(), raceOpts(settings, image('fondCourse'), raceFocus));
 }
@@ -1093,11 +1096,15 @@ function openScreensaver() {
 
 // Bocaux de likes en plein écran (on en sort en touchant l'écran).
 const race = new Race($('race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
-$('race-btn').addEventListener('click', () => {
-  $('race-full').hidden = false;
-  requestAnimationFrame(() => race.update(raceData(), raceOpts(settings, image('fondCourse'), raceFocus)));
-  castState();
+// Bouton 🫙 du Top Likes : chercher un pseudo et voir son bocal (comme les viewers).
+myJar = new MyJarPanel($('jar-full'), {
+  getAll: () => likes.top(3000).map((u) => [u.handle || u.name, u.name || u.handle, Math.round(u.value)]),
+  getGoal: () => jarGoal(settings),
+  sound,
+  title: '🫙 Bocal de likes',
+  hint: 'Cherchez un pseudo pour voir son bocal se remplir.',
 });
+$('jar-btn').addEventListener('click', () => myJar.open());
 $('race-full').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   $('race-full').hidden = true;

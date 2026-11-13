@@ -172,7 +172,8 @@ Le diaporama passe aussi dans la version Broadcast, écran par écran, mais pas 
 
 La photo, le pseudo et la **jauge du bocal** de chacun (un petit cœur qui avance), sans aucun nombre. Les mieux classés en premier ; les pseudos cochés avec 🔍 (diaporama) passent devant, en surbrillance.
 - **Titre, texte sous les bocaux, taille des photos et des textes, nombre de personnes** : Personnalisation → Écran des bocaux de likes. **Police** : Personnalisation → Polices d’écriture. **Image de fond** : Réglages → Écran des bocaux de likes.
-- **Sur la tablette** : bouton 🫙 en bas de la case Top Likes (plein écran), et dans le diaporama.
+- **Sur la tablette** : dans le diaporama. Le bouton 🫙 en bas de la case Top Likes permet de **chercher un pseudo et de voir son bocal** (comme « Mon bocal de likes » chez les viewers).
+- **Démonstration** : ouvrez `live.html?demo=bocal` (par exemple `https://thefnii.github.io/portes/live.html?demo=bocal`) : un bocal se remplit tout seul, se ferme avec le bruit de victoire, puis recommence. Touchez l’écran une fois pour entendre le son.
 - **Dans la version Broadcast** : comme sur la tablette.
 - **Pour les viewers** : le bouton ❤ en haut de leur page ouvre cet écran (avec 🔍 pour suivre des pseudos). Et sous le Top Likes, le bouton **🫙 Mon bocal de likes** : chacun cherche son pseudo et voit **son bocal** se remplir, le bouchon posé à côté. Bocal plein : le bouchon se pose dessus avec un bruit de victoire, puis le bocal se vide et se remplit à nouveau. Le pseudo choisi est gardé sur le téléphone. Les phrases se règlent dans **Réglages → Page des viewers**.
 
