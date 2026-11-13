@@ -18,7 +18,7 @@ export const SETTINGS = [
       { key: 'fontPinned', label: 'Police du message épinglé', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontBoard', label: 'Police de la case centrale (et du message de fin de live)', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontTicker', label: 'Police du bandeau déroulant', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
-      { key: 'fontRace', label: 'Police de la course aux likes', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
+      { key: 'fontRace', label: 'Police de l’écran des bocaux de likes', type: 'select', def: 'same', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
       { key: 'fontStar', label: 'Police de la bulle de l’étoile (présentation)', type: 'select', def: 'lora', options: [['same', 'Comme les textes'], ...FONT_OPTIONS] },
     ],
   },
@@ -56,24 +56,32 @@ export const SETTINGS = [
     ],
   },
   {
-    group: 'Course aux likes 🏃',
+    // Réglé dans Réglages → Bocal de likes (pas dans Personnalisation).
+    group: 'Bocal de likes 🫙', hidden: true,
     items: [
-      { key: 'raceTitle', label: 'Titre de l’écran', type: 'text', def: 'Course aux likes' },
-      { key: 'raceView', label: 'Fin de la ligne', type: 'select', def: 'follow', options: [['follow', 'Le prochain palier selon le total du live (puis le suivant…)'], ['fixed', 'Toujours le dernier palier réglé (ex. seulement 0 → 10 000)']] },
+      { key: 'jars', label: 'Bocaux de likes activés (bocal rempli = question gratuite en priorité)', type: 'bool', def: true },
+      { key: 'jarGoal', label: 'Likes pour remplir un bocal (jamais affiché : les viewers voient seulement la jauge)', type: 'number', def: 3000, min: 10, max: 10000000 },
+      { key: 'jarTitle', label: 'Texte de l’animation de victoire ({pseudo})', type: 'text', def: '{pseudo} a rempli sa jauge de likes et débloque une question gratuite en priorité' },
+      { key: 'jarLabel', label: 'Texte dans la liste à traiter', type: 'text', def: 'Bocal de likes rempli' },
+    ],
+  },
+  {
+    group: 'Écran des bocaux de likes 🫙',
+    items: [
+      { key: 'raceTitle', label: 'Titre de l’écran', type: 'text', def: 'Bocaux de likes' },
       { key: 'racePhoto', label: 'Taille des photos', type: 'range', def: 100, min: 50, max: 200, unit: '%' },
-      { key: 'raceTextSize', label: 'Taille des textes (titre, paliers, likes, texte sous le chemin)', type: 'range', def: 100, min: 50, max: 200, unit: '%' },
-      { key: 'raceLabel', label: 'Au-dessus de chaque photo', type: 'select', def: 'both', options: [['both', 'Nombre de likes et pseudo'], ['likes', 'Nombre de likes'], ['name', 'Pseudo'], ['none', 'Rien (seulement la photo)']] },
-      { key: 'raceCount', label: 'Nombre de personnes sur le chemin (0 = tout le monde)', type: 'range', def: 0, min: 0, max: 100, unit: '' },
-      { key: 'raceText', label: 'Texte sous le chemin', type: 'textarea', def: 'Envoyez des likes pour avancer sur le chemin ❤️' },
+      { key: 'raceTextSize', label: 'Taille des textes (titre, pseudos, texte sous les bocaux)', type: 'range', def: 100, min: 50, max: 200, unit: '%' },
+      { key: 'raceCount', label: 'Nombre de personnes affichées (0 = autant que possible)', type: 'range', def: 0, min: 0, max: 60, unit: '' },
+      { key: 'raceText', label: 'Texte sous les bocaux', type: 'textarea', def: 'Envoyez des likes pour remplir votre bocal ❤️ Bocal plein = une question gratuite en priorité !' },
     ],
   },
   {
     // Réglés dans Réglages → Page des viewers (pas dans Personnalisation).
-    group: 'Course aux likes chez les viewers', hidden: true,
+    group: 'Bocaux de likes chez les viewers', hidden: true,
     items: [
-      { key: 'raceVTitle', label: 'Titre de la course (vide = comme sur la tablette)', type: 'text', def: '' },
-      { key: 'raceVText', label: 'Texte sous le chemin (vide = comme sur la tablette)', type: 'textarea', def: '' },
-      { key: 'raceVHint', label: 'Phrase au-dessus de la liste des pseudos', type: 'text', def: 'Cochez votre pseudo (et ceux de vos amis) pour suivre leur progression.' },
+      { key: 'raceVTitle', label: 'Titre de l’écran des bocaux (vide = comme sur la tablette)', type: 'text', def: '' },
+      { key: 'raceVText', label: 'Texte sous les bocaux (vide = comme sur la tablette)', type: 'textarea', def: '' },
+      { key: 'raceVHint', label: 'Phrase au-dessus de la recherche « Mon bocal de likes »', type: 'text', def: 'Cherchez votre pseudo pour voir votre bocal se remplir.' },
     ],
   },
   {
@@ -154,9 +162,6 @@ export const SETTINGS = [
       { key: 'milestoneTitle', label: 'Texte affiché en grand ({palier})', type: 'text', def: 'Palier {palier} likes !' },
       { key: 'milestoneLabel', label: 'Texte dans la liste ({palier})', type: 'text', def: '{palier} likes' },
       { key: 'milestoneAlertText', label: 'Annonce juste avant le palier ({palier})', type: 'text', def: 'Le palier {palier} approche : écrivez « {palier} » au bon moment !' },
-      { key: 'personalTiers', label: 'Paliers par personne (10 000 likes…) activés — les paliers se règlent dans « Paliers de likes par personne »', type: 'bool', def: true },
-      { key: 'tierTitle', label: 'Palier par personne : texte affiché en grand ({n} = likes)', type: 'text', def: '{n} likes !' },
-      { key: 'tierLabel', label: 'Palier par personne : texte dans la liste ({n} = likes)', type: 'text', def: '{n} likes' },
     ],
   },
   {

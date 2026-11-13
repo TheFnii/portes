@@ -1,10 +1,10 @@
-/* ---------- Course aux likes (race.js) : un chemin, les photos sont les curseurs ---------- */
+/* ---------- Bocaux de likes (race.js) : photo, pseudo et jauge de chacun ---------- */
 
 .race {
-  --b: calc(clamp(40px, 8vmin, 104px) * var(--race-ph, 1));
-  --path: calc(clamp(26px, 4.6vmin, 56px) * var(--race-ph, 1));
+  --b: calc(clamp(44px, 7.6vmin, 96px) * var(--race-ph, 1));
   display: flex;
   flex-direction: column;
+  gap: 1.6vh;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -12,7 +12,7 @@
   background-size: cover;
   background-position: center;
 }
-.race.race-has-bg { padding: 2vh 0; }
+.race.race-has-bg { padding: 2vh 2vw; }
 .race-head { flex: none; text-align: center; }
 .race-title {
   margin: 0;
@@ -20,140 +20,67 @@
   color: var(--c-title, var(--gold-light));
   text-shadow: 0 0 24px rgba(var(--accent-rgb), .6), 0 2px 6px rgba(0, 0, 0, .8);
 }
-.race-sub { margin: .4vh 0 0; font: italic 600 calc(clamp(18px, 3.2vmin, 36px) * var(--race-tx, 1))/1.2 var(--font-race, var(--font-text)); color: #ffd0da; text-shadow: 0 2px 6px rgba(0, 0, 0, .8); }
-.race-sub strong { font-style: normal; font-family: var(--font-race, var(--font-title)); color: var(--gold-light); }
 
-.race-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.race-stage.dezoom .race-wrap { animation: race-dezoom 1.4s cubic-bezier(.2, .8, .3, 1); }
-@keyframes race-dezoom { from { transform: scaleX(1.8); transform-origin: 0 50%; opacity: .3; } }
-
-/* Le chemin */
-.race-wrap { position: relative; flex: 0 0 58%; margin: 0 4% 0 5%; }
-.race-path, .race-fill {
-  position: absolute;
-  left: 0;
-  top: 52%;
-  height: var(--path);
-  margin-top: calc(var(--path) / -2);
-  border-radius: calc(var(--path) / 2);
+.jar-grid {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  width: min(100%, 1500px);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--b) * 5.4)), 1fr));
+  gap: 1.2vmin 2.4vmin;
+  align-content: start;
 }
-.race-path {
-  right: -4%;
-  background:
-    linear-gradient(90deg, transparent 0 50%, rgba(255, 244, 214, .5) 50% 100%) center / 46px 3px repeat-x,
-    linear-gradient(180deg, #6b4a2a, #4a3018 55%, #3a2412);
-  border: 3px solid rgba(var(--accent-rgb), .55);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, .55), inset 0 3px 8px rgba(0, 0, 0, .5);
-  -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent);
-  mask-image: linear-gradient(90deg, #000 94%, transparent);
-}
-.race-fill {
-  width: var(--lead, 0%);
-  background: linear-gradient(90deg, rgba(var(--accent-rgb), .25), rgba(255, 215, 106, .75));
-  box-shadow: 0 0 18px rgba(255, 215, 106, .5);
-  transition: width 1.2s cubic-bezier(.3, .8, .3, 1);
-}
-
-/* Les paliers, sur le chemin, avec leur texte en dessous */
-.race-flag {
-  position: absolute;
-  left: var(--x);
-  top: 52%;
+.jar-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  width: max-content;
-  max-width: 22vw;
-  transform: translate(-50%, calc(var(--b) * -.36));
-  text-align: center;
-  z-index: 1;
+  gap: 1.4vmin;
+  min-width: 0;
+  padding: .9vmin 1.6vmin;
+  border-radius: 99px;
+  background: rgba(var(--veil-rgb), .55);
+  border: 1px solid rgba(var(--accent-rgb), .25);
+  font: 600 calc(clamp(18px, 3vmin, 34px) * var(--race-tx, 1))/1.15 var(--font-race, var(--font-text));
+  color: var(--c-tops, var(--ink));
+  animation: feed-in .45s ease both;
 }
-.race-flag-dot {
+.jar-rank { flex: none; width: 1.6em; text-align: center; font-family: var(--font-title); color: rgba(var(--accent-light-rgb), .7); }
+.jar-card .race-face {
+  flex: none;
   display: grid;
   place-items: center;
-  width: calc(var(--b) * .72);
-  height: calc(var(--b) * .72);
-  border-radius: 50%;
-  border: 4px solid var(--gold);
-  background: rgb(var(--veil-rgb));
-  font: 700 calc(var(--b) * .34)/1 var(--font-race, var(--font-title));
-  color: #2a1606;
-}
-.race-flag.reached .race-flag-dot { background: var(--gold); }
-.race-flag.final .race-flag-dot { border-color: #ffd76a; box-shadow: 0 0 24px rgba(255, 215, 106, .9); animation: race-glow 2s ease-in-out infinite; }
-@keyframes race-glow { 50% { box-shadow: 0 0 6px rgba(255, 215, 106, .4); } }
-.race-flag-v { margin-top: .3em; font: 700 calc(clamp(18px, 3.4vmin, 42px) * var(--race-tx, 1))/1.1 var(--font-race, var(--font-title)); color: var(--gold-light); text-shadow: 0 2px 6px rgba(0, 0, 0, .9); }
-.race-flag.final .race-flag-v { color: #ffe08a; }
-.race-flag-t { margin-top: .2em; font: 600 calc(clamp(14px, 2.3vmin, 28px) * var(--race-tx, 1))/1.25 var(--font-race, var(--font-text)); color: var(--c-tops, var(--ink)); text-shadow: 0 2px 6px rgba(0, 0, 0, .9); }
-.race-flag.reached .race-flag-v, .race-flag.reached .race-flag-t { opacity: .7; }
-/* Palier tout à droite : son texte s'aligne vers la gauche pour rester dans l'écran */
-.race-flag.at-end { align-items: flex-end; text-align: right; transform: translate(calc(-100% + var(--b) * .36), calc(var(--b) * -.36)); }
-
-/* Les curseurs : la photo de chacun, posée sur le chemin, tous au même niveau */
-.race-cursors { position: absolute; inset: 0; }
-.race-c {
-  position: absolute;
-  left: var(--x);
-  bottom: 48%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translateX(-50%);
-  transition: left 1.2s cubic-bezier(.3, .8, .3, 1);
-}
-.race-c-stem { width: 3px; height: calc(var(--path) * .3); background: rgba(var(--accent-light-rgb), .8); }
-.race-face {
-  flex: none;
   width: var(--b);
   height: var(--b);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
   border-radius: 50%;
-  border: max(3px, calc(var(--b) * .05)) solid rgba(var(--accent-light-rgb), .95);
-  background: linear-gradient(160deg, var(--panel-solid-a), var(--panel-solid-b));
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .6);
-  font: 700 calc(var(--b) * .42) var(--font-race, var(--font-title));
+  overflow: hidden;
+  border: 3px solid rgba(var(--accent-light-rgb), .8);
+  background: rgb(var(--veil-rgb));
+  font: 700 calc(var(--b) * .42)/1 var(--font-title);
   color: var(--gold-light);
 }
 .race-face img { width: 100%; height: 100%; object-fit: cover; }
-.race-c.rank-1 .race-face { border-color: #ffd76a; box-shadow: 0 0 22px rgba(255, 215, 106, .9); }
-.race-c.rank-2 .race-face { border-color: #e2e6ee; }
-.race-c.rank-3 .race-face { border-color: #e0a066; }
-.race-c-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 3px;
-  padding: .15em .55em;
-  border-radius: 10px;
-  background: rgba(var(--veil-rgb), .85);
-  white-space: nowrap;
-  line-height: 1.1;
-}
-.race-c-name { max-width: max(calc(var(--b) * 1.8), 7em); overflow: hidden; text-overflow: ellipsis; font: 600 calc(clamp(13px, 2vmin, 24px) * var(--race-tx, 1)) var(--font-race); color: var(--c-tops, var(--ink)); }
-.race-c-likes { font: 700 calc(clamp(14px, 2.3vmin, 28px) * var(--race-tx, 1)) var(--font-race); color: #ffb3c4; }
-.race-c.rank-1 .race-c-likes { color: #ffd76a; }
-.race-no-name .race-c-name, .race-no-likes .race-c-likes { display: none; }
-.race-no-name.race-no-likes .race-c-label { display: none; }
+.jar-card.rank-1 .race-face { border-color: #ffd76a; box-shadow: 0 0 18px rgba(255, 215, 106, .8); }
+.jar-card.rank-2 .race-face { border-color: #e2e6ee; }
+.jar-card.rank-3 .race-face { border-color: #e0a066; }
+.jar-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .35em; }
+.jar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jar-card.focus { background: rgba(255, 215, 106, .22); border-color: #ffd76a; box-shadow: 0 0 22px rgba(255, 215, 106, .55); }
+.jar-card.focus .jar-name { color: #ffe08a; }
+.jar-empty { grid-column: 1 / -1; text-align: center; font: italic 600 calc(clamp(18px, 3vmin, 34px) * var(--race-tx, 1)) var(--font-race, var(--font-text)); color: var(--c-board, #fff4d8); opacity: .8; }
 
-/* Sous le chemin : votre texte (Réglages) */
+/* Sous les bocaux : votre texte (Réglages) */
 .race-note {
-  flex: 1;
-  min-height: 0;
+  flex: none;
   margin: 0 7%;
-  overflow: hidden;
   text-align: center;
   font: italic 600 calc(clamp(18px, 3.4vmin, 40px) * var(--race-tx, 1))/1.35 var(--font-race, var(--font-text));
   color: var(--c-board, #fff4d8);
   text-shadow: 0 2px 8px rgba(0, 0, 0, .9);
 }
-
-@media (orientation: portrait) {
-  .race { --b: calc(clamp(34px, 10vw, 60px) * var(--race-ph, 1)); --path: calc(clamp(20px, 6vw, 36px) * var(--race-ph, 1)); }
-  .race-wrap { flex-basis: 52%; }
-  .race-flag { max-width: 40vw; }
-}
+.race-note:empty { display: none; }
 
 .race-full {
   position: fixed;
@@ -219,16 +146,6 @@
   color: var(--gold-light);
 }
 
-/* Une photo sur deux sous le chemin ; le pseudo recherché en grand, qui brille */
-.race-c.down { bottom: auto; top: 52%; flex-direction: column-reverse; }
-.race-c.down .race-c-label { margin: 3px 0 0; }
-.race-c.focus .race-face { transform: scale(1.35); border-color: #fff; box-shadow: 0 0 0 4px #ffd76a, 0 0 34px rgba(255, 215, 106, 1); animation: race-focus 1.2s ease-in-out infinite; }
-.race-c.focus .race-c-label { transform: translateY(-14%); background: #ffd76a; }
-.race-c.focus .race-c-label * { color: #2a1606 !important; }
-.race-c.focus .race-c-name, .race-c.focus .race-c-likes { display: block !important; }
-@keyframes race-focus { 50% { box-shadow: 0 0 0 7px #ffd76a, 0 0 54px rgba(255, 215, 106, 1); } }
-.race-c.focus .race-c-label { display: flex !important; }
-
 /* Commandes du diaporama (tablette seulement) */
 .ss-controls { position: fixed; inset: 0; z-index: 97; pointer-events: none; }
 .ss-controls .icon-btn {
@@ -287,7 +204,6 @@
 .ss-search li b, .v-race-picker li b { font: 700 15px/1 var(--font-title); color: #ffb3c4; }
 .ss-search .empty, .v-race-picker .empty { padding: 10px 6px; font-style: italic; opacity: .6; }
 .ss-search .btn { width: 100%; margin-top: 8px; }
-.race-wrap { isolation: isolate; }
 .ss-search li label { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 6px; border-bottom: 1px solid rgba(var(--accent-rgb), .15); color: var(--ink); font: 500 18px/1.2 var(--font-text); cursor: pointer; }
 .ss-search input[type=checkbox] { width: 24px; height: 24px; min-height: 0; flex: none; accent-color: #d9a94a; }
 .ss-search .v-race-hint { margin: 0 0 8px; font-style: italic; color: rgba(243, 233, 210, .8); }

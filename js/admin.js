@@ -15,7 +15,6 @@ import { getMedia, putMedia, deleteMedia, shrinkImage } from './media.js';
 import { hostKey, viewerLink, Broadcaster, castMedia } from './broadcast.js';
 import { grimoireMessages, loadEdits, saveEdits, buildDeck, messageId } from './universe.js';
 import { TOUR_TARGETS, TOUR_SIDES, STAR_POSES, starImage, loadTour, saveTour, defaultTour } from './tour.js';
-import { DEFAULT_RACE_GOALS } from './race.js';
 import { SLIDE_KINDS, loadSlides, saveSlides, defaultSlides, newSlide } from './slideshow.js';
 import { loadMyTracks, addFileTrack, addUrlTrack, removeTrack, moveTrack, renameTrack } from './playlist.js';
 
@@ -342,7 +341,7 @@ const MEDIA_SLOTS = {
     ['img:animLettre', 'Lettre ouverte (vierge)', 'le message est écrit dessus', 1600],
   ],
   'media-race': [
-    ['img:fondCourse', 'Fond de la course aux likes', 'derrière le chemin (paysage conseillé)', 2400],
+    ['img:fondCourse', 'Fond de l’écran des bocaux de likes', 'derrière les bocaux (paysage conseillé)', 2400],
   ],
   'media-sounds': [
     ['snd:chat', 'Chat porte-bonheur', 'miaulement'],
@@ -627,52 +626,24 @@ $('univ-restore').addEventListener('click', () => {
 });
 renderUniv();
 
-// ---------- Paliers de likes par personne ----------
+// ---------- Bocal de likes ----------
 
-function readTiers() {
-  try {
-    const t = JSON.parse(localStorage.getItem(STORAGE.likeTiers) || 'null');
-    if (Array.isArray(t)) return t;
-  } catch (e) { /* ignore */ }
-  return [{ likes: 10000, anim: true, list: true }];
-}
-function tierRow(t) {
-  return `<div class="tier-row">
-    <label class="check">Palier <input type="number" min="1" step="1" inputmode="numeric" value="${Number(t.likes) || ''}" data-tier="likes"> likes</label>
-    <label class="check"><input type="checkbox" data-tier="anim"${t.anim ? ' checked' : ''}> Animation de victoire</label>
-    <label class="check"><input type="checkbox" data-tier="list"${t.list ? ' checked' : ''}> Ajout à la liste</label>
-    <button class="x-btn" data-tier-del type="button" aria-label="Retirer ce palier">✕</button>
-  </div>`;
-}
-function renderTiers(list = readTiers()) {
-  $('tier-rows').innerHTML = list.length ? list.map(tierRow).join('') : '<p class="hint">Aucun palier.</p>';
-}
-function collectTiers() {
-  return [...$('tier-rows').querySelectorAll('.tier-row')].map((row) => ({
-    likes: Math.round(Number(row.querySelector('[data-tier="likes"]').value) || 0),
-    anim: row.querySelector('[data-tier="anim"]').checked,
-    list: row.querySelector('[data-tier="list"]').checked,
-  }));
-}
-$('tier-rows').addEventListener('click', (e) => {
-  if (!e.target.closest('[data-tier-del]')) return;
-  e.target.closest('.tier-row').remove();
+const JAR_KEYS = ['jars', 'jarGoal', 'jarTitle', 'jarLabel'];
+const jarItems = SETTINGS.flatMap((g) => g.items).filter((it) => JAR_KEYS.includes(it.key));
+$('jar-items').innerHTML = jarItems.map((it) => settingField(it, loadSettings()[it.key])).join('');
+$('jar-items').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-setting]');
+  if (!b) return;
+  const on = b.getAttribute('aria-pressed') !== 'true';
+  b.setAttribute('aria-pressed', String(on));
+  b.querySelector('.state').textContent = on ? 'Oui' : 'Non';
 });
-$('tier-add').addEventListener('click', () => {
-  const list = collectTiers();
-  const last = list.length ? Math.max(...list.map((t) => t.likes)) : 0;
-  list.push({ likes: last ? last * 2 : 10000, anim: true, list: false });
-  renderTiers(list);
+$('jar-save').addEventListener('click', () => {
+  saveSettings(readSettings());
+  status($('jar-status'), '✓ Bocal de likes enregistré.', 'live');
 });
-$('tier-save').addEventListener('click', () => {
-  const list = collectTiers().filter((t) => t.likes > 0).sort((a, b) => a.likes - b.likes);
-  localStorage.setItem(STORAGE.likeTiers, JSON.stringify(list));
-  renderTiers(list);
-  status($('tier-status'), '✓ Paliers enregistrés.', 'live');
-});
-renderTiers();
 
-// ---------- Page des viewers : textes de la course aux likes ----------
+// ---------- Page des viewers : textes des bocaux de likes ----------
 
 const VIEWER_KEYS = ['raceVTitle', 'raceVText', 'raceVHint'];
 const viewerItems = SETTINGS.flatMap((g) => g.items).filter((it) => VIEWER_KEYS.includes(it.key));
@@ -683,49 +654,6 @@ $('viewer-texts-save').addEventListener('click', () => {
   saveSettings(s);
   status($('viewer-texts-status'), '✓ Textes enregistrés : les viewers les voient tout de suite.', 'live');
 });
-
-// ---------- Course aux likes : paliers (total du live) et leurs textes ----------
-
-function readRaceGoals() {
-  try {
-    const t = JSON.parse(localStorage.getItem(STORAGE.raceGoals) || 'null');
-    if (Array.isArray(t)) return t;
-  } catch (e) { /* ignore */ }
-  return DEFAULT_RACE_GOALS.map((g) => ({ ...g }));
-}
-function raceRow(g) {
-  return `<div class="tier-row">
-    <label class="check">Palier <input type="number" min="1" step="1" inputmode="numeric" value="${Number(g.likes) || ''}" data-race="likes"> likes au total</label>
-    <button class="x-btn" data-race-del type="button" aria-label="Retirer ce palier">✕</button>
-    <label class="field tier-text"><span>Texte sous ce palier (facultatif)</span><textarea rows="2" data-rich data-race="text">${esc(g.text || '')}</textarea></label>
-  </div>`;
-}
-function renderRaceGoals(list = readRaceGoals()) {
-  $('race-rows').innerHTML = list.length ? list.map(raceRow).join('') : '<p class="hint">Aucun palier : la course commence à 10 000.</p>';
-}
-function collectRaceGoals() {
-  return [...$('race-rows').querySelectorAll('.tier-row')].map((row) => ({
-    likes: Math.round(Number(row.querySelector('[data-race="likes"]').value) || 0),
-    text: row.querySelector('[data-race="text"]').value.trim(),
-  }));
-}
-$('race-rows').addEventListener('click', (e) => {
-  if (!e.target.closest('[data-race-del]')) return;
-  e.target.closest('.tier-row').remove();
-});
-$('race-add').addEventListener('click', () => {
-  const list = collectRaceGoals();
-  const last = list.length ? Math.max(...list.map((g) => g.likes)) : 0;
-  list.push({ likes: last ? last * 2 : 10000, text: '' });
-  renderRaceGoals(list);
-});
-$('race-save').addEventListener('click', () => {
-  const list = collectRaceGoals().filter((g) => g.likes > 0).sort((a, b) => a.likes - b.likes);
-  localStorage.setItem(STORAGE.raceGoals, JSON.stringify(list));
-  renderRaceGoals(list);
-  status($('race-status'), '✓ Paliers de la course enregistrés.', 'live');
-});
-renderRaceGoals();
 
 // ---------- Radio : ma playlist ----------
 

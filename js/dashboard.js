@@ -8,6 +8,7 @@ import { applyFonts } from './fonts.js';
 import { rich } from './stickers.js';
 import { esc } from './shell.js';
 import { renderBoard, stopBoard } from './board.js';
+import { gauge, jarGoal } from './jar.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -28,7 +29,7 @@ function logo(role, fallbackUrl, emoji) {
 // Icône d'une entrée de la liste (logo fourni, image du cadeau ou emoji).
 export function entryIcon(e) {
   if (e.type === 'winner') return '<span class="gift-icon" title="Gagnant du jeu">🏆</span>';
-  if (e.type === 'milestone') return '<span class="gift-icon" title="Palier de likes">🏅</span>';
+  if (e.type === 'milestone') return e.jar ? '<span class="gift-icon" title="Bocal de likes rempli">🫙</span>' : '<span class="gift-icon" title="Palier de likes">🏅</span>';
   const role = ROLES[e.gift];
   const emoji = role ? role.emoji : '🎁';
   const img = logo(e.gift, e.giftImage, emoji);
@@ -91,12 +92,19 @@ export function fitPinnedText(p, box, s) {
 }
 
 // Classement en grand (Top Likes plein écran).
-export function bigRanking(list, unit = '') {
+// goal : Top Likes → la jauge du bocal de chacun sous son pseudo, sans nombre.
+export function bigRanking(list, unit = '', goal = 0) {
   const medals = ['🥇', '🥈', '🥉'];
   return list.length
-    ? list.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span><span class="name">${esc(u.name)}</span>
-        <span class="value">${Math.round(u.value).toLocaleString('fr-FR')}${unit}</span></li>`).join('')
+    ? list.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span>${rankName(u, unit, goal)}</li>`).join('')
     : '<li class="empty">Personne pour l’instant</li>';
+}
+
+// Pseudo + nombre (Top Gifters), ou pseudo + jauge du bocal (Top Likes).
+export function rankName(u, unit = '', goal = 0) {
+  if (goal) return `<span class="name-g"><span class="name">${esc(u.name)}</span><span class="gauge-row">${gauge(u.value, goal)}</span></span>`;
+  return `<span class="name">${esc(u.name)}</span>
+        <span class="value">${Math.round(u.value).toLocaleString('fr-FR')}${unit}</span>`;
 }
 
 export class Dashboard {
@@ -229,18 +237,17 @@ export class Dashboard {
 
   // ---------- Tops ----------
 
-  renderTop(listId, totalId, ranking, unit, n = 6) {
+  renderTop(listId, totalId, ranking, unit, n = 6, goal = 0) {
     $(totalId).innerHTML = Math.round(ranking.total).toLocaleString('fr-FR') + unit;
     const medals = ['🥇', '🥈', '🥉'];
     const top = ranking.top(n);
     $(listId).innerHTML = top.length
-      ? top.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span><span class="name">${esc(u.name || u.handle)}</span>
-          <span class="value">${Math.round(u.value).toLocaleString('fr-FR')}${unit}</span></li>`).join('')
+      ? top.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span>${rankName({ name: u.name || u.handle, value: u.value }, unit, goal)}</li>`).join('')
       : '<li class="empty">Personne pour l’instant</li>';
   }
 
   renderLikes(likes) {
-    this.renderTop('likes-list', 'likes-total', likes, '', this.s.topCount || 6);
+    this.renderTop('likes-list', 'likes-total', likes, '', this.s.topCount || 6, jarGoal(this.s));
     if (!$('likes-full').hidden) this.renderLikesFull(likes);
   }
 
@@ -249,7 +256,7 @@ export class Dashboard {
     $('likes-full-total').textContent = Math.round(likes.total).toLocaleString('fr-FR');
     const n = this.s.likesFullCount || 10;
     $('likes-full-list').style.setProperty('--n', n);
-    $('likes-full-list').innerHTML = bigRanking(likes.top(n).map((u) => ({ name: u.name || u.handle, value: u.value })));
+    $('likes-full-list').innerHTML = bigRanking(likes.top(n).map((u) => ({ name: u.name || u.handle, value: u.value })), '', jarGoal(this.s));
   }
 
   renderGifters(gifters) {

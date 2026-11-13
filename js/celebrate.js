@@ -4,6 +4,7 @@
 import { esc } from './shell.js';
 import { image } from './images.js';
 import { rich } from './stickers.js';
+import { Jar } from './jar.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -320,6 +321,24 @@ export class Celebrate {
     this.sound.fanfare();
     this.confetti(this.seconds * 1000 + 1200);
     await this.finish(el, 800);
+  }
+
+  // Bocal de likes rempli : le bocal plein, le bouchon se pose dessus, bruit de victoire.
+  // Aucun nombre : seulement le pseudo et le texte des Réglages ({pseudo}).
+  async jar({ name, title }) {
+    const MARK = '@@PSEUDO@@';
+    const text = String(title || '{pseudo} a rempli sa jauge de likes et débloque une question gratuite en priorité');
+    const named = text.includes('{pseudo}');
+    const html = rich(text.replace(/\{pseudo\}/g, MARK)).split(MARK).join(`<span class="cel-jar-name">${esc(name)}</span>`);
+    const el = this.stage('cel-jar', `<div class="cel-jar-box"></div>
+      ${named ? '' : `<p class="cel-name">${esc(name)}</p>`}<p class="cel-title">${html}</p>`);
+    const jar = new Jar(el.querySelector('.cel-jar-box'));
+    jar.set(0.9);
+    jar.close({
+      reset: false,
+      sound: () => { this.sound.jarClose(); this.confetti(this.seconds * 1000 + 1200); },
+    });
+    await this.finish(el, 2200);
   }
 
   // Annonce discrète (palier qui approche).

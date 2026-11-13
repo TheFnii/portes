@@ -90,29 +90,19 @@
       <ol class="univ-list" id="received-list"></ol>
     </details>
 
-    <!-- Paliers de likes par personne -->
+    <!-- Bocal de likes -->
     <details class="card fold" id="paliers">
-      <summary><h2><span class="fold-icon" aria-hidden="true">🏅</span>Paliers de likes par personne</h2></summary>
-      <p class="hint">Quand une personne atteint un palier (ses propres likes), son pseudo peut s’afficher en grand avec une animation de victoire et/ou rejoindre la liste à traiter. Elle reste dans le Top Likes avec son nombre de likes.</p>
-      <div class="tier-rows" id="tier-rows"></div>
-      <div class="form-actions">
-        <button class="btn" id="tier-add" type="button">＋ Ajouter un palier</button>
-        <button class="btn btn-primary" id="tier-save" type="button">Enregistrer les paliers</button>
-      </div>
-      <p class="form-status" id="tier-status" role="status"></p>
+      <summary><h2><span class="fold-icon" aria-hidden="true">🫙</span>Bocal de likes</h2></summary>
+      <p class="hint">Chaque personne remplit son bocal avec ses likes. Bocal plein : son pseudo s’affiche en grand avec l’animation du bocal qui se ferme, elle rejoint la liste à traiter (une question gratuite en priorité) et son bocal repart de zéro : elle peut le remplir encore. Le nombre de likes réglé ici n’est jamais affiché : les viewers voient seulement la jauge (un petit cœur qui avance) sous leur pseudo, et leur bocal avec le bouton « Mon bocal de likes ».</p>
+      <div class="set-items" id="jar-items"></div>
+      <div class="form-actions"><button class="btn btn-primary" id="jar-save" type="button">Enregistrer</button></div>
+      <p class="form-status" id="jar-status" role="status"></p>
     </details>
 
-    <!-- Course aux likes -->
+    <!-- Écran des bocaux de likes -->
     <details class="card fold" id="course">
-      <summary><h2><span class="fold-icon" aria-hidden="true">🏃</span>Course aux likes</h2></summary>
-      <p class="hint">L’affichage suit le <strong>total des likes du live</strong> : tant que le total n’a pas atteint le premier palier, ce palier est tout à droite du chemin. Dès qu’il est franchi, le palier suivant passe tout à droite (les paliers franchis restent à leur place, en proportion). Seuls <strong>vos</strong> paliers sont affichés : une fois le dernier dépassé, la ligne reste sur lui. Pour ne montrer que 0 → 10 000, gardez un seul palier (10 000). Dans <strong>Personnalisation → Course aux likes</strong> : la fin de la ligne (suivre le total, ou toujours le dernier palier), la taille des photos et des textes, le titre, ce qui s’affiche au-dessus des photos, le nombre de personnes et le <strong>texte sous le chemin</strong> ; la police dans <strong>Polices d’écriture</strong>.</p>
-      <h3>Paliers et leur texte (affiché sous le palier)</h3>
-      <div class="tier-rows" id="race-rows"></div>
-      <div class="form-actions">
-        <button class="btn" id="race-add" type="button">＋ Ajouter un palier</button>
-        <button class="btn btn-primary" id="race-save" type="button">Enregistrer les paliers</button>
-      </div>
-      <p class="form-status" id="race-status" role="status"></p>
+      <summary><h2><span class="fold-icon" aria-hidden="true">❤</span>Écran des bocaux de likes</h2></summary>
+      <p class="hint">L’écran qui remplace la course aux likes : la photo, le pseudo et la jauge du bocal de chacun (sans nombre). Sur la tablette : bouton 🫙 de la case Top Likes, et dans le diaporama. Le titre, le texte, la taille des photos et des textes : <strong>Personnalisation → Écran des bocaux de likes</strong>.</p>
       <h3>Image de fond</h3>
       <div class="media-grid" id="media-race"></div>
     </details>
@@ -163,8 +153,8 @@
         <button class="btn btn-ghost" id="cast-renew" type="button">Changer de lien</button>
       </div>
       <p class="form-status" id="cast-status-text" role="status"></p>
-      <h3 class="sub-title">🏃 Course aux likes sur les téléphones</h3>
-      <p class="hint">Les phrases de la course que voient les viewers sur leur téléphone. Laissez vide pour reprendre celles de la tablette.</p>
+      <h3 class="sub-title">🫙 Bocaux de likes sur les téléphones</h3>
+      <p class="hint">Les phrases de l’écran des bocaux et de « Mon bocal de likes » que voient les viewers sur leur téléphone. Laissez vide pour reprendre celles de la tablette.</p>
       <div class="set-items" id="viewer-texts"></div>
       <div class="form-actions"><button class="btn btn-primary" id="viewer-texts-save" type="button">Enregistrer les textes</button></div>
       <p class="form-status" id="viewer-texts-status" role="status"></p>

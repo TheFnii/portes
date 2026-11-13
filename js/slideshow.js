@@ -1,5 +1,5 @@
 // Diaporama (bouton 🌙) : les écrans choisis dans les Réglages passent en plein écran, chacun
-// pendant son temps (Top Likes, course aux likes, message central, Top Gifters, messages
+// pendant son temps (Top Likes, bocaux de likes, message central, Top Gifters, messages
 // défilants, vos textes, images et vidéos…), avec une phrase sous chacun si on veut.
 // La tablette le lance ; la page Broadcast le suit écran par écran.
 
@@ -9,12 +9,13 @@ import { esc } from './shell.js';
 import { renderBoard, stopBoard } from './board.js';
 import { Ticker } from './ticker.js';
 import { Race, raceOpts } from './race.js';
+import { jarGoal } from './jar.js';
 import { image } from './images.js';
 import { bigRanking, endMessages, entryDetail, COIN } from './dashboard.js';
 
 export const SLIDE_KINDS = {
   likes: { label: 'Top Likes', seconds: 10 },
-  race: { label: 'Course aux likes', seconds: 12 },
+  race: { label: 'Bocaux de likes', seconds: 12 },
   board: { label: 'Message central (case centrale)', seconds: 15 },
   gifters: { label: 'Top Gifters', seconds: 10 },
   ticker: { label: 'Messages défilants (bandeau)', seconds: 14 },
@@ -211,7 +212,7 @@ export class Slideshow {
           const r = (kind === 'likes' ? d.likesFull || d.likes : d.giftersFull || d.gifters) || {};
           title = kind === 'likes' ? ss.likesTitle || 'Top Likes' : ss.giftersTitle || 'Top Gifters';
           total = `${Math.round(r.total || 0).toLocaleString('fr-FR')} ${kind === 'likes' ? 'likes' : COIN}`;
-          html = bigRanking(r.top || [], kind === 'gifters' ? COIN : '');
+          html = bigRanking(r.top || [], kind === 'gifters' ? COIN : '', kind === 'likes' ? jarGoal(ss) : 0);
         } else if (kind === 'list') {
           title = d.title || '';
           const l = (d.list || []).slice(0, 10);

@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/dash.css">
   <link rel="stylesheet" href="css/celebrate.css">
   <link rel="stylesheet" href="css/race.css">
+  <link rel="stylesheet" href="css/jar.css">
   <link rel="stylesheet" href="css/live.css">
 </head>
 <body class="viewer at-home">
@@ -61,7 +62,7 @@
     <header class="v-head">
       <span class="v-status" id="v-status"><span class="dot"></span><span class="label">Connexion…</span></span>
       <span class="v-head-tools">
-        <button class="icon-btn v-race" id="v-race-btn" type="button" aria-label="Course aux likes" title="Course aux likes" hidden>🏃</button>
+        <button class="icon-btn v-race" id="v-race-btn" type="button" aria-label="Bocaux de likes de tout le monde" title="Bocaux de likes" hidden>❤</button>
         <button class="icon-btn v-letters" id="v-letters" type="button" aria-label="Messages de l’univers" hidden><span class="v-env" id="v-letters-icon" aria-hidden="true">✉️</span><span class="badge" id="v-letters-count">0</span></button>
         <button class="icon-btn v-sound" id="v-sound" type="button" aria-label="Activer le son">🔇</button>
       </span>
@@ -94,6 +95,7 @@
       <section class="panel likers" data-feature="likes">
         <header class="panel-head"><h3>❤ <span id="v-likes-title">Top Likes</span></h3><span class="count" id="v-likes-total">0</span></header>
         <ol class="side-list" id="v-likes"></ol>
+        <button class="btn btn-primary v-jar-btn" id="v-jar-btn" type="button">🫙 Mon bocal de likes</button>
       </section>
       <section class="panel gifters" data-feature="gifters">
         <header class="panel-head"><h3>🎁 <span id="v-gifters-title">Top Gifters</span></h3><span class="count" id="v-gifters-total">0</span></header>
@@ -126,7 +128,24 @@
     </div>
   </div>
 
-  <!-- Course aux likes : 🔍 pour choisir les pseudos à suivre, ✕ pour fermer -->
+  <!-- Mon bocal de likes : chercher son pseudo, puis voir son bocal se remplir -->
+  <div class="v-jar-full" id="v-jar-full" hidden>
+    <button class="icon-btn v-jar-close" id="v-jar-close" type="button" aria-label="Fermer">✕</button>
+    <h2 class="v-jar-title">🫙 Mon bocal de likes</h2>
+    <div class="v-jar-search" id="v-jar-search">
+      <p class="v-race-hint" id="v-jar-hint">Cherchez votre pseudo pour voir votre bocal se remplir.</p>
+      <input id="v-jar-q" type="search" placeholder="Chercher mon pseudo…" autocomplete="off" aria-label="Chercher mon pseudo">
+      <ul id="v-jar-list"></ul>
+    </div>
+    <div class="v-jar-view" id="v-jar-view" hidden>
+      <p class="v-jar-name" id="v-jar-name"></p>
+      <div class="v-jar-box" id="v-jar-box"></div>
+      <p class="v-jar-text">Vos likes remplissent votre bocal. Bocal plein : une question gratuite en priorité, et il se remplit à nouveau !</p>
+      <button class="btn btn-ghost" id="v-jar-change" type="button">Changer de pseudo</button>
+    </div>
+  </div>
+
+  <!-- Bocaux de likes : 🔍 pour choisir les pseudos à suivre, ✕ pour fermer -->
   <div class="race-full v-race-full" id="v-race-full" hidden>
     <div class="race-box" id="v-race-box"></div>
     <div class="v-race-tools">
@@ -139,7 +158,7 @@
       <ul id="v-race-list"></ul>
       <div class="v-race-actions">
         <button class="btn btn-ghost" id="v-race-none" type="button">Tout décocher (voir le top)</button>
-        <button class="btn btn-primary" id="v-race-ok" type="button">Voir la course</button>
+        <button class="btn btn-primary" id="v-race-ok" type="button">Voir les bocaux</button>
       </div>
     </div>
   </div>

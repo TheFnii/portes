@@ -12,14 +12,15 @@ import { Sound } from './sound.js';
 import { Ticker } from './ticker.js';
 import { Round } from './game.js';
 import { TikTokLive } from './tiktok.js';
-import { LiveQueue, Ranking, Milestones, crossedTiers } from './queue.js';
+import { LiveQueue, Ranking, Milestones } from './queue.js';
+import { jarsFilled, jarGoal } from './jar.js';
 import { roleOf, GiftCounter } from './gifts.js';
 import { loadFeatures, loadGiftConfig, logGift, readJSON } from './features.js';
 import { Dashboard, endMessages } from './dashboard.js';
 import { renderBoard, stopBoard } from './board.js';
 import { applyTheme, currentTheme } from './theme.js';
 import { Slideshow } from './slideshow.js';
-import { Race, raceOpts, DEFAULT_RACE_GOALS } from './race.js';
+import { Race, raceOpts } from './race.js';
 import { getMedia } from './media.js';
 import { Radio } from './radio.js';
 import { Celebrate } from './celebrate.js';
@@ -181,16 +182,6 @@ function drawMessage() {
   return m;
 }
 
-// ---------- Paliers de likes par personne ----------
-
-const DEFAULT_TIERS = [{ likes: 10000, anim: true, list: true }];
-function loadTiers() {
-  const t = readJSON(STORAGE.likeTiers, null);
-  return Array.isArray(t) ? t : DEFAULT_TIERS;
-}
-let tiers = loadTiers();
-let tiersReached = readJSON(STORAGE.likeTiersReached, {}) || {};
-
 const diceHit = document.createElement('button');
 diceHit.className = 'dice-hit';
 diceHit.type = 'button';
@@ -232,7 +223,7 @@ function changed() {
   });
 }
 
-// Les grands écrans ouverts (diaporama, course aux likes) suivent le live.
+// Les grands écrans ouverts (diaporama, bocaux de likes) suivent le live.
 function refreshLive() {
   if (slideshow) slideshow.refresh();
   if (!$('race-full').hidden) race.update(raceData(), raceOpts(settings, image('fondCourse'), raceFocus));
@@ -244,12 +235,11 @@ let cast = null;
 let tour = null; // présentation ⭐ (créée plus bas)
 let slideshow = null; // diaporama 🌙 (créé plus bas)
 
-// Course aux likes : les premiers du Top Likes et les objectifs (paliers par personne).
-// Pseudo(s) recherché(s) dans le diaporama (loupe) : mis en avant sur la course.
+// Bocaux de likes : les premiers du Top Likes (photo, pseudo, jauge).
+// Pseudo(s) recherché(s) dans le diaporama (loupe) : mis en avant, en premier.
 let raceFocus = [];
 const racer = (u) => ({ id: u.handle || u.name, name: u.name || u.handle, value: Math.round(u.value), avatar: u.avatar || '' });
 function raceData() {
-  const goals = readJSON(STORAGE.raceGoals, null);
   // Les photos : les premiers (60 au plus, pour un envoi léger), plus le pseudo recherché.
   const top = likes.top(Math.min(settings.raceCount || 60, 60)).map(racer);
   raceFocus.forEach((id) => {
@@ -259,7 +249,7 @@ function raceData() {
   });
   return {
     total: Math.round(likes.total),
-    goals: Array.isArray(goals) ? goals : DEFAULT_RACE_GOALS,
+    goal: jarGoal(settings),
     top,
     focus: raceFocus,
     // Tous les participants (sans photo) : les viewers cherchent leur pseudo dedans.
@@ -334,7 +324,7 @@ function snapshot() {
     title: dash.title(queue),
     chip: chip.hidden ? '' : chip.textContent,
     list: queue.list().map((e) => ({
-      id: e.id, type: e.type, name: e.name, gift: e.gift, count: e.count, label: e.label, door: e.door, giftImage: e.giftImage, later: e.later ? 1 : 0,
+      id: e.id, type: e.type, name: e.name, gift: e.gift, count: e.count, label: e.label, jar: e.jar ? 1 : 0, door: e.door, giftImage: e.giftImage, later: e.later ? 1 : 0,
     })),
     letters: features.donuts ? queue.donuts.map((e) => ({ id: e.id, name: e.name, message: e.message || '', count: e.count })) : [],
     likes: pickTop(likes),
@@ -479,7 +469,7 @@ function onLike({ user, likeCount, totalLikeCount, t }) {
     if (!waiting && milestones.crossedAt !== null) setTimeout(() => resolveMilestone(true), 1100);
   }
   const after = (likes.users[user.key] && likes.users[user.key].value) || 0;
-  checkTiers(user, before, after);
+  checkJar(user, before, after);
   persist();
   checkMilestone();
   if (likesDirty) return;
@@ -487,19 +477,14 @@ function onLike({ user, likeCount, totalLikeCount, t }) {
   setTimeout(() => { likesDirty = false; dash.renderLikes(likes); refreshLive(); castState(); }, 500);
 }
 
-// Une personne atteint un palier de likes (10 000…) : animation et/ou ajout à la liste.
-function checkTiers(user, before, after) {
-  if (!settings.personalTiers || !user.key) return;
-  const reached = tiersReached[user.key] || [];
-  const won = crossedTiers(tiers, before, after, reached);
-  if (!won.length) return;
-  tiersReached[user.key] = [...reached, ...won.map((t) => t.likes)];
-  save(STORAGE.likeTiersReached, JSON.stringify(tiersReached));
-  won.forEach((t) => {
-    const n = t.likes.toLocaleString('fr-FR');
-    if (t.anim) play('milestone', { name: user.name, title: fill(settings.tierTitle, { n, pseudo: user.name }) });
-    if (t.list && features.list) queue.addMilestone(user, fill(settings.tierLabel, { n, pseudo: user.name }));
-  });
+// Bocal de likes rempli : animation de victoire (sans nombre), une question gratuite en
+// priorité dans la liste, et le bocal repart de zéro.
+function checkJar(user, before, after) {
+  if (!settings.jars || !user.key) return;
+  const n = jarsFilled(before, after, jarGoal(settings));
+  if (!n) return;
+  play('jar', { name: user.name || user.handle, title: settings.jarTitle });
+  if (features.list) queue.addMilestone(user, n > 1 ? `${settings.jarLabel} ×${n}` : settings.jarLabel).jar = 1;
   changed();
 }
 
@@ -981,13 +966,13 @@ async function simulateGifts() {
     ['pin', 'Luna', 'Bienvenue ! Posez vos questions après un Chat porte-bonheur 🐱'],
     ['gift', 'Céleste', 'Lucky Cat', 99], ['like', 'Inès', 40], ['gift', 'Jade', 'Galaxy', 1000], ['gift', 'Sofia', 'Doughnut', 30],
     ['like', 'Céleste', 25], ['gift', 'Camille', 'Rose', 1], ['like', 'Jade', 60], ['gift', 'Aurore', 'Lucky Cat', 99],
-    ['like', 'Manon', 99700], ['like', 'Nour', 150], ['chat', 'Iris', 'allez les 100k !!'], ['like', 'Lina', 120], ['chat', 'Zoé', 'on a fait 100k 🎉'],
+    ['like', 'Inès', 2990], ['like', 'Manon', 120, 99700], ['like', 'Nour', 150], ['chat', 'Iris', 'allez les 100k !!'], ['like', 'Lina', 120], ['chat', 'Zoé', 'on a fait 100k 🎉'],
   ];
   let i = 0;
   for (const [type, name, arg, extra] of script) {
     const user = fakeUser(name);
     if (type === 'pin') onPin({ pinned: true, text: arg, user, pinId: 'sim' });
-    else if (type === 'like') onLike({ user, likeCount: arg, totalLikeCount: 0 });
+    else if (type === 'like') onLike({ user, likeCount: arg, totalLikeCount: extra || 0 });
     else if (type === 'chat') claimMilestone({ handle: user.handle, name, text: arg });
     else onGift({ user, msgId: `sim-${Date.now()}-${i++}`, giftId: `sim-${arg}`, giftName: arg, giftImage: '', combo: false, repeatCount: 1, repeatEnd: true, diamonds: extra });
     await wait(type === 'like' ? 900 : 1200);
@@ -1050,7 +1035,7 @@ function forgetSlideMedia() {
 slideshow = new Slideshow($('slideshow'), { data: snapshot, mediaUrl: slideMedia, onStep: () => { syncSearchBtn(); castState(); } });
 
 // Commandes du diaporama (seulement sur la tablette) : 🌙 pour sortir, ◀ ▶ pour changer
-// d'écran, 🔍 pour chercher un pseudo dans la course aux likes.
+// d'écran, 🔍 pour chercher un pseudo dans les bocaux de likes.
 $('ss-close').addEventListener('click', () => closeScreensaver());
 $('ss-prev').addEventListener('click', () => slideshow.prev());
 $('ss-next').addEventListener('click', () => slideshow.next());
@@ -1067,7 +1052,7 @@ function renderRaceSearch() {
   const list = all.filter((u) => raceFocus.includes(u.id) || !q || norm(u.name).includes(q) || norm(u.id).includes(q));
   list.sort((a, b) => (raceFocus.includes(b.id) - raceFocus.includes(a.id)) || b.value - a.value);
   $('ss-search-list').innerHTML = list.length
-    ? list.map((u) => `<li><label><input type="checkbox" data-racer="${esc(u.id)}"${raceFocus.includes(u.id) ? ' checked' : ''}><span>${esc(u.name)}</span><b>${Math.round(u.value).toLocaleString('fr-FR')}</b></label></li>`).join('')
+    ? list.map((u) => `<li><label><input type="checkbox" data-racer="${esc(u.id)}"${raceFocus.includes(u.id) ? ' checked' : ''}><span>${esc(u.name)}</span></label></li>`).join('')
     : '<li class="empty">Personne avec ce pseudo pour l’instant</li>';
   $('ss-search-clear').hidden = !raceFocus.length;
 }
@@ -1087,7 +1072,7 @@ $('ss-search-clear').addEventListener('click', () => {
   slideshow.refresh();
   castState();
 });
-// La loupe n'apparaît que sur l'écran de la course aux likes.
+// La loupe n'apparaît que sur l’écran des bocaux de likes.
 function syncSearchBtn() {
   const onRace = slideshow.active && slideshow.list[slideshow.index] && slideshow.list[slideshow.index].kind === 'race';
   $('ss-search-btn').hidden = !onRace;
@@ -1106,7 +1091,7 @@ function openScreensaver() {
   enterFullscreen(false);
 }
 
-// Course aux likes en plein écran (on en sort en touchant l'écran).
+// Bocaux de likes en plein écran (on en sort en touchant l'écran).
 const race = new Race($('race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 $('race-btn').addEventListener('click', () => {
   $('race-full').hidden = false;
@@ -1213,7 +1198,6 @@ function reloadSettings() {
   ticker.setEnabled(loadFlag(STORAGE.ticker, true));
   sound.setEnabled(loadFlag(STORAGE.sound, true));
   syncToggles();
-  tiers = loadTiers();
   loadDeck();
   radio.rebuild();
   // La liste a été vidée depuis les Réglages (« Nouveau live »).
@@ -1228,7 +1212,6 @@ function reloadSettings() {
     milestones.total = 0;
     milestones.reset();
     milestoneAnnounced = 0;
-    tiersReached = {};
     pinned = null;
     dash.renderPinned(pinned);
     endLive = false;
@@ -1260,9 +1243,7 @@ window.addEventListener('storage', (e) => {
     loadTicker();
     sendMedia();
   }
-  else if (e.key === STORAGE.likeTiers) tiers = loadTiers();
   else if (e.key === STORAGE.radioMine || e.key === STORAGE.radioGrimoire) radio.rebuild();
-  else if (e.key === STORAGE.raceGoals) { refreshLive(); castState(); }
   else if (e.key === STORAGE.slides) { forgetSlideMedia(); sendMedia(); }
   else if (e.key === STORAGE.media) {
     // Image ou son déposé dans les Réglages : on le prend tout de suite.

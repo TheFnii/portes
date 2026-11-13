@@ -30,7 +30,7 @@ L’application demande à la tablette de garder l’écran allumé, si le navig
 ## Le tableau de bord (accueil)
 
 - **En haut** : 📌 le **message épinglé** du live, en grand (la taille du texte s’adapte à sa longueur), et à côté la case **✉️ Message de l’univers** (les Donuts : touchez ✓ une fois le message lu).
-- **À gauche** : ❤ **Top Likes** et 🎁 **Top Gifters** (pièces offertes).
+- **À gauche** : ❤ **Top Likes** (avec la jauge du bocal de chacun, sans nombre) et 🎁 **Top Gifters** (pièces offertes).
 - **Au centre** : une grande case où vos **messages et règles** défilent doucement.
 - **À droite (environ 1/3)** : la **liste à traiter**, titrée « X tirages avant le prochain jeu », avec la personne **en cours** en grand. Dessous : **Retour en arrière** et **Personne suivante**. Le ✕ retire une personne.
 - **En bas** : le ruban des messages, puis 🌙 veille, ⚙ réglages, ⛶ plein écran et l’état de la connexion TikTok à gauche ; le bouton **Jeu des Portes** (serrure) au milieu ; la **radio** à droite.
@@ -40,7 +40,7 @@ Tout est sauvegardé sur l’appareil : un rechargement de page en plein live ne
 ### L’ordre de la liste
 
 - **La personne en cours ne bouge plus** : un cadeau qui arrive pendant son tirage ne la coupe pas, il passe juste après elle. Elle reste en cours jusqu’à « Personne suivante ».
-- **Ensuite, les priorités, dans l’ordre d’arrivée** : Chat porte-bonheur, Galaxie, paliers de likes du live (100k…) et paliers par personne (10 000 likes…). Un palier atteint pendant le Jeu des Portes passe donc avant les gagnants du jeu.
+- **Ensuite, les priorités, dans l’ordre d’arrivée** : Chat porte-bonheur, Galaxie, paliers de likes du live (100k…) et bocaux de likes remplis 🫙. Un palier atteint pendant le Jeu des Portes passe donc avant les gagnants du jeu.
 - **Puis les gagnants du Jeu des Portes.**
 - **Bouton ↑** : touchez un nom de la liste, une flèche ↑ apparaît ; elle met cette personne en cours tout de suite. Celle qui était en cours (qui ne répond pas, par exemple) repart en bas de la liste, dans « En attente de leur retour », sans être perdue.
 
@@ -53,6 +53,7 @@ Tout est sauvegardé sur l’appareil : un rechargement de page en plein live ne
 - **Galaxie** : une galaxie scintille au milieu de l’écran, son de harpe, « 3 questions en priorité pour : [pseudo] ».
 - **Donut** : une enveloppe virevolte parmi les étoiles et les comètes, s’arrête, se retourne côté destinataire avec le pseudo, puis file dans la case « Message de l’univers ».
 - **Palier de likes** : le pseudo s’affiche en grand avec une fanfare et des confettis.
+- **Bocal de likes rempli** : le bocal se remplit, le bouchon se pose dessus avec un « pop » et une fanfare, et « [pseudo] a rempli sa jauge de likes et débloque une question gratuite en priorité ».
 
 Les animations passent l’une après l’autre. Chacune peut être désactivée dans les Réglages.
 
@@ -112,7 +113,7 @@ Dans la case, toucher **Relire** rouvre une lettre. Dans **Réglages → Message
 
 ## Top Likes et Top Gifters
 
-**Personnalisation → Top Likes et Top Gifters** (à part de la course aux likes) : le titre de chaque top, le nombre de personnes dans la case, et le nombre en plein écran et dans le diaporama, pour chacun des deux.
+Dans le Top Likes, chaque pseudo a sa **jauge** (un petit cœur qui avance) au lieu de son nombre de likes. **Personnalisation → Top Likes et Top Gifters** (à part de l’écran des bocaux) : le titre de chaque top, le nombre de personnes dans la case, et le nombre en plein écran et dans le diaporama, pour chacun des deux.
 
 ## Thème, couleurs et tailles des textes
 
@@ -138,9 +139,12 @@ Le message épinglé reste affiché jusqu’au prochain épinglage, même si vou
 
 Le bouton ⭐, à côté de la lune, lance une présentation : une petite étoile montre tour à tour chaque case du tableau de bord (mise en lumière) et une bulle explique à quoi elle sert. Touchez l’écran pour revenir. Dans **Réglages → Présentation des cases** : pour chaque case, activée ou non, titre et texte de la bulle, position de l’étoile (automatique, à gauche, à droite, au-dessus, en dessous), durée, et ordre. L’étoile vient de vos planches (39 poses, dont des versions en miroir, dans `images/etoile/`) : elle arrive joyeuse, vole d’une case à l’autre, puis prend la pose choisie pour chaque case (ou regarde la case, en automatique) ; une petite flèche dorée montre la case. La bulle prend la plus grande place libre de l’écran (taille réglable dans Personnalisation → Présentation) et son texte s’ajuste.
 
-## Paliers de likes par personne
+## Bocal de likes 🫙
 
-Quand une personne atteint un palier avec ses propres likes (10 000 par défaut), son pseudo s’affiche en grand avec l’animation de victoire et elle rejoint la liste à traiter. Dans **Réglages → Paliers de likes par personne** : ajouter d’autres paliers et choisir pour chacun « Animation de victoire » et/ou « Ajout à la liste ». Elle reste dans le Top Likes avec son nombre de likes.
+Chaque personne remplit son **bocal** avec ses likes. Quand il est plein : son pseudo s’affiche en grand avec l’animation du bocal qui se ferme (« [pseudo] a rempli sa jauge de likes et débloque une question gratuite en priorité », sans aucun nombre), elle rejoint la liste à traiter en priorité 🫙, et son bocal **repart de zéro** : elle peut le remplir encore et gagner encore.
+
+- **Réglages → Bocal de likes** : activer ou non, le **nombre de likes pour remplir un bocal** (3 000 par défaut), le texte de l’animation ({pseudo}) et le texte dans la liste. Ce nombre n’est **jamais affiché** : les viewers voient seulement leur jauge se remplir.
+- Les likes sont ceux que TikTok transmet à l’application : TikTok n’envoie pas tous les likes un par un (surtout quand ils arrivent vite), donc un bocal se remplit un peu plus lentement que le compteur de TikTok. Réglez l’objectif en conséquence.
 
 ## Radio : ma playlist
 
@@ -156,23 +160,21 @@ Sur le tableau de bord, le fond est neutre : le Jeu des Portes n’apparaît plu
 
 ## Diaporama 🌙
 
-Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. On en sort **seulement avec le bouton 🌙** (il reste visible en bas à gauche). À côté : **◀** écran précédent ; en bas à droite : **▶** écran suivant ; en haut à droite, seulement sur l’écran de la course aux likes : **🔍** la liste de tous les participants, avec cases à cocher et recherche ; les pseudos cochés sont mis en avant sur la course (aussi dans la version Broadcast) et remontent en haut de la liste. Dans **Réglages → Diaporama** :
-- cochez les écrans à montrer, parmi Top Likes, Course aux likes, message central, Top Gifters, messages défilants, message épinglé, liste à traiter, messages de l’univers et message de fin de live ;
+Le bouton 🌙 lance un diaporama en plein écran : les écrans choisis passent l’un après l’autre, puis ça recommence. On en sort **seulement avec le bouton 🌙** (il reste visible en bas à gauche). À côté : **◀** écran précédent ; en bas à droite : **▶** écran suivant ; en haut à droite, seulement sur l’écran des bocaux de likes : **🔍** la liste de tous les participants, avec cases à cocher et recherche ; les pseudos cochés sont mis en avant (en premier) (aussi dans la version Broadcast) et remontent en haut de la liste. Dans **Réglages → Diaporama** :
+- cochez les écrans à montrer, parmi Top Likes, Bocaux de likes, message central, Top Gifters, messages défilants, message épinglé, liste à traiter, messages de l’univers et message de fin de live ;
 - choisissez leur ordre et leur durée ;
 - ajoutez une phrase sous chaque écran ;
 - ajoutez vos propres écrans : **texte** (avec autocollants), **image**, **vidéo** (sans son, 8 Mo au plus ; durée 0 = toute la vidéo).
 
 Le diaporama passe aussi dans la version Broadcast, écran par écran, mais pas sur les téléphones des viewers.
 
-## Course aux likes 🏃
+## Écran des bocaux de likes 🫙 (remplace la course aux likes)
 
-Un chemin (sans chiffres qui encombrent) : les photos de profil sont les curseurs, une sur deux au-dessus et en dessous du chemin (elles se chevauchent moins), placées selon les likes de chacun, avec au-dessus le nombre de likes et le pseudo (réglable). Tout le monde qui envoie des likes peut y être (0 = tout le monde).
-- **Les paliers** (Réglages → Course aux likes) : leur valeur et leur texte (affiché sous le palier). Seuls vos paliers apparaissent. Pour ne montrer que 0 → 10 000 (chacun voit s’il approche de sa question gratuite), gardez un seul palier : 10 000.
-- **Fin de la ligne** (Personnalisation → Course aux likes) : « le prochain palier selon le total du live » (10 000 tout à droite, puis 50 000 une fois 10 000 likes atteints au total… et on reste sur le dernier palier) ou « toujours le dernier palier réglé ».
-- **Taille des photos, taille des textes, texte sous le chemin, titre** : Personnalisation → Course aux likes. **Police** : Personnalisation → Polices d’écriture. **Image de fond** : Réglages → Course aux likes.
-- **Sur la tablette** : bouton 🏃 en bas de la case Top Likes (plein écran), et dans le diaporama.
+La photo, le pseudo et la **jauge du bocal** de chacun (un petit cœur qui avance), sans aucun nombre. Les mieux classés en premier ; les pseudos cochés avec 🔍 (diaporama) passent devant, en surbrillance.
+- **Titre, texte sous les bocaux, taille des photos et des textes, nombre de personnes** : Personnalisation → Écran des bocaux de likes. **Police** : Personnalisation → Polices d’écriture. **Image de fond** : Réglages → Écran des bocaux de likes.
+- **Sur la tablette** : bouton 🫙 en bas de la case Top Likes (plein écran), et dans le diaporama.
 - **Dans la version Broadcast** : comme sur la tablette.
-- **Pour les viewers** : un bouton 🏃 en haut de leur page. Avec 🔍, la liste complète des participants (avec recherche) : chacun coche son pseudo et ceux de ses amis ou concurrents pour suivre leur progression, même hors du top ; les pseudos cochés sont en haut de la liste ; « Tout décocher » revient au top. Les phrases de la course chez les viewers se règlent dans **Réglages → Page des viewers**.
+- **Pour les viewers** : le bouton ❤ en haut de leur page ouvre cet écran (avec 🔍 pour suivre des pseudos). Et sous le Top Likes, le bouton **🫙 Mon bocal de likes** : chacun cherche son pseudo et voit **son bocal** se remplir, le bouchon posé à côté. Bocal plein : le bouchon se pose dessus avec un bruit de victoire, puis le bocal se vide et se remplit à nouveau. Le pseudo choisi est gardé sur le téléphone. Les phrases se règlent dans **Réglages → Page des viewers**.
 
 ## Version Broadcast (TikTok LIVE Studio)
 
@@ -188,7 +190,7 @@ Pour une 4K très nette sur un écran plus petit, vous pouvez aussi zoomer dans 
 
 ## La page des viewers (téléphones)
 
-Vos viewers suivent le live en direct sur leur téléphone (ou tablette), en **lecture seule** : message épinglé, liste « X tirages avant le prochain jeu », case des messages qui défilent, Top Likes, Top Gifters, Jeu des Portes (seulement quand vous le lancez) et toutes les animations (Chat porte-bonheur, Galaxie, enveloppe, paliers de likes). Pas de réglages, pas de boutons, pas de radio.
+Vos viewers suivent le live en direct sur leur téléphone (ou tablette), en **lecture seule** : message épinglé, liste « X tirages avant le prochain jeu », case des messages qui défilent, Top Likes, Top Gifters, Jeu des Portes (seulement quand vous le lancez) et toutes les animations (Chat porte-bonheur, Galaxie, enveloppe, paliers de likes, bocaux remplis), et leur bocal de likes. Pas de réglages, pas de boutons, pas de radio.
 
 1. Sur **la tablette du live** : **Réglages → Page des viewers** → activez **Diffuser le live aux viewers**.
 2. Copiez le lien et partagez-le (bio TikTok, message épinglé…). Il reste le même d’un live à l’autre.
@@ -286,7 +288,7 @@ L’indicateur en haut à droite du jeu montre l’état de la connexion : vert 
 ### Ce que l’application lit dans le live
 - **Le chat** : les chiffres du Jeu des Portes.
 - **Les cadeaux** : nom, identifiant, valeur en pièces, expéditeur et nombre envoyé (combos compris) : liste, animations et Top Gifters.
-- **Les likes** : par personne pour le Top Likes, et le total du live pour les paliers.
+- **Les likes** : par personne pour le Top Likes et les bocaux, et le total du live pour les paliers.
 - **Le message épinglé** : affiché dans la case 📌, jusqu’au prochain message épinglé.
 
 ### Pendant le jeu
@@ -374,7 +376,8 @@ js/
   fonts.js            polices de l’app
   theme.js            thèmes, couleurs, tailles des textes
   board.js            case centrale : défilement ou un message à la fois
-  race.js             course aux likes (chemin, objectifs, bulles)
+  race.js             écran des bocaux de likes (photo, pseudo, jauge)
+  jar.js              bocal de likes : jauge, bocal illustré, remplissage et fermeture
   slideshow.js        diaporama 🌙
   stickers.js         autocollants dans les textes
   broadcast.js        diffusion signée tablette → viewers

@@ -12,7 +12,8 @@ import { FX } from './fx.js';
 import { Sound } from './sound.js';
 import { Celebrate } from './celebrate.js';
 import { Receiver } from './broadcast.js';
-import { entryIcon, entryDetail, SECTIONS, sectionOf, COIN, layoutGrid, fitPinnedText, bigRanking } from './dashboard.js';
+import { entryIcon, entryDetail, SECTIONS, sectionOf, COIN, layoutGrid, fitPinnedText, bigRanking, rankName } from './dashboard.js';
+import { jarGoal, jarOf, Jar } from './jar.js';
 import { Ticker } from './ticker.js';
 import { Tour } from './tour.js';
 import { Slideshow } from './slideshow.js';
@@ -218,13 +219,12 @@ function renderQueue(st) {
   $('v-list').innerHTML = html;
 }
 
-function renderTop(listId, totalId, data, unit) {
+function renderTop(listId, totalId, data, unit, goal = 0) {
   const d = data || { total: 0, top: [] };
   $(totalId).innerHTML = Math.round(d.total || 0).toLocaleString('fr-FR') + unit;
   const medals = ['🥇', '🥈', '🥉'];
   $(listId).innerHTML = d.top && d.top.length
-    ? d.top.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span><span class="name">${esc(u.name)}</span>
-        <span class="value">${Math.round(u.value).toLocaleString('fr-FR')}${unit}</span></li>`).join('')
+    ? d.top.map((u, i) => `<li><span class="medal">${medals[i] || i + 1}</span>${rankName(u, unit, goal)}</li>`).join('')
     : '<li class="empty">Personne pour l’instant</li>';
 }
 
@@ -329,13 +329,14 @@ function renderDash(st) {
     setRich('v-game-label', settings.gameButton || 'Jeu des Portes');
     body.classList.toggle('no-game-btn', f.game === false);
   }
-  renderTop('v-likes', 'v-likes-total', st.likes, '');
+  renderTop('v-likes', 'v-likes-total', st.likes, '', jarGoal(settings));
   renderTop('v-gifters', 'v-gifters-total', st.gifters, COIN);
   renderBoard(st.board);
   renderEndLive(!!st.endLive && f.board !== false);
   if (!OUTPUT && $('v-race-btn')) $('v-race-btn').hidden = !(st.race && (st.race.top || []).length) || f.likes === false;
   if (OUTPUT) renderOutput(st);
   renderRace(st);
+  renderMyJar(st);
 }
 
 // ---------- Broadcast : bandeau, et ce que la tablette affiche par-dessus ----------
@@ -354,8 +355,8 @@ const slideshow = OUTPUT ? new Slideshow($('v-slideshow'), {
   data: () => last || {},
   mediaUrl: async (key) => slideUrls[String(key).replace(/^sld-/, '')] || null,
 }) : null;
-// Course aux likes : en plein écran sur la page Broadcast (comme la tablette), et à la demande
-// sur les téléphones (bouton 🏃).
+// Bocaux de likes : en plein écran sur la page Broadcast (comme la tablette), et à la demande
+// sur les téléphones (bouton ❤).
 const race = new Race($('v-race-box'), { render: (t) => rich(t).replace(/\n/g, '<br>') });
 
 // Téléphones : chacun peut cocher les pseudos à suivre (le sien, ses amis…), même hors du top.
@@ -376,7 +377,6 @@ function renderRace(st) {
   if ($('v-race-full').hidden || !st.race) return;
   // Téléphones : les phrases choisies pour les viewers (sinon celles de la tablette).
   const s = OUTPUT ? settings : { ...settings, raceTitle: settings.raceVTitle || settings.raceTitle, raceText: settings.raceVText || settings.raceText };
-  if (!OUTPUT && $('v-race-hint')) setRich('v-race-hint', settings.raceVHint || '');
   race.update(raceView(st.race), raceOpts(s, image('fondCourse'), OUTPUT ? st.race.focus || [] : []));
 }
 const normName = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -387,7 +387,7 @@ function renderPicker() {
   const list = all.filter(([id, name]) => picked.includes(String(id)) || !q || normName(name).includes(q) || normName(id).includes(q));
   list.sort((a, b) => (picked.includes(String(b[0])) - picked.includes(String(a[0]))) || b[2] - a[2]);
   $('v-race-list').innerHTML = list.length
-    ? list.map(([id, name, value]) => `<li><label><input type="checkbox" data-pick="${esc(id)}"${picked.includes(String(id)) ? ' checked' : ''}><span>${esc(name)}</span><b>${Math.round(value).toLocaleString('fr-FR')}</b></label></li>`).join('')
+    ? list.map(([id, name, value]) => `<li><label><input type="checkbox" data-pick="${esc(id)}"${picked.includes(String(id)) ? ' checked' : ''}><span>${esc(name)}</span></label></li>`).join('')
     : '<li class="empty">Personne avec ce pseudo pour l’instant (envoyez des likes pour apparaître)</li>';
 }
 if (!OUTPUT) {
@@ -413,6 +413,61 @@ if (!OUTPUT) {
   $('v-race-none').addEventListener('click', () => { picked = []; savePicked(); renderPicker(); if (last) renderRace(last); });
   $('v-race-ok').addEventListener('click', () => { $('v-race-picker').hidden = true; if (last) renderRace(last); });
 }
+
+// ---------- Mon bocal de likes (téléphones) ----------
+// Chacun cherche son pseudo et voit son bocal se remplir (jamais de nombre). Bocal plein :
+// le bouchon se pose dessus avec un bruit de victoire, puis le bocal repart de zéro.
+const MYJAR_KEY = 'portes.viewer.jar';
+let myJar = null;
+try { myJar = localStorage.getItem(MYJAR_KEY) || null; } catch (e) { myJar = null; }
+let myJarSeen = null; // { id, n } : bocaux remplis déjà vus pour ce pseudo
+const jarView = !OUTPUT && $('v-jar-box') ? new Jar($('v-jar-box')) : null;
+function setMyJar(id) {
+  myJar = id;
+  myJarSeen = null;
+  try { if (id) localStorage.setItem(MYJAR_KEY, id); else localStorage.removeItem(MYJAR_KEY); } catch (e) { /* stockage indisponible */ }
+}
+function renderMyJar(st) {
+  if (!jarView || $('v-jar-full').hidden) return;
+  const all = (st && st.race && st.race.all) || [];
+  $('v-jar-search').hidden = !!myJar;
+  $('v-jar-view').hidden = !myJar;
+  if (!myJar) { renderJarList(); return; }
+  const row = all.find(([id]) => String(id) === myJar);
+  setText('v-jar-name', row ? row[1] : myJar);
+  const { p, n } = jarOf(row ? row[2] : 0, jarGoal(settings));
+  jarView.set(p);
+  if (myJarSeen && myJarSeen.id === myJar && n > myJarSeen.n) {
+    jarView.close({ sound: () => { sound.unlock(); sound.jarClose(); } });
+  }
+  myJarSeen = { id: myJar, n };
+}
+function renderJarList() {
+  const all = (last && last.race && last.race.all) || [];
+  const q = normName($('v-jar-q').value.trim());
+  const list = all.filter(([id, name]) => !q || normName(name).includes(q) || normName(id).includes(q)).slice(0, 60);
+  $('v-jar-list').innerHTML = list.length
+    ? list.map(([id, name]) => `<li><button type="button" data-jar="${esc(id)}"><span>${esc(name)}</span><b>🫙</b></button></li>`).join('')
+    : `<li class="empty">${q ? 'Personne avec ce pseudo pour l’instant (envoyez des likes pour apparaître)' : 'Envoyez des likes pour apparaître ici'}</li>`;
+}
+if (jarView) {
+  $('v-jar-btn').addEventListener('click', () => {
+    $('v-jar-full').hidden = false;
+    $('v-jar-q').value = '';
+    if (settings.raceVHint) setRich('v-jar-hint', settings.raceVHint);
+    renderMyJar(last);
+  });
+  $('v-jar-close').addEventListener('click', () => { $('v-jar-full').hidden = true; });
+  $('v-jar-q').addEventListener('input', renderJarList);
+  $('v-jar-list').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-jar]');
+    if (!b) return;
+    setMyJar(b.dataset.jar);
+    renderMyJar(last);
+  });
+  $('v-jar-change').addEventListener('click', () => { setMyJar(null); renderMyJar(last); $('v-jar-q').focus(); });
+}
+
 let tickerKey = '';
 let fullKey = '';
 
@@ -460,7 +515,7 @@ function renderOutput(st) {
     const d = st.likesFull || st.likes || {};
     setRich('v-likes-full-title', settings.likesTitle || 'Top Likes');
     setText('v-likes-full-total', Math.round(d.total || 0).toLocaleString('fr-FR'));
-    const html = bigRanking(d.top || []);
+    const html = bigRanking(d.top || [], '', jarGoal(settings));
     const el = $('v-likes-full-list');
     el.style.setProperty('--n', Math.max(5, (d.top || []).length));
     if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }

@@ -507,6 +507,38 @@ export class Sound {
     this.shimmer(t + 0.4, 2, 0.06);
   }
 
+  // Bocal fermé : « pop » du bouchon, puis la fanfare de victoire.
+  jarClose() {
+    if (!this.ready) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime + 0.01;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.exponentialRampToValueAtTime(110, t + 0.12);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g);
+    g.connect(this.master);
+    o.start(t);
+    o.stop(t + 0.2);
+    const n = ctx.createBufferSource();
+    n.buffer = this.noise(0.08);
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1800;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.12, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    n.connect(bp);
+    bp.connect(ng);
+    ng.connect(this.master);
+    n.start(t);
+    setTimeout(() => this.fanfare(), 180);
+  }
+
   // Petit tintement (clic de bouton, sommaire…).
   tink() {
     if (!this.ready) return;
